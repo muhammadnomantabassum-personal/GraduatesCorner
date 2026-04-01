@@ -511,7 +511,7 @@ function HomePageContent() {
                   What Our Community Says
                 </h3>
                 <p className="text-muted-foreground">
-                  Hear from students, universities, and companies who use GradNexus
+                  Hear from students, universities, and companies who use GraduatesCorner
                 </p>
               </div>
               {testimonials.length > 0 ? (
@@ -537,7 +537,7 @@ function HomePageContent() {
             </h2>
             <p className="mx-auto mb-8 max-w-2xl text-pretty text-lg text-primary-foreground/80">
               Whether you are a student looking for opportunities, a university posting positions, or a
-              company seeking fresh talent — GradNexus connects you with the right people.
+              company seeking fresh talent — GraduatesCorner connects you with the right people.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/register">

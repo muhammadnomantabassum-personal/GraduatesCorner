@@ -13,12 +13,12 @@ const faqCategories = [
     title: "General",
     items: [
       {
-        q: "What is GradNexus?",
-        a: "GradNexus is a platform that connects students with thesis positions and trainee programs offered by universities and companies across Scandinavia and beyond. We make it easy to discover, compare, and apply for academic and professional opportunities.",
+        q: "What is GraduatesCorner?",
+        a: "GraduatesCorner is a platform that connects students with thesis positions and trainee programs offered by universities and companies across Scandinavia and beyond. We make it easy to discover, compare, and apply for academic and professional opportunities.",
       },
       {
-        q: "Is GradNexus free to use?",
-        a: "Yes, GradNexus is completely free for students. Universities and companies can create accounts and list opportunities at no cost during our launch phase. Premium features for organizations may be introduced in the future.",
+        q: "Is GraduatesCorner free to use?",
+        a: "Yes, GraduatesCorner is completely free for students. Universities and companies can create accounts and list opportunities at no cost during our launch phase. Premium features for organizations may be introduced in the future.",
       },
       {
         q: "Which countries do you cover?",
@@ -90,7 +90,7 @@ export default function FAQPage() {
             Frequently Asked Questions
           </h1>
           <p className="mx-auto max-w-lg text-[15px] text-primary-foreground/60">
-            Everything you need to know about GradNexus. Can&apos;t find what you&apos;re
+            Everything you need to know about GraduatesCorner. Can&apos;t find what you&apos;re
             looking for?{" "}
             <Link href="/contact" className="font-medium text-accent underline underline-offset-2 hover:text-accent/80">
               Get in touch

@@ -22,7 +22,7 @@ export default function PrivacyPolicyPage() {
             <div>
               <h2 className="mb-3 text-lg font-semibold text-foreground">1. Introduction</h2>
               <p>
-                GradNexus (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;) is
+                GraduatesCorner (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;) is
                 committed to protecting your privacy. This Privacy Policy explains how we collect,
                 use, disclose, and safeguard your information when you visit our platform, including
                 any related services, features, or content we offer.

@@ -87,7 +87,7 @@ export function GlobalSearchCommand() {
       <CommandDialog
         open={open}
         onOpenChange={setOpen}
-        title="Search GradNexus"
+        title="Search GraduatesCorner"
         description="Search for pages, theses, programs, and blog posts"
       >
         <CommandInput placeholder="Type to search everything..." />

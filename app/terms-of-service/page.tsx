@@ -22,7 +22,7 @@ export default function TermsOfServicePage() {
             <div>
               <h2 className="mb-3 text-lg font-semibold text-foreground">1. Acceptance of Terms</h2>
               <p>
-                By accessing or using GradNexus (&ldquo;the Platform&rdquo;), you agree to be
+                By accessing or using GraduatesCorner (&ldquo;the Platform&rdquo;), you agree to be
                 bound by these Terms of Service. If you do not agree to all of these terms, you may
                 not access or use the Platform. We reserve the right to update these terms at any
                 time, and continued use constitutes acceptance of the revised terms.
@@ -32,7 +32,7 @@ export default function TermsOfServicePage() {
             <div>
               <h2 className="mb-3 text-lg font-semibold text-foreground">2. Description of Service</h2>
               <p>
-                GradNexus is a platform that connects students, universities, and companies
+                GraduatesCorner is a platform that connects students, universities, and companies
                 for thesis collaborations and trainee programs. We facilitate discovery and
                 communication but do not employ, contract, or guarantee placements for any party.
               </p>
@@ -81,7 +81,7 @@ export default function TermsOfServicePage() {
               <h2 className="mb-3 text-lg font-semibold text-foreground">6. Intellectual Property</h2>
               <p>
                 The Platform, including its design, logos, text, graphics, and software, is the
-                property of GradNexus and is protected by intellectual property laws. You may
+                property of GraduatesCorner and is protected by intellectual property laws. You may
                 not copy, modify, distribute, or create derivative works from any part of the
                 Platform without our prior written consent.
               </p>
@@ -100,7 +100,7 @@ export default function TermsOfServicePage() {
             <div>
               <h2 className="mb-3 text-lg font-semibold text-foreground">8. Limitation of Liability</h2>
               <p>
-                To the fullest extent permitted by law, GradNexus shall not be liable for any
+                To the fullest extent permitted by law, GraduatesCorner shall not be liable for any
                 indirect, incidental, special, consequential, or punitive damages, including loss of
                 profits, data, or opportunities, arising from your use of or inability to use the
                 Platform.

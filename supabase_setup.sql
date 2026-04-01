@@ -1,4 +1,4 @@
--- Create tables for GradNexus
+-- Create tables for GraduatesCorner
 
 -- 1. Profiles (extends Supabase Auth Users)
 CREATE TABLE IF NOT EXISTS public.profiles (

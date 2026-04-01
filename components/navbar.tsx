@@ -84,7 +84,7 @@ export function Navbar() {
             </div>
             <span className={`font-semibold tracking-tight text-foreground transition-all duration-200 ${scrolled ? "text-[15px]" : "text-[17px]"
               }`}>
-              GradNexus
+              GraduatesCorner
             </span>
           </Link>
 
@@ -188,7 +188,7 @@ export function Navbar() {
                         <GraduationCap className="h-3.5 w-3.5 text-primary-foreground" />
                       </div>
                       <span className="text-sm font-semibold text-foreground">
-                        GradNexus
+                        GraduatesCorner
                       </span>
                     </Link>
                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground" onClick={() => setOpen(false)}>

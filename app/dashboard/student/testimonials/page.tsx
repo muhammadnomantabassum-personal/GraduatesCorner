@@ -159,7 +159,7 @@ export default function StudentTestimonialsPage() {
         <div>
           <h1 className="text-xl font-bold text-foreground">My Feedback</h1>
           <p className="text-sm text-muted-foreground">
-            Share your experience with GradNexus
+            Share your experience with GraduatesCorner
           </p>
         </div>
         {(canWriteNew || canEditApproved) && !showForm && (
@@ -177,7 +177,7 @@ export default function StudentTestimonialsPage() {
           <div className="text-xs leading-relaxed text-muted-foreground">
             <p className="font-medium text-foreground">How feedback works</p>
             <p className="mt-1">
-              You can submit feedback about your experience with GradNexus.
+              You can submit feedback about your experience with GraduatesCorner.
               After admin approval, it will be shown publicly on the website.
               If you submit an update, it will go through review while your previous 
               approved feedback remains visible (if any).
@@ -244,7 +244,7 @@ export default function StudentTestimonialsPage() {
                 </Label>
                 <Textarea
                   id="content"
-                  placeholder="Tell us about your experience with GradNexus..."
+                  placeholder="Tell us about your experience with GraduatesCorner..."
                   rows={4}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -399,7 +399,7 @@ export default function StudentTestimonialsPage() {
             <MessageSquare className="mb-3 h-12 w-12 text-muted-foreground/30" />
             <h3 className="mb-1 text-base font-semibold text-foreground">No feedback yet</h3>
             <p className="mb-5 max-w-sm text-sm text-muted-foreground">
-              Share your experience with GradNexus to help other students
+              Share your experience with GraduatesCorner to help other students
               discover the platform
             </p>
             <Button onClick={() => setShowForm(true)} className="gap-1.5">

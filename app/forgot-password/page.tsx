@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <GraduationCap className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="text-sm font-semibold text-foreground">GradNexus</span>
+              <span className="text-sm font-semibold text-foreground">GraduatesCorner</span>
             </Link>
 
             {submitted ? (
@@ -140,7 +140,7 @@ export default function ForgotPasswordPage() {
 
         {/* Bottom copyright */}
         <div className="shrink-0 border-t border-border/50 px-6 py-3 text-center text-[11px] text-muted-foreground">
-          © {new Date().getFullYear()} GradNexus. All rights reserved.
+          © {new Date().getFullYear()} GraduatesCorner. All rights reserved.
         </div>
       </div>
     </div>

@@ -164,7 +164,7 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
               )}
               {thesis.organization}
               {thesis.postedBy === "admin" && (
-                <span className="text-primary-foreground/40">· by GradNexus</span>
+                <span className="text-primary-foreground/40">· by GraduatesCorner</span>
               )}
             </span>
             <span className="flex items-center gap-1.5">

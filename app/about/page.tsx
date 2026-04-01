@@ -39,7 +39,7 @@ export default function AboutPage() {
       <section className="border-b border-border bg-primary px-4 py-16 text-primary-foreground lg:py-20">
         <div className="mx-auto max-w-7xl text-center">
           <GraduationCap className="mx-auto mb-6 h-14 w-14" />
-          <h1 className="mb-4 text-balance text-3xl font-bold lg:text-5xl">About GradNexus</h1>
+          <h1 className="mb-4 text-balance text-3xl font-bold lg:text-5xl">About GraduatesCorner</h1>
           <p className="mx-auto max-w-2xl text-pretty text-lg text-primary-foreground/80">
             We bridge the gap between ambitious graduates and world-class academic and professional
             opportunities. Our mission is to make finding thesis positions and trainee programs
@@ -77,7 +77,7 @@ export default function AboutPage() {
                 <Users className="mx-auto mb-4 h-10 w-10 text-primary" />
                 <h3 className="mb-2 text-lg font-semibold text-foreground">Trusted Community</h3>
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Over 120 partner universities and companies trust GradNexus to connect them
+                  Over 120 partner universities and companies trust GraduatesCorner to connect them
                   with qualified, motivated candidates.
                 </p>
               </CardContent>
@@ -133,7 +133,7 @@ export default function AboutPage() {
             Ready to Get Started?
           </h2>
           <p className="mx-auto mb-8 max-w-xl text-muted-foreground">
-            Join thousands of students, universities, and companies already using GradNexus.
+            Join thousands of students, universities, and companies already using GraduatesCorner.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link href="/register">

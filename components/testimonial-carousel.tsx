@@ -7,14 +7,14 @@ import { AnimatePresence, motion } from "framer-motion"
 const testimonials = [
   {
     quote:
-      "GradNexus connected me with my dream thesis at Ericsson. The platform made it incredibly easy to find relevant opportunities in my field.",
+      "GraduatesCorner connected me with my dream thesis at Ericsson. The platform made it incredibly easy to find relevant opportunities in my field.",
     name: "Anna Svensson",
     initials: "AS",
     role: "MSc Graduate · KTH → Ericsson",
   },
   {
     quote:
-      "We found three exceptional thesis students through GradNexus. The quality of applicants exceeded all our expectations.",
+      "We found three exceptional thesis students through GraduatesCorner. The quality of applicants exceeded all our expectations.",
     name: "Erik Lindqvist",
     initials: "EL",
     role: "R&D Manager · Volvo Group",
@@ -28,14 +28,14 @@ const testimonials = [
   },
   {
     quote:
-      "I landed my internship at Spotify through GradNexus. The process was smooth and the matching algorithm really works.",
+      "I landed my internship at Spotify through GraduatesCorner. The process was smooth and the matching algorithm really works.",
     name: "Oscar Bergström",
     initials: "OB",
     role: "Software Engineer · Chalmers → Spotify",
   },
   {
     quote:
-      "As a startup, finding research talent was difficult until we joined GradNexus. It leveled the playing field for us.",
+      "As a startup, finding research talent was difficult until we joined GraduatesCorner. It leveled the playing field for us.",
     name: "Sara Nilsson",
     initials: "SN",
     role: "CTO · NordicAI",

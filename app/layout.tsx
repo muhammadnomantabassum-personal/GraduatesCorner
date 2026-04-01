@@ -11,7 +11,7 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'GradNexus - Find Your Academic Opportunity',
+  title: 'GraduatesCorner - Find Your Academic Opportunity',
   description: 'Discover master theses, PhD positions, and graduate trainee programs from top universities and companies across Europe.',
   generator: 'v0.app',
   icons: {

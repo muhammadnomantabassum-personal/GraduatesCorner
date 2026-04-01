@@ -49,7 +49,7 @@ export default function AdminLoginPage() {
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary shadow-md">
             <GraduationCap className="h-6 w-6 text-primary-foreground" />
           </div>
-          <h1 className="text-xl font-bold text-foreground">GradNexus</h1>
+          <h1 className="text-xl font-bold text-foreground">GraduatesCorner</h1>
           <div className="mt-2 flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1">
             <Shield className="h-3 w-3 text-primary" />
             <span className="text-[11px] font-medium text-primary">Admin Panel</span>
@@ -123,7 +123,7 @@ export default function AdminLoginPage() {
         </div>
 
         <p className="mt-4 text-center text-[11px] text-muted-foreground">
-          © {new Date().getFullYear()} GradNexus. All rights reserved.
+          © {new Date().getFullYear()} GraduatesCorner. All rights reserved.
         </p>
       </div>
     </div>

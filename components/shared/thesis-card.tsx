@@ -72,7 +72,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
             )}
             <span className="truncate">{thesis.organization}</span>
             {thesis.postedBy === "admin" && (
-              <span className="shrink-0 text-[11px] text-muted-foreground/50">· by GradNexus</span>
+              <span className="shrink-0 text-[11px] text-muted-foreground/50">· by GraduatesCorner</span>
             )}
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

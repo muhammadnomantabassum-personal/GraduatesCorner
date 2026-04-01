@@ -58,7 +58,7 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
             <Building2 className="h-4 w-4 shrink-0 text-primary" />
             <span className="truncate">{program.company}</span>
             {program.postedBy === "admin" && (
-              <span className="shrink-0 text-[11px] text-muted-foreground/50">· by GradNexus</span>
+              <span className="shrink-0 text-[11px] text-muted-foreground/50">· by GraduatesCorner</span>
             )}
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

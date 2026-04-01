@@ -73,7 +73,7 @@ export function Footer() {
                 <GraduationCap className="h-[18px] w-[18px] text-accent" />
               </div>
               <span className="text-[17px] font-bold tracking-tight text-primary-foreground">
-                GradNexus
+                GraduatesCorner
               </span>
             </Link>
             <p className="mt-4 max-w-sm text-[14px] leading-[1.75] text-primary-foreground/50">
@@ -162,7 +162,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 border-t border-primary-foreground/8 pt-7">
           <p className="text-center text-[13px] text-primary-foreground/30">
-            © {new Date().getFullYear()} GradNexus. All rights reserved.
+            © {new Date().getFullYear()} GraduatesCorner. All rights reserved.
           </p>
         </div>
       </div>

@@ -41,7 +41,7 @@ export function Header() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
           <GraduationCap className="h-7 w-7 text-primary" />
-          <span className="text-lg font-bold text-foreground">GradNexus</span>
+          <span className="text-lg font-bold text-foreground">GraduatesCorner</span>
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
@@ -102,7 +102,7 @@ export function Header() {
               <div className="flex items-center justify-between border-b border-border px-4 py-4">
                 <Link href="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
                   <GraduationCap className="h-6 w-6 text-primary" />
-                  <span className="font-bold text-foreground">GradNexus</span>
+                  <span className="font-bold text-foreground">GraduatesCorner</span>
                 </Link>
                 <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
                   <X className="h-5 w-5" />

@@ -122,7 +122,7 @@ export function RoleSelectionModal({ open, onClose, userId }: RoleSelectionModal
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">How will you use GradNexus?</DialogTitle>
+          <DialogTitle className="text-xl font-bold">How will you use GraduatesCorner?</DialogTitle>
           <DialogDescription>
             Select your role to personalize your experience.
           </DialogDescription>
