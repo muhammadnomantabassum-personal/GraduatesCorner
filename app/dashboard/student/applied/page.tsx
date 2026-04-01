@@ -1,0 +1,139 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { useAuth } from "@/lib/auth-context"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { ThesisCard } from "@/components/shared/thesis-card"
+import { ProgramCard } from "@/components/shared/program-card"
+import type { Thesis, TraineeProgram } from "@/lib/data/types"
+import { Send, Loader2, ArrowRight } from "lucide-react"
+import Link from "next/link"
+
+export default function StudentAppliedPage() {
+  const { user, supabase } = useAuth()
+  const [appliedTheses, setAppliedTheses] = useState<Thesis[]>([])
+  const [appliedPrograms, setAppliedPrograms] = useState<TraineeProgram[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchAppliedData = async () => {
+      if (!user || user.type !== 'student') return
+
+      setLoading(true)
+
+      const { data, error } = await supabase
+        .from('applications')
+        .select(`
+          thesis_id,
+          program_id,
+          theses (*),
+          trainee_programs (*)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error("Error fetching applications:", error)
+      } else if (data) {
+        const theses = data
+          .filter((item: any) => item.theses)
+          .map((item: any) => ({
+            id: item.theses.id,
+            title: item.theses.title,
+            type: item.theses.type,
+            description: item.theses.description,
+            subject: item.theses.subject,
+            organization: item.theses.organization,
+            organizationType: item.theses.organization_type,
+            location: item.theses.location,
+            compensation: item.theses.compensation,
+            deadline: item.theses.deadline,
+            postedBy: item.theses.posted_by,
+            postedByUserId: item.theses.posted_by_user_id,
+            externalUrl: item.theses.external_url,
+            status: item.theses.status,
+            createdAt: item.theses.created_at,
+          }))
+        
+        const programs = data
+          .filter((item: any) => item.trainee_programs)
+          .map((item: any) => ({
+            id: item.trainee_programs.id,
+            title: item.trainee_programs.title,
+            company: item.trainee_programs.company,
+            description: item.trainee_programs.description,
+            field: item.trainee_programs.field,
+            location: item.trainee_programs.location,
+            duration: item.trainee_programs.duration,
+            compensation: item.trainee_programs.compensation,
+            deadline: item.trainee_programs.deadline,
+            postedBy: item.trainee_programs.posted_by,
+            postedByUserId: item.trainee_programs.posted_by_user_id,
+            externalUrl: item.trainee_programs.external_url,
+            status: item.trainee_programs.status,
+            createdAt: item.trainee_programs.created_at,
+          }))
+
+        setAppliedTheses(theses)
+        setAppliedPrograms(programs)
+      }
+
+      setLoading(false)
+    }
+
+    fetchAppliedData()
+  }, [user, supabase])
+
+  const totalApplied = appliedTheses.length + appliedPrograms.length
+
+  return (
+    <div className="mx-auto max-w-5xl">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Applied Posts</h1>
+          <p className="text-sm text-muted-foreground">Posts where you clicked "Apply on Company Website"</p>
+        </div>
+        <Badge variant="outline" className="h-7 gap-1.5 px-3 font-medium">
+          <Send className="h-3.5 w-3.5 text-primary" />
+          {totalApplied} Applications
+        </Badge>
+      </div>
+
+      {loading ? (
+        <div className="flex min-h-[400px] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : totalApplied > 0 ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {appliedTheses.map((thesis) => (
+            <ThesisCard key={thesis.id} thesis={thesis} />
+          ))}
+          {appliedPrograms.map((program) => (
+            <ProgramCard key={program.id} program={program} />
+          ))}
+        </div>
+      ) : (
+        <Card className="border-dashed py-12">
+          <CardContent className="flex flex-col items-center justify-center text-center">
+            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary/5">
+              <Send className="h-10 w-10 text-primary/20" />
+            </div>
+            <h3 className="text-xl font-semibold text-foreground">No applications yet</h3>
+            <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+              You haven't applied to any posts yet. Browse opportunities and click apply to track them here.
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <Link href="/master-thesis">
+                <Button className="gap-2">
+                  Find a Thesis <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
