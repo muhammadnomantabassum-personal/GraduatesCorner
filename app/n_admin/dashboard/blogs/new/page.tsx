@@ -19,7 +19,7 @@ import { toast } from "sonner"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { CoverImageSelector, FALLBACK_COVER } from "@/components/shared/cover-image-selector"
-import { RichTextEditor } from "@/components/shared/rich-text-editor"
+import { Textarea } from "@/components/ui/textarea"
 
 const categories = [
   "Academic Life",
@@ -60,7 +60,7 @@ export default function AdminNewBlogPage() {
 
     setIsSubmitting(true)
 
-    const wordCount = content.replace(/<[^>]*>/g, '').trim().split(/\s+/).filter(Boolean).length
+    const wordCount = content.trim().split(/\s+/).filter(Boolean).length
     const readTime = `${Math.max(1, Math.ceil(wordCount / 200))} min read`
     const slug = title.toLowerCase().replace(/[^\w\s]/gi, '').replace(/\s+/g, '-')
 
@@ -75,7 +75,7 @@ export default function AdminNewBlogPage() {
         category,
         cover_image: coverImage || FALLBACK_COVER,
         read_time: readTime,
-        posted_by_user_id: user.id, 
+        posted_by_user_id: null, // Admin posts don't need a user UUID reference
         status: 'approved' // Admin posts are approved immediately
       })
 
@@ -89,7 +89,7 @@ export default function AdminNewBlogPage() {
     }
   }
 
-  const wordCount = content.replace(/<[^>]*>/g, '').trim().split(/\s+/).filter(Boolean).length
+  const wordCount = content.trim().split(/\s+/).filter(Boolean).length
   const readTimeNum = Math.max(1, Math.ceil(wordCount / 200))
 
   return (
@@ -185,18 +185,21 @@ export default function AdminNewBlogPage() {
               </span>
             </div>
 
-            {/* Content with Rich Text Editor */}
+            {/* Content Textarea */}
             <div className="flex flex-col gap-2">
               <Label htmlFor="content" className="text-sm font-medium">
                 Content <span className="text-destructive">*</span>
               </Label>
-              <RichTextEditor
+              <Textarea
+                id="content"
                 value={content}
-                onChange={setContent}
+                onChange={(e) => setContent(e.target.value)}
                 placeholder="Write your blog post content here..."
+                required
+                className="min-h-[300px] resize-y"
               />
               <div className="flex justify-between text-[10px] text-muted-foreground">
-                <span>WYSIWYG Editor</span>
+                <span>Plain Text</span>
                 <span>
                   ~{readTimeNum} min read
                 </span>

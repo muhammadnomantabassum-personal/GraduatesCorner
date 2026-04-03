@@ -61,17 +61,31 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
         }
         setProgram(formattedProgram)
 
-        // Fetch related programs
+        // Fetch related programs — show if at least 1 field is in common
+        const currentFields = data.field
+          ? data.field.split(',').map((s: string) => s.trim().toLowerCase()).filter(Boolean)
+          : []
+
         const { data: relatedData } = await supabase
           .from('trainee_programs')
           .select('*')
           .eq('status', 'approved')
-          .eq('field', data.field)
           .neq('id', data.id)
-          .limit(2)
+          .limit(30) // fetch broader pool, filter client-side
 
         if (relatedData) {
-          setRelatedPrograms(relatedData.map((p: any) => ({
+          const filtered = relatedData
+            .filter((p: any) => {
+              if (!p.field) return false
+              const pFields = p.field
+                .split(',')
+                .map((s: string) => s.trim().toLowerCase())
+                .filter(Boolean)
+              return pFields.some((f: string) => currentFields.includes(f))
+            })
+            .slice(0, 3)
+
+          setRelatedPrograms(filtered.map((p: any) => ({
             id: p.id,
             title: p.title,
             company: p.company,
@@ -272,18 +286,27 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
             </aside>
           </div>
 
-          {relatedPrograms.length > 0 && (
-            <div className="mt-12">
-              <h2 className="mb-6 text-xl font-semibold text-foreground">Related Programs</h2>
-              <div className="grid gap-6 md:grid-cols-2">
-                {relatedPrograms.map((p) => (
-                  <ProgramCard key={p.id} program={p} />
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </section>
+
+      {/* Related Programs */}
+      {relatedPrograms.length > 0 && (
+        <section className="border-t border-border bg-slate-50/50 dark:bg-slate-900/20 px-4 py-16 lg:py-20">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-10 flex items-center justify-between">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">Related Programs</h2>
+              <Link href="/trainee-programs" className="text-sm font-medium text-primary hover:underline">
+                View all {"->"}
+              </Link>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {relatedPrograms.map((p) => (
+                <ProgramCard key={p.id} program={p} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </PublicLayout>
   )
 }

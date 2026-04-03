@@ -195,15 +195,26 @@ export default function AdminBlogDetailsPage({ params }: { params: Promise<{ id:
                 </div>
               </div>
 
-              <div className="bg-muted/30 p-4 rounded-lg italic text-muted-foreground mb-8 border-l-4 border-primary">
-                {post.excerpt}
+              {/* Excerpt — compact summary teaser */}
+              <div className="mb-8 flex items-start gap-3 rounded-lg border border-border/60 bg-muted/30 px-4 py-3">
+                <span className="mt-0.5 shrink-0 rounded border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-primary">
+                  Summary
+                </span>
+                <p className="text-sm leading-relaxed text-muted-foreground italic">
+                  {post.excerpt}
+                </p>
               </div>
 
-              <div className="prose prose-sm max-w-none text-foreground leading-relaxed">
+              {/* Content — main body, given the most visual weight */}
+              <div className="mb-4 flex items-center gap-3">
+                <span className="text-xs font-bold uppercase tracking-widest text-foreground">Article Content</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              <div className="prose prose-base max-w-none text-foreground leading-relaxed prose-headings:text-foreground prose-a:text-primary prose-strong:text-foreground">
                 {isHtml ? (
                   <div dangerouslySetInnerHTML={{ __html: post.content }} />
                 ) : (
-                  <div className="whitespace-pre-wrap">{post.content}</div>
+                  <div className="whitespace-pre-wrap text-sm leading-loose">{post.content}</div>
                 )}
               </div>
             </CardContent>

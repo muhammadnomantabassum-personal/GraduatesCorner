@@ -114,11 +114,10 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
-                      isActive
+                    className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${isActive
                         ? "bg-sidebar-accent text-sidebar-accent-foreground"
                         : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                    }`}
+                      }`}
                   >
                     <link.icon className="h-4 w-4" />
                     {link.label}
@@ -132,7 +131,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
           <Link href="/">
             <Button
               variant="ghost"
-              className="mb-2 w-full justify-start gap-2 text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+              className="mb-2 w-full justify-start gap-2 text-sidebar-foreground/70 hover:bg-accent hover:text-accent-foreground"
             >
               <Home className="h-4 w-4" /> Back to Site
             </Button>
@@ -143,7 +142,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
               logout()
               router.push("/n_admin")
             }}
-            className="w-full justify-start gap-2 text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            className="w-full justify-start gap-2 text-sidebar-foreground/70 hover:bg-accent hover:text-accent-foreground"
           >
             <LogOut className="h-4 w-4" /> Log Out
           </Button>
@@ -210,11 +209,10 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex shrink-0 flex-col items-center gap-0.5 border-b-2 px-2 py-2 text-[9px] font-medium transition-colors sm:flex-row sm:gap-1.5 sm:px-3 sm:py-3 sm:text-xs ${
-                  isActive
+                className={`flex shrink-0 flex-col items-center gap-0.5 border-b-2 px-2 py-2 text-[9px] font-medium transition-colors sm:flex-row sm:gap-1.5 sm:px-3 sm:py-3 sm:text-xs ${isActive
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
+                  }`}
               >
                 <link.icon className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                 <span className="truncate">{link.mobileLabel}</span>

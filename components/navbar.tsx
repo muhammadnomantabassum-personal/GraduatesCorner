@@ -124,7 +124,7 @@ export function Navbar() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 gap-1.5 rounded-lg text-[13px] font-medium text-muted-foreground hover:text-foreground"
+                      className="h-8 gap-1.5 rounded-lg text-[13px] font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                     >
                       <LayoutDashboard className="h-3.5 w-3.5" />
                       Dashboard
@@ -134,7 +134,7 @@ export function Navbar() {
                     variant="ghost"
                     size="sm"
                     onClick={logout}
-                    className="h-8 gap-1.5 rounded-lg text-[13px] font-medium text-muted-foreground hover:text-foreground"
+                    className="h-8 gap-1.5 rounded-lg text-[13px] font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                   >
                     <LogOut className="h-3.5 w-3.5" />
                   </Button>
@@ -228,7 +228,7 @@ export function Navbar() {
                         <Link href={dashboardPath} onClick={() => setOpen(false)}>
                           <Button
                             variant="outline"
-                            className="w-full justify-start gap-2 text-[13px]"
+                            className="w-full justify-start gap-2 text-[13px] hover:bg-accent hover:text-accent-foreground"
                           >
                             <LayoutDashboard className="h-4 w-4" />
                             Dashboard
@@ -240,7 +240,7 @@ export function Navbar() {
                             logout()
                             setOpen(false)
                           }}
-                          className="w-full justify-start gap-2 text-[13px] text-muted-foreground"
+                          className="w-full justify-start gap-2 text-[13px] text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                         >
                           <LogOut className="h-4 w-4" />
                           Log Out

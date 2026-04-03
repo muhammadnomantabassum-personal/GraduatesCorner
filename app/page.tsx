@@ -84,8 +84,8 @@ function HomePageContent() {
         ] = await Promise.all([
           supabase.from('theses').select('*').eq('status', 'approved').limit(6),
           supabase.from('trainee_programs').select('*').eq('status', 'approved').limit(3),
-          supabase.from('blog_posts').select('*').eq('status', 'approved').order('created_at', { ascending: false }).limit(3),
-          supabase.from('testimonials').select('*').eq('status', 'approved').limit(3)
+          supabase.from('blog_posts').select('*, profiles(avatar)').eq('status', 'approved').order('created_at', { ascending: false }).limit(3),
+          supabase.from('testimonials').select('*, profiles(avatar)').eq('status', 'approved').limit(3)
         ])
 
         if (thesesData) {
@@ -141,6 +141,7 @@ function HomePageContent() {
             readTime: p.read_time,
             status: p.status,
             postedByUserId: p.posted_by_user_id,
+            authorAvatar: p.profiles?.avatar || undefined,
           })))
         }
 
@@ -155,6 +156,7 @@ function HomePageContent() {
             status: t.status,
             createdAt: t.created_at,
             userId: t.user_id,
+            avatar: t.profiles?.avatar || undefined,
           })))
         }
       } catch (err) {

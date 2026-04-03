@@ -20,7 +20,7 @@ import { toast } from "sonner"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { CoverImageSelector, FALLBACK_COVER } from "@/components/shared/cover-image-selector"
-import { RichTextEditor } from "@/components/shared/rich-text-editor"
+
 
 const categories = [
   "Academic Life",
@@ -188,18 +188,21 @@ export default function NewBlogPostPage() {
               </span>
             </div>
 
-            {/* Content with Rich Text Editor */}
+            {/* Content Textarea */}
             <div className="flex flex-col gap-2">
               <Label htmlFor="content" className="text-sm font-medium">
                 Content <span className="text-destructive">*</span>
               </Label>
-              <RichTextEditor
+              <Textarea
+                id="content"
                 value={content}
-                onChange={setContent}
+                onChange={(e) => setContent(e.target.value)}
                 placeholder="Write your blog post content here..."
+                required
+                className="min-h-[300px] resize-y"
               />
               <div className="flex justify-between text-[10px] text-muted-foreground">
-                <span>WYSIWYG Editor</span>
+                <span>Plain Text</span>
                 <span>
                   ~{readTimeNum} min read
                 </span>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -164,10 +165,14 @@ export default function AdminUsersPage() {
                 <CardContent className="p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground sm:h-10 sm:w-10 sm:text-sm">
-                        {u.organization
-                          ? u.organization.split(" ").map((n) => n[0]).join("").slice(0, 2)
-                          : u.name.charAt(0)}
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground sm:h-10 sm:w-10 sm:text-sm overflow-hidden relative">
+                        {u.avatar ? (
+                          <Image src={u.avatar} alt={u.name} fill className="object-cover" />
+                        ) : (
+                          u.organization
+                            ? u.organization.split(" ").map((n) => n[0]).join("").slice(0, 2)
+                            : u.name.charAt(0)
+                        )}
                       </div>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-foreground">

@@ -187,7 +187,7 @@ export default function AdminBlogsPage() {
                         className="flex-1 h-8 text-xs gap-1.5 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                       >
                         <Eye className="h-3.5 w-3.5" />
-                        Review Details
+                        {activeTab === "approved" ? "Read Article" : "Review Details"}
                       </Button>
                       <Button
                         size="sm"

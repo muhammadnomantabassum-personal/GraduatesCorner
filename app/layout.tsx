@@ -13,7 +13,6 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: 'GraduatesCorner - Find Your Academic Opportunity',
   description: 'Discover master theses, PhD positions, and graduate trainee programs from top universities and companies across Europe.',
-  generator: 'v0.app',
   icons: {
     icon: [
       {
@@ -23,10 +22,6 @@ export const metadata: Metadata = {
       {
         url: '/icon-dark-32x32.png',
         media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
       },
     ],
     apple: '/apple-icon.png',

@@ -66,6 +66,7 @@ export interface BlogPost {
   readTime: string
   status: ApprovalStatus
   postedByUserId?: string
+  authorAvatar?: string
 }
 
 export interface Testimonial {
@@ -78,5 +79,6 @@ export interface Testimonial {
   status: ApprovalStatus
   createdAt: string
   userId?: string
+  avatar?: string
   previousVersionId?: string
 }

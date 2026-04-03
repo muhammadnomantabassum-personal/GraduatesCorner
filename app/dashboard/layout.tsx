@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import {
@@ -204,7 +205,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Link href="/">
             <Button
               variant="ghost"
-              className="mb-2 w-full justify-start gap-2 text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+              className="mb-2 w-full justify-start gap-2 text-sidebar-foreground/70 hover:bg-accent hover:text-accent-foreground"
             >
               <Home className="h-4 w-4" /> Back to Site
             </Button>
@@ -215,7 +216,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               logout()
               router.push("/")
             }}
-            className="w-full justify-start gap-2 text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            className="w-full justify-start gap-2 text-sidebar-foreground/70 hover:bg-accent hover:text-accent-foreground"
           >
             <LogOut className="h-4 w-4" /> Log Out
           </Button>
@@ -239,13 +240,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="hidden text-sm text-muted-foreground sm:block">
               {user.name}
             </span>
-            <div className="hidden h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground lg:flex">
-              {user.name?.charAt(0) || 'U'}
+            <div className="hidden h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground lg:flex overflow-hidden">
+              {user.avatar ? (
+                <Image src={user.avatar} alt={user.name || 'User'} width={32} height={32} className="h-full w-full object-cover" />
+              ) : (
+                user.name?.charAt(0) || 'U'
+              )}
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild className="lg:hidden">
-                <button className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground outline-none">
-                  {user.name?.charAt(0) || 'U'}
+                <button className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground outline-none overflow-hidden">
+                  {user.avatar ? (
+                    <Image src={user.avatar} alt={user.name || 'User'} width={32} height={32} className="h-full w-full object-cover" />
+                  ) : (
+                    user.name?.charAt(0) || 'U'
+                  )}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">

@@ -10,42 +10,57 @@ import { toast } from "sonner"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
-// Hardcoded default cover images
+// Hardcoded default cover images matching professional/academic contexts (9 categories)
 const DEFAULT_COVERS = [
   {
     id: "default-1",
-    url: "https://images.unsplash.com/photo-1434031213662-874396ca9d1e?q=80&w=1000&auto=format&fit=crop",
-    label: "Study Desk",
+    url: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=1200&auto=format&fit=crop",
+    label: "Academic Life", // books, desk, study setup
   },
   {
     id: "default-2",
-    url: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=1000&auto=format&fit=crop",
-    label: "Library",
+    url: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=1200&auto=format&fit=crop",
+    label: "Career Tips", // laptop + planning notes
   },
   {
     id: "default-3",
-    url: "https://images.unsplash.com/photo-1523050335392-93851179ae22?q=80&w=1000&auto=format&fit=crop",
-    label: "Graduation",
+    url: "https://images.unsplash.com/photo-1484417894907-623942c8ee29?q=80&w=1200&auto=format&fit=crop",
+    label: "Industry Insights", // charts, analytics dashboard
   },
   {
     id: "default-4",
-    url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop",
-    label: "Digital Learning",
+    url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop",
+    label: "Research", // documents, analysis workspace
   },
   {
     id: "default-5",
-    url: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?q=80&w=1000&auto=format&fit=crop",
-    label: "Education Architecture",
+    url: "https://images.unsplash.com/photo-1492724441997-5dc865305da7?q=80&w=1200&auto=format&fit=crop",
+    label: "Company News", // office workspace
   },
   {
     id: "default-6",
-    url: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1000&auto=format&fit=crop",
-    label: "Collaboration",
+    url: "https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?q=80&w=1200&auto=format&fit=crop",
+    label: "University News", // campus building (no people focus)
   },
-]
+  {
+    id: "default-7",
+    url: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1200&auto=format&fit=crop",
+    label: "Student Stories", // group study table (faces not visible)
+  },
+  {
+    id: "default-8",
+    url: "https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=1200&auto=format&fit=crop",
+    label: "Success Stories", // trophy / achievement symbolism
+  },
+  {
+    id: "default-9",
+    url: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop",
+    label: "Platform Updates", // tech / code / chips
+  },
+];
 
 // The default fallback if none is chosen
-export const FALLBACK_COVER = "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?q=80&w=1000&auto=format&fit=crop"
+export const FALLBACK_COVER = "https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=1200&auto=format&fit=crop"
 
 interface CoverImageSelectorProps {
   value: string
@@ -109,7 +124,7 @@ export function CoverImageSelector({ value, onChange }: CoverImageSelectorProps)
   return (
     <div className="flex flex-col gap-4">
       <Label className="text-sm font-medium">Cover Image (Optional)</Label>
-      
+
       {/* Current Selection Preview */}
       <div className="relative aspect-[21/9] w-full overflow-hidden rounded-lg border bg-muted shadow-inner group">
         {value ? (
@@ -177,7 +192,7 @@ export function CoverImageSelector({ value, onChange }: CoverImageSelectorProps)
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Upload custom
           </p>
-          <Card 
+          <Card
             className={cn(
               "cursor-pointer border-dashed transition-colors hover:bg-accent/50",
               isCustom ? "border-primary bg-primary/[0.02]" : ""

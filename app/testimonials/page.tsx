@@ -22,7 +22,7 @@ export default function TestimonialsPage() {
       setLoading(true)
       const { data, error } = await supabase
         .from('testimonials')
-        .select('*')
+        .select('*, profiles(avatar)')
         .eq('status', 'approved')
         .order('created_at', { ascending: false })
 
@@ -39,6 +39,7 @@ export default function TestimonialsPage() {
           status: t.status,
           createdAt: t.created_at,
           userId: t.user_id,
+          avatar: t.profiles?.avatar || undefined,
         }))
         setTestimonials(formattedData)
       }

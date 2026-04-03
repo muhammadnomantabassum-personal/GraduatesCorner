@@ -127,16 +127,19 @@ export function ProfilePhotoSection({ size = "md", editable = true }: ProfilePho
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-                  <ImagePlus className="mr-2 h-4 w-4" />
+                <DropdownMenuItem 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="group cursor-pointer"
+                >
+                  <ImagePlus className="mr-2 h-4 w-4 transition-colors group-focus:text-black" />
                   <span>Change Photo</span>
                 </DropdownMenuItem>
                 {user?.avatar && !user.avatar.includes("googleusercontent.com") && (
                   <DropdownMenuItem
                     onClick={removePhoto}
-                    className="text-destructive focus:text-destructive"
+                    className="group cursor-pointer text-destructive focus:text-destructive"
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 className="mr-2 h-4 w-4 transition-colors group-focus:text-black" />
                     <span>Remove Photo</span>
                   </DropdownMenuItem>
                 )}

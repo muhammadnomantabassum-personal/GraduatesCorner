@@ -22,10 +22,10 @@ import {
   GraduationCap,
   Search,
   ArrowRight,
+  Loader2,
 } from "lucide-react"
-import { theses } from "@/lib/data/theses"
-import { traineePrograms } from "@/lib/data/trainee-programs"
-import { blogPosts } from "@/lib/data/blog-posts"
+import { createClient } from "@/lib/supabase/client"
+import type { Thesis, TraineeProgram, BlogPost } from "@/lib/data/types"
 
 const pages = [
   { name: "Home", href: "/", icon: Home },
@@ -41,7 +41,84 @@ const pages = [
 
 export function GlobalSearchCommand() {
   const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [items, setItems] = useState<{
+    masterTheses: Partial<Thesis>[],
+    phdPositions: Partial<Thesis>[],
+    programs: Partial<TraineeProgram>[],
+    posts: Partial<BlogPost>[],
+    searchResults: any[]
+  }>({
+    masterTheses: [],
+    phdPositions: [],
+    programs: [],
+    posts: [],
+    searchResults: []
+  })
   const router = useRouter()
+  const supabase = createClient()
+
+  const fetchRecentItems = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [
+        { data: masterData },
+        { data: phdData },
+        { data: progData },
+        { data: postsData }
+      ] = await Promise.all([
+        supabase.from('theses').select('id, title, type, subject, organization').eq('status', 'approved').eq('type', 'master').limit(5),
+        supabase.from('theses').select('id, title, type, subject, organization').eq('status', 'approved').eq('type', 'phd').limit(5),
+        supabase.from('trainee_programs').select('id, title, company, field, location').eq('status', 'approved').limit(5),
+        supabase.from('blog_posts').select('id, title, slug, author, category, read_time').eq('status', 'approved').order('created_at', { ascending: false }).limit(5)
+      ])
+
+      setItems(prev => ({
+        ...prev,
+        masterTheses: masterData || [],
+        phdPositions: phdData || [],
+        programs: progData || [],
+        posts: (postsData || []).map((p: any) => ({
+          ...p,
+          readTime: p.read_time // mapping snake_case to camelCase
+        }))
+      }))
+    } catch (error) {
+      console.error("Failed to fetch search items:", error)
+    } finally {
+      setLoading(false)
+    }
+  }, [supabase])
+
+  useEffect(() => {
+    if (open && items.masterTheses.length === 0) {
+      fetchRecentItems()
+    }
+  }, [open, items.masterTheses.length, fetchRecentItems])
+
+  // Live Search Effect
+  useEffect(() => {
+    if (searchQuery.length < 2) {
+      setItems(prev => ({ ...prev, searchResults: [] }))
+      return
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setLoading(true)
+      try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`)
+        const data = await response.json()
+        setItems(prev => ({ ...prev, searchResults: data.results || [] }))
+      } catch (error) {
+        console.error("Global search failed:", error)
+      } finally {
+        setLoading(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(delayDebounceFn)
+  }, [searchQuery])
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -63,11 +140,7 @@ export function GlobalSearchCommand() {
     []
   )
 
-  const approvedTheses = theses.filter((t) => t.status === "approved").slice(0, 5)
-  const approvedPrograms = traineePrograms
-    .filter((p) => p.status === "approved")
-    .slice(0, 5)
-  const recentPosts = blogPosts.filter((p) => p.status === "approved").slice(0, 5)
+
 
   return (
     <>
@@ -90,134 +163,192 @@ export function GlobalSearchCommand() {
         title="Search GraduatesCorner"
         description="Search for pages, theses, programs, and blog posts"
       >
-        <CommandInput placeholder="Type to search everything..." />
+        <CommandInput 
+          placeholder="Type to search everything..." 
+          value={searchQuery}
+          onValueChange={setSearchQuery}
+        />
         <CommandList className="max-h-[400px]">
+          {loading && items.searchResults.length === 0 && (
+            <div className="flex items-center justify-center p-6">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          )}
           <CommandEmpty>
             <div className="flex flex-col items-center gap-2 py-4">
               <Search className="h-8 w-8 text-muted-foreground/40" />
               <p className="text-sm text-muted-foreground">No results found.</p>
               <p className="text-xs text-muted-foreground/60">
-                Try searching for a thesis, program, or page.
+                Try searching for a thesis, program, or topic.
               </p>
             </div>
           </CommandEmpty>
 
-          {/* Pages */}
-          <CommandGroup heading="Pages">
-            {pages.map((page) => (
-              <CommandItem
-                key={page.href}
-                value={page.name}
-                onSelect={() => runCommand(() => router.push(page.href))}
-                className="gap-3"
-              >
-                <page.icon className="h-4 w-4 text-foreground/60" />
-                <span>{page.name}</span>
-              </CommandItem>
-            ))}
-          </CommandGroup>
+          {/* Live Search Results */}
+          {items.searchResults.length > 0 && (
+            <CommandGroup heading="Search Results">
+              {items.searchResults.map((result) => (
+                <CommandItem
+                  key={`${result.category}-${result.id}`}
+                  value={`${result.title} ${result.meta} ${result.category}`}
+                  onSelect={() => runCommand(() => {
+                    const link = result.category === 'thesis' ? `/theses/${result.id}` :
+                                 result.category === 'program' ? `/trainee-programs/${result.id}` :
+                                 `/blog/${result.slug || result.id}`;
+                    router.push(link);
+                  })}
+                  className="gap-3"
+                >
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                    result.category === 'thesis' || result.category === 'phd' ? 'bg-primary/10 text-primary' :
+                    result.category === 'program' ? 'bg-accent/10 text-accent' :
+                    'bg-emerald-500/10 text-emerald-600'
+                  }`}>
+                    {result.category === 'phd' || (result.category === 'thesis' && result.meta?.toLowerCase().includes('phd')) ? (
+                      <GraduationCap className="h-4 w-4" />
+                    ) : result.category === 'thesis' ? (
+                      <FileText className="h-4 w-4" />
+                    ) : result.category === 'program' ? (
+                      <Briefcase className="h-4 w-4" />
+                    ) : (
+                      <Newspaper className="h-4 w-4" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-0.5 overflow-hidden">
+                    <span className="truncate text-sm font-medium">{result.title}</span>
+                    <span className="truncate text-[11px] text-muted-foreground">
+                      <span className="capitalize">{result.category}</span> · {result.meta}
+                    </span>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
 
-          <CommandSeparator />
+          {!searchQuery && (
+            <>
+              {/* Pages */}
+              <CommandGroup heading="Quick Access">
+                {pages.map((page) => (
+                  <CommandItem
+                    key={page.href}
+                    value={page.name}
+                    onSelect={() => runCommand(() => router.push(page.href))}
+                    className="gap-3"
+                  >
+                    <page.icon className="h-4 w-4 text-foreground/60" />
+                    <span>{page.name}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
 
-          {/* Theses */}
-          <CommandGroup heading="Theses">
-            {approvedTheses.map((thesis) => (
-              <CommandItem
-                key={thesis.id}
-                value={`${thesis.title} ${thesis.subject} ${thesis.organization}`}
-                onSelect={() =>
-                  runCommand(() => router.push(`/theses/${thesis.id}`))
-                }
-                className="gap-3"
-              >
-                <FileText className="h-4 w-4 shrink-0 text-foreground/60" />
-                <div className="flex flex-col gap-0.5 overflow-hidden">
-                  <span className="truncate text-sm">{thesis.title}</span>
-                  <span className="truncate text-xs text-foreground/60">
-                    {thesis.organization} · {thesis.type.toUpperCase()} · {thesis.subject}
-                  </span>
-                </div>
-              </CommandItem>
-            ))}
-            <CommandItem
-              value="View all opportunities"
-              onSelect={() => runCommand(() => router.push("/master-thesis"))}
-              className="gap-3 text-primary"
-            >
-              <ArrowRight className="h-4 w-4 shrink-0" />
-              <span className="text-sm font-medium">View all opportunities</span>
-            </CommandItem>
-          </CommandGroup>
+              <CommandSeparator />
 
-          <CommandSeparator />
+              {/* Theses */}
+              {items.masterTheses.length > 0 && (
+                <CommandGroup heading="Recent Master Theses">
+                  {items.masterTheses.map((thesis) => (
+                    <CommandItem
+                      key={thesis.id}
+                      value={`${thesis.title} ${thesis.subject} ${thesis.organization}`}
+                      onSelect={() =>
+                        runCommand(() => router.push(`/theses/${thesis.id}`))
+                      }
+                      className="gap-3"
+                    >
+                      <FileText className="h-4 w-4 shrink-0 text-foreground/60" />
+                      <div className="flex flex-col gap-0.5 overflow-hidden">
+                        <span className="truncate text-sm">{thesis.title}</span>
+                        <span className="truncate text-xs text-foreground/60">
+                          {thesis.organization} · {thesis.subject}
+                        </span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
 
-          {/* Trainee Programs */}
-          <CommandGroup heading="Trainee Programs">
-            {approvedPrograms.map((program) => (
-              <CommandItem
-                key={program.id}
-                value={`${program.title} ${program.company} ${program.field}`}
-                onSelect={() =>
-                  runCommand(() =>
-                    router.push(`/trainee-programs/${program.id}`)
-                  )
-                }
-                className="gap-3"
-              >
-                <Briefcase className="h-4 w-4 shrink-0 text-foreground/60" />
-                <div className="flex flex-col gap-0.5 overflow-hidden">
-                  <span className="truncate text-sm">{program.title}</span>
-                  <span className="truncate text-xs text-foreground/60">
-                    {program.company} · {program.field} · {program.location}
-                  </span>
-                </div>
-              </CommandItem>
-            ))}
-            <CommandItem
-              value="View all trainee programs"
-              onSelect={() =>
-                runCommand(() => router.push("/trainee-programs"))
-              }
-              className="gap-3 text-primary"
-            >
-              <ArrowRight className="h-4 w-4 shrink-0" />
-              <span className="text-sm font-medium">
-                View all trainee programs
-              </span>
-            </CommandItem>
-          </CommandGroup>
+              <CommandSeparator />
 
-          <CommandSeparator />
+              {/* PhD Positions */}
+              {items.phdPositions.length > 0 && (
+                <CommandGroup heading="Recent PhD Positions">
+                  {items.phdPositions.map((phd) => (
+                    <CommandItem
+                      key={phd.id}
+                      value={`${phd.title} ${phd.subject} ${phd.organization}`}
+                      onSelect={() =>
+                        runCommand(() => router.push(`/theses/${phd.id}`))
+                      }
+                      className="gap-3"
+                    >
+                      <GraduationCap className="h-4 w-4 shrink-0 text-foreground/60" />
+                      <div className="flex flex-col gap-0.5 overflow-hidden">
+                        <span className="truncate text-sm">{phd.title}</span>
+                        <span className="truncate text-xs text-foreground/60">
+                          {phd.organization} · {phd.subject}
+                        </span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
 
-          {/* Blog */}
-          <CommandGroup heading="Blog Posts">
-            {recentPosts.map((post) => (
-              <CommandItem
-                key={post.id}
-                value={`${post.title} ${post.category} ${post.author}`}
-                onSelect={() =>
-                  runCommand(() => router.push(`/blog/${post.slug}`))
-                }
-                className="gap-3"
-              >
-                <Newspaper className="h-4 w-4 shrink-0 text-foreground/60" />
-                <div className="flex flex-col gap-0.5 overflow-hidden">
-                  <span className="truncate text-sm">{post.title}</span>
-                  <span className="truncate text-xs text-foreground/60">
-                    {post.author} · {post.category} · {post.readTime}
-                  </span>
-                </div>
-              </CommandItem>
-            ))}
-            <CommandItem
-              value="View all blog posts"
-              onSelect={() => runCommand(() => router.push("/blog"))}
-              className="gap-3 text-primary"
-            >
-              <ArrowRight className="h-4 w-4 shrink-0" />
-              <span className="text-sm font-medium">View all blog posts</span>
-            </CommandItem>
-          </CommandGroup>
+              <CommandSeparator />
+
+              {/* Trainee Programs */}
+              {items.programs.length > 0 && (
+                <CommandGroup heading="Recent Programs">
+                  {items.programs.map((program) => (
+                    <CommandItem
+                      key={program.id}
+                      value={`${program.title} ${program.company} ${program.field}`}
+                      onSelect={() =>
+                        runCommand(() =>
+                          router.push(`/trainee-programs/${program.id}`)
+                        )
+                      }
+                      className="gap-3"
+                    >
+                      <Briefcase className="h-4 w-4 shrink-0 text-foreground/60" />
+                      <div className="flex flex-col gap-0.5 overflow-hidden">
+                        <span className="truncate text-sm">{program.title}</span>
+                        <span className="truncate text-xs text-foreground/60">
+                          {program.company} · {program.field} · {program.location}
+                        </span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+
+              <CommandSeparator />
+
+              {/* Blog */}
+              {items.posts.length > 0 && (
+                <CommandGroup heading="Recent Blog Posts">
+                  {items.posts.map((post) => (
+                    <CommandItem
+                      key={post.id}
+                      value={`${post.title} ${post.category} ${post.author}`}
+                      onSelect={() =>
+                        runCommand(() => router.push(`/blog/${post.slug}`))
+                      }
+                      className="gap-3"
+                    >
+                      <Newspaper className="h-4 w-4 shrink-0 text-foreground/60" />
+                      <div className="flex flex-col gap-0.5 overflow-hidden">
+                        <span className="truncate text-sm">{post.title}</span>
+                        <span className="truncate text-xs text-foreground/60">
+                          {post.author} · {post.category} · {post.readTime}
+                        </span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+            </>
+          )}
         </CommandList>
 
         {/* Footer */}

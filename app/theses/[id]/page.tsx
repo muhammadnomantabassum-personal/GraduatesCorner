@@ -63,17 +63,31 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
         }
         setThesis(formattedThesis)
 
-        // Fetch related theses
+        // Fetch related theses — show if at least 1 field is in common
+        const currentFields = data.subject
+          ? data.subject.split(',').map((s: string) => s.trim().toLowerCase()).filter(Boolean)
+          : []
+
         const { data: relatedData } = await supabase
           .from('theses')
           .select('*')
           .eq('status', 'approved')
-          .eq('subject', data.subject)
           .neq('id', data.id)
-          .limit(2)
+          .limit(30) // fetch broader pool, filter client-side
 
         if (relatedData) {
-          setRelatedTheses(relatedData.map((t: any) => ({
+          const filtered = relatedData
+            .filter((t: any) => {
+              if (!t.subject) return false
+              const tFields = t.subject
+                .split(',')
+                .map((s: string) => s.trim().toLowerCase())
+                .filter(Boolean)
+              return tFields.some((f: string) => currentFields.includes(f))
+            })
+            .slice(0, 3)
+
+          setRelatedTheses(filtered.map((t: any) => ({
             id: t.id,
             title: t.title,
             type: t.type,
@@ -291,19 +305,29 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
             </aside>
           </div>
 
-          {/* Related Theses */}
-          {relatedTheses.length > 0 && (
-            <div className="mt-12">
-              <h2 className="mb-6 text-xl font-semibold text-foreground">Related Theses</h2>
-              <div className="grid gap-6 md:grid-cols-2">
-                {relatedTheses.map((t) => (
-                  <ThesisCard key={t.id} thesis={t} />
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </section>
+
+      {/* Related Theses */}
+      {relatedTheses.length > 0 && (
+        <section className="border-t border-border bg-slate-50/50 dark:bg-slate-900/20 px-4 py-16 lg:py-20">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-10 flex items-center justify-between">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                {thesis.type === "phd" ? "Related PhD Positions" : "Related Theses"}
+              </h2>
+              <Link href={thesis.type === "phd" ? "/phd-positions" : "/master-thesis"} className="text-sm font-medium text-primary hover:underline">
+                View all {"->"}
+              </Link>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {relatedTheses.map((t) => (
+                <ThesisCard key={t.id} thesis={t} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </PublicLayout>
   )
 }

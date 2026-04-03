@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -29,7 +30,7 @@ export default function AdminTestimonialsPage() {
     setLoading(true)
     const { data, error } = await supabase
       .from('testimonials')
-      .select('*')
+      .select('*, profiles(avatar)')
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -45,6 +46,7 @@ export default function AdminTestimonialsPage() {
         status: t.status,
         createdAt: t.created_at,
         userId: t.user_id,
+        avatar: t.profiles?.avatar || undefined,
       })))
     }
     setLoading(false)
@@ -168,8 +170,12 @@ export default function AdminTestimonialsPage() {
                     <div className="flex flex-col gap-3">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                         <div className="flex items-center gap-2">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                            {testimonial.author.charAt(0)}
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground overflow-hidden relative">
+                            {testimonial.avatar ? (
+                              <Image src={testimonial.avatar} alt={testimonial.author} fill className="object-cover" />
+                            ) : (
+                              testimonial.author.charAt(0)
+                            )}
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-foreground">{testimonial.author}</p>
@@ -245,8 +251,12 @@ export default function AdminTestimonialsPage() {
                     <div className="flex flex-col gap-3">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                         <div className="flex items-center gap-2">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-700">
-                            {testimonial.author.charAt(0)}
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-700 overflow-hidden relative">
+                            {testimonial.avatar ? (
+                              <Image src={testimonial.avatar} alt={testimonial.author} fill className="object-cover" />
+                            ) : (
+                              testimonial.author.charAt(0)
+                            )}
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-foreground">{testimonial.author}</p>

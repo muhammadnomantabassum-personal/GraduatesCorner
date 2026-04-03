@@ -45,9 +45,15 @@ export function BlogCard({ post, featured = false }: { post: BlogPost; featured?
             <p className="mb-4 leading-relaxed text-muted-foreground">{post.excerpt}</p>
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <User className="h-4 w-4" />
-                  {post.author}
+                <span className="flex items-center gap-1.5 min-w-0">
+                  {post.authorAvatar ? (
+                    <div className="relative h-5 w-5 shrink-0 overflow-hidden rounded-full">
+                      <Image src={post.authorAvatar} alt={post.author} fill className="object-cover" />
+                    </div>
+                  ) : (
+                    <User className="h-4 w-4 text-primary/70" />
+                  )}
+                  <span className="truncate">{post.author}</span>
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
@@ -103,9 +109,15 @@ export function BlogCard({ post, featured = false }: { post: BlogPost; featured?
       <CardFooter className="flex flex-col items-start gap-4 pt-0">
         <div className="flex w-full items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1">
-              <User className="h-3 w-3" />
-              {post.author}
+            <span className="flex items-center gap-1.5 min-w-0">
+              {post.authorAvatar ? (
+                <div className="relative h-4 w-4 shrink-0 overflow-hidden rounded-full font-bold">
+                  <Image src={post.authorAvatar} alt={post.author} fill className="object-cover" />
+                </div>
+              ) : (
+                <User className="h-3 w-3 text-primary/70" />
+              )}
+              <span className="truncate">{post.author}</span>
             </span>
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />

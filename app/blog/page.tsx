@@ -21,7 +21,7 @@ export default function BlogPage() {
       // Excluding 'content' field as it can be very large and is not needed on this page
       const { data, error } = await supabase
         .from('blog_posts')
-        .select('id, title, slug, excerpt, author, category, cover_image, created_at, read_time, status, posted_by_user_id')
+        .select('*, profiles(avatar)')
         .eq('status', 'approved')
         .order('created_at', { ascending: false })
 
@@ -41,6 +41,7 @@ export default function BlogPage() {
           readTime: p.read_time,
           status: p.status,
           postedByUserId: p.posted_by_user_id,
+          authorAvatar: p.profiles?.avatar || undefined,
         }))
         setPosts(formattedData)
       }
