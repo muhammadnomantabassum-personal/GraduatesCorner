@@ -78,7 +78,7 @@ export function Footer() {
             </Link>
             <p className="mt-4 max-w-sm text-[14px] leading-[1.75] text-primary-foreground/50">
               Connecting ambitious graduates with world-class academic and professional
-              opportunities across Europe and beyond.
+              opportunities across Sweden and all over the world.
             </p>
 
             {/* Social icons */}

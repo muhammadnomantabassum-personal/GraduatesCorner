@@ -12,7 +12,8 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: 'GraduatesCorner - Find Your Academic Opportunity',
-  description: 'Discover master theses, PhD positions, and graduate trainee programs from top universities and companies across Europe.',
+  description: 'Discover master theses, PhD positions, and graduate trainee programs from top universities and companies across Sweden and all over the world.',
+
   icons: {
     icon: [
       {
@@ -26,8 +27,29 @@ export const metadata: Metadata = {
     ],
     apple: '/apple-icon.png',
   },
-}
 
+  openGraph: {
+    title: 'GraduatesCorner',
+    description: 'Find master theses, PhD positions, and graduate programs across Sweden and the world.',
+    url: 'https://graduatescorner.com', 
+    siteName: 'GraduatesCorner',
+    images: [
+      {
+        url: 'https://graduatescorner.com/og-image.png?v=2', // VERY IMPORTANT
+        width: 1200,
+        height: 630,
+      },
+    ],
+    type: 'website',
+  },
+
+  twitter: {
+    card: 'summary_large_image',
+    title: 'GraduatesCorner',
+    description: 'Find academic and career opportunities across Sweden and the world.',
+    images: ['https://graduatescorner.com/og-image.png?v=2'],
+  },
+}
 export default function RootLayout({
   children,
 }: Readonly<{

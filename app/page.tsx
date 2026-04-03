@@ -240,7 +240,7 @@ function HomePageContent() {
             </h1>
             <h2 className="mb-8 text-pretty text-lg leading-relaxed text-primary-foreground/80 lg:text-xl font-normal">
               Discover master thesis, PhD positions, and graduate trainee programs from top
-              universities and leading companies across Europe and beyond.
+              universities and leading companies across Sweden and all over the world.
             </h2>
 
             {/* Functional Search Bar */}
