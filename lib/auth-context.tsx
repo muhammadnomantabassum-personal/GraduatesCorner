@@ -12,7 +12,11 @@ import {
 import { createClient } from "@/lib/supabase/client"
 import type { User as AppUser, UserType } from "@/lib/data/types"
 import { useRouter } from "next/navigation"
-import type { SupabaseClient } from "@supabase/supabase-js"
+import type {
+  SupabaseClient,
+  AuthChangeEvent,
+  Session,
+} from "@supabase/supabase-js"
 import { toast } from "sonner"
 
 interface AuthContextType {
@@ -137,8 +141,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // and post-OAuth redirects.
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return
+    } = supabase.auth.onAuthStateChange(
+      (event: AuthChangeEvent, session: Session | null) => {
+        if (!mounted) return
 
       if (event === "SIGNED_OUT") {
         setUser(null)
