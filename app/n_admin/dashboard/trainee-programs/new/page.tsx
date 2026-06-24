@@ -121,7 +121,7 @@ export default function AdminNewProgramPage() {
         deadline,
         external_url: externalUrl,
         posted_by: 'admin',
-        posted_by_user_id: null,
+        posted_by_user_id: user.id,
         status: 'approved'
       })
 

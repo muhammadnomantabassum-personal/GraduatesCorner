@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useEffect, useState } from "react"
+import { use, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { createClient } from "@/lib/supabase/client"
 import type { BlogPost } from "@/lib/data/types"
+import { sanitizeHtml } from "@/lib/sanitize-html"
 import {
   ArrowLeft,
   CheckCircle2,
@@ -28,6 +29,12 @@ export default function AdminBlogDetailsPage({ params }: { params: Promise<{ id:
   const [isActioning, setIsActioning] = useState(false)
 
   const supabase = createClient()
+
+  const isHtml = post?.content.trim().startsWith('<') ?? false
+  const sanitizedContent = useMemo(
+    () => (post ? (isHtml ? sanitizeHtml(post.content) : post.content) : ""),
+    [isHtml, post?.content]
+  )
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -107,8 +114,6 @@ export default function AdminBlogDetailsPage({ params }: { params: Promise<{ id:
   }
 
   if (!post) return null
-
-  const isHtml = post.content.trim().startsWith('<')
 
   return (
     <div className="mx-auto max-w-4xl px-4">
@@ -212,7 +217,7 @@ export default function AdminBlogDetailsPage({ params }: { params: Promise<{ id:
               </div>
               <div className="prose prose-base max-w-none text-foreground leading-relaxed prose-headings:text-foreground prose-a:text-primary prose-strong:text-foreground">
                 {isHtml ? (
-                  <div dangerouslySetInnerHTML={{ __html: post.content }} />
+                  <div dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
                 ) : (
                   <div className="whitespace-pre-wrap text-sm leading-loose">{post.content}</div>
                 )}

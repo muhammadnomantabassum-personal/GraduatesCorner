@@ -87,7 +87,7 @@ export default function StudentTestimonialsPage() {
       content: content.trim(),
       rating,
       status: "pending",
-      user_id: user.type === 'admin' ? null : user.id,
+      user_id: user.id,
     }
 
     let error;

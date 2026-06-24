@@ -1,4 +1,4 @@
--- Create tables for GraduatesCorner
+-- Hardened database setup for GraduatesCorner
 
 -- 1. Profiles (extends Supabase Auth Users)
 CREATE TABLE IF NOT EXISTS public.profiles (
@@ -13,8 +13,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- For existing tables, run this:
--- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS welcome_email_sent BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS welcome_email_sent BOOLEAN DEFAULT FALSE;
 
 -- 2. Theses
 CREATE TABLE IF NOT EXISTS public.theses (
@@ -82,35 +81,56 @@ CREATE TABLE IF NOT EXISTS public.testimonials (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 6. Admin Users (for custom admin authentication)
-CREATE TABLE IF NOT EXISTS public.admin_users (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  username TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL, -- Note: In production, passwords should be hashed
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 7. Wishlist (Students only)
+-- 6. Wishlist
 CREATE TABLE IF NOT EXISTS public.wishlist (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   thesis_id UUID REFERENCES public.theses(id) ON DELETE CASCADE,
   program_id UUID REFERENCES public.trainee_programs(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  -- Ensure only one of thesis_id or program_id is set
   CONSTRAINT only_one_item CHECK (
     (thesis_id IS NOT NULL AND program_id IS NULL) OR
     (thesis_id IS NULL AND program_id IS NOT NULL)
   ),
-  -- Unique constraint to prevent duplicate entries for the same user and item
   UNIQUE (user_id, thesis_id),
   UNIQUE (user_id, program_id)
 );
 
--- Insert a default admin user
-INSERT INTO public.admin_users (username, password)
-VALUES ('admin', 'admin123')
-ON CONFLICT (username) DO NOTHING;
+-- 7. Applications
+CREATE TABLE IF NOT EXISTS public.applications (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  thesis_id UUID REFERENCES public.theses(id) ON DELETE CASCADE,
+  program_id UUID REFERENCES public.trainee_programs(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT only_one_item_applied CHECK (
+    (thesis_id IS NOT NULL AND program_id IS NULL) OR
+    (thesis_id IS NULL AND program_id IS NOT NULL)
+  ),
+  UNIQUE (user_id, thesis_id),
+  UNIQUE (user_id, program_id)
+);
+
+-- Remove the legacy plaintext custom-admin table. Admins must be Supabase Auth
+-- users whose profile row has type='admin'.
+DROP TABLE IF EXISTS public.admin_users;
+
+-- Helper for RLS policies. SECURITY DEFINER avoids recursive policy checks when
+-- policies need to know whether the current authenticated user is an admin.
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE SQL
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.profiles
+    WHERE id = auth.uid()
+      AND type = 'admin'
+  );
+$$;
 
 -- Enable RLS
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -118,63 +138,161 @@ ALTER TABLE public.theses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.trainee_programs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blog_posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.testimonials ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wishlist ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
 
--- Profiles Policies
+-- Reset policies so this script is repeatable.
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Admins can update profiles" ON public.profiles;
+
+DROP POLICY IF EXISTS "Approved theses are viewable by everyone" ON public.theses;
+DROP POLICY IF EXISTS "Users can view their own theses" ON public.theses;
+DROP POLICY IF EXISTS "Admins can view all theses" ON public.theses;
+DROP POLICY IF EXISTS "Organizations can insert theses" ON public.theses;
+DROP POLICY IF EXISTS "Users can insert pending own theses" ON public.theses;
+DROP POLICY IF EXISTS "Admins can insert theses" ON public.theses;
+DROP POLICY IF EXISTS "Users can update their own theses" ON public.theses;
+DROP POLICY IF EXISTS "Admins can update theses" ON public.theses;
+DROP POLICY IF EXISTS "Admins can delete theses" ON public.theses;
+
+DROP POLICY IF EXISTS "Approved trainee programs viewable by everyone" ON public.trainee_programs;
+DROP POLICY IF EXISTS "Users can view their own trainee programs" ON public.trainee_programs;
+DROP POLICY IF EXISTS "Admins can view all trainee programs" ON public.trainee_programs;
+DROP POLICY IF EXISTS "Users can insert pending own trainee programs" ON public.trainee_programs;
+DROP POLICY IF EXISTS "Admins can insert trainee programs" ON public.trainee_programs;
+DROP POLICY IF EXISTS "Users can update their own trainee programs" ON public.trainee_programs;
+DROP POLICY IF EXISTS "Admins can update trainee programs" ON public.trainee_programs;
+DROP POLICY IF EXISTS "Admins can delete trainee programs" ON public.trainee_programs;
+
+DROP POLICY IF EXISTS "Approved blog posts viewable by everyone" ON public.blog_posts;
+DROP POLICY IF EXISTS "Users can view their own blog posts" ON public.blog_posts;
+DROP POLICY IF EXISTS "Admins can view all blog posts" ON public.blog_posts;
+DROP POLICY IF EXISTS "Users can insert pending own blog posts" ON public.blog_posts;
+DROP POLICY IF EXISTS "Admins can insert blog posts" ON public.blog_posts;
+DROP POLICY IF EXISTS "Users can update their own blog posts" ON public.blog_posts;
+DROP POLICY IF EXISTS "Admins can update blog posts" ON public.blog_posts;
+DROP POLICY IF EXISTS "Admins can delete blog posts" ON public.blog_posts;
+
+DROP POLICY IF EXISTS "Approved testimonials viewable by everyone" ON public.testimonials;
+DROP POLICY IF EXISTS "Users can view their own testimonials" ON public.testimonials;
+DROP POLICY IF EXISTS "Admins can view all testimonials" ON public.testimonials;
+DROP POLICY IF EXISTS "Users can insert pending own testimonials" ON public.testimonials;
+DROP POLICY IF EXISTS "Users can update their own testimonials" ON public.testimonials;
+DROP POLICY IF EXISTS "Admins can update testimonials" ON public.testimonials;
+DROP POLICY IF EXISTS "Admins can delete testimonials" ON public.testimonials;
+
+DROP POLICY IF EXISTS "Users can view their own wishlist" ON public.wishlist;
+DROP POLICY IF EXISTS "Users can insert into their own wishlist" ON public.wishlist;
+DROP POLICY IF EXISTS "Users can delete from their own wishlist" ON public.wishlist;
+
+DROP POLICY IF EXISTS "Users can view their own applications" ON public.applications;
+DROP POLICY IF EXISTS "Users can insert into their own applications" ON public.applications;
+DROP POLICY IF EXISTS "Admins can view all applications" ON public.applications;
+
+-- Profiles policies
 CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles
   FOR SELECT USING (true);
 CREATE POLICY "Users can insert their own profile" ON public.profiles
-  FOR INSERT WITH CHECK (auth.uid() = id);
+  FOR INSERT WITH CHECK (auth.uid() = id AND type IN ('student', 'university', 'company'));
 CREATE POLICY "Users can update own profile" ON public.profiles
-  FOR UPDATE USING (auth.uid() = id);
+  FOR UPDATE USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+CREATE POLICY "Admins can update profiles" ON public.profiles
+  FOR UPDATE USING (public.is_admin())
+  WITH CHECK (public.is_admin());
 
--- Theses Policies
+REVOKE UPDATE ON public.profiles FROM authenticated;
+GRANT UPDATE (name, organization, bio, avatar) ON public.profiles TO authenticated;
+
+-- Theses policies
 CREATE POLICY "Approved theses are viewable by everyone" ON public.theses
   FOR SELECT USING (status = 'approved');
 CREATE POLICY "Users can view their own theses" ON public.theses
   FOR SELECT USING (auth.uid() = posted_by_user_id);
-CREATE POLICY "Organizations can insert theses" ON public.theses
-  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+CREATE POLICY "Admins can view all theses" ON public.theses
+  FOR SELECT USING (public.is_admin());
+CREATE POLICY "Users can insert pending own theses" ON public.theses
+  FOR INSERT WITH CHECK (
+    auth.uid() = posted_by_user_id
+    AND status = 'pending'
+    AND posted_by IN ('university', 'company')
+  );
+CREATE POLICY "Admins can insert theses" ON public.theses
+  FOR INSERT WITH CHECK (public.is_admin() AND posted_by = 'admin' AND status = 'approved');
 CREATE POLICY "Users can update their own theses" ON public.theses
-  FOR UPDATE USING (auth.uid() = posted_by_user_id);
+  FOR UPDATE USING (auth.uid() = posted_by_user_id)
+  WITH CHECK (auth.uid() = posted_by_user_id AND status = 'pending');
+CREATE POLICY "Admins can update theses" ON public.theses
+  FOR UPDATE USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+CREATE POLICY "Admins can delete theses" ON public.theses
+  FOR DELETE USING (public.is_admin());
 
--- Trainee Programs Policies
+-- Trainee program policies
 CREATE POLICY "Approved trainee programs viewable by everyone" ON public.trainee_programs
   FOR SELECT USING (status = 'approved');
 CREATE POLICY "Users can view their own trainee programs" ON public.trainee_programs
   FOR SELECT USING (auth.uid() = posted_by_user_id);
+CREATE POLICY "Admins can view all trainee programs" ON public.trainee_programs
+  FOR SELECT USING (public.is_admin());
+CREATE POLICY "Users can insert pending own trainee programs" ON public.trainee_programs
+  FOR INSERT WITH CHECK (
+    auth.uid() = posted_by_user_id
+    AND status = 'pending'
+    AND posted_by = 'company'
+  );
+CREATE POLICY "Admins can insert trainee programs" ON public.trainee_programs
+  FOR INSERT WITH CHECK (public.is_admin() AND posted_by = 'admin' AND status = 'approved');
+CREATE POLICY "Users can update their own trainee programs" ON public.trainee_programs
+  FOR UPDATE USING (auth.uid() = posted_by_user_id)
+  WITH CHECK (auth.uid() = posted_by_user_id AND status = 'pending');
+CREATE POLICY "Admins can update trainee programs" ON public.trainee_programs
+  FOR UPDATE USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+CREATE POLICY "Admins can delete trainee programs" ON public.trainee_programs
+  FOR DELETE USING (public.is_admin());
 
--- Blog Posts Policies
+-- Blog post policies
 CREATE POLICY "Approved blog posts viewable by everyone" ON public.blog_posts
   FOR SELECT USING (status = 'approved');
+CREATE POLICY "Users can view their own blog posts" ON public.blog_posts
+  FOR SELECT USING (auth.uid() = posted_by_user_id);
+CREATE POLICY "Admins can view all blog posts" ON public.blog_posts
+  FOR SELECT USING (public.is_admin());
+CREATE POLICY "Users can insert pending own blog posts" ON public.blog_posts
+  FOR INSERT WITH CHECK (auth.uid() = posted_by_user_id AND status = 'pending');
+CREATE POLICY "Admins can insert blog posts" ON public.blog_posts
+  FOR INSERT WITH CHECK (public.is_admin() AND auth.uid() = posted_by_user_id AND status = 'approved');
+CREATE POLICY "Users can update their own blog posts" ON public.blog_posts
+  FOR UPDATE USING (auth.uid() = posted_by_user_id)
+  WITH CHECK (auth.uid() = posted_by_user_id AND status = 'pending');
+CREATE POLICY "Admins can update blog posts" ON public.blog_posts
+  FOR UPDATE USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+CREATE POLICY "Admins can delete blog posts" ON public.blog_posts
+  FOR DELETE USING (public.is_admin());
 
--- Testimonials Policies
+-- Testimonial policies
 CREATE POLICY "Approved testimonials viewable by everyone" ON public.testimonials
   FOR SELECT USING (status = 'approved');
+CREATE POLICY "Users can view their own testimonials" ON public.testimonials
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Admins can view all testimonials" ON public.testimonials
+  FOR SELECT USING (public.is_admin());
+CREATE POLICY "Users can insert pending own testimonials" ON public.testimonials
+  FOR INSERT WITH CHECK (auth.uid() = user_id AND status = 'pending');
+CREATE POLICY "Users can update their own testimonials" ON public.testimonials
+  FOR UPDATE USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id AND status = 'pending');
+CREATE POLICY "Admins can update testimonials" ON public.testimonials
+  FOR UPDATE USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+CREATE POLICY "Admins can delete testimonials" ON public.testimonials
+  FOR DELETE USING (public.is_admin());
 
--- Admin Users Policies
-CREATE POLICY "Admin credentials viewable for login" ON public.admin_users
-  FOR SELECT USING (true);
-
--- 8. Applications (Students only)
-CREATE TABLE IF NOT EXISTS public.applications (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-  thesis_id UUID REFERENCES public.theses(id) ON DELETE CASCADE,
-  program_id UUID REFERENCES public.trainee_programs(id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  -- Ensure only one of thesis_id or program_id is set
-  CONSTRAINT only_one_item_applied CHECK (
-    (thesis_id IS NOT NULL AND program_id IS NULL) OR
-    (thesis_id IS NULL AND program_id IS NOT NULL)
-  ),
-  -- Unique constraint to prevent duplicate entries for the same user and item
-  UNIQUE (user_id, thesis_id),
-  UNIQUE (user_id, program_id)
-);
-
--- Wishlist Policies
+-- Wishlist policies
 CREATE POLICY "Users can view their own wishlist" ON public.wishlist
   FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert into their own wishlist" ON public.wishlist
@@ -182,34 +300,38 @@ CREATE POLICY "Users can insert into their own wishlist" ON public.wishlist
 CREATE POLICY "Users can delete from their own wishlist" ON public.wishlist
   FOR DELETE USING (auth.uid() = user_id);
 
--- Applications Policies
-ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
+-- Applications policies
 CREATE POLICY "Users can view their own applications" ON public.applications
   FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert into their own applications" ON public.applications
   FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Admins can view all applications" ON public.applications
+  FOR SELECT USING (public.is_admin());
 
--- Trigger to create profile on signup
--- NOTE: For Google OAuth, the 'type' is NOT set in raw_user_meta_data by Google.
--- It's only set for email/password signups where we explicitly pass it.
--- The auth callback route (/auth/callback) handles role assignment via upsert
--- for Google OAuth signups, overwriting the trigger's default 'student' value.
+-- Trigger to create profile on signup. Admin users should be promoted only by a
+-- trusted server-side process or direct database maintenance, never by clients.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  requested_type TEXT := COALESCE(new.raw_user_meta_data->>'type', 'student');
 BEGIN
+  IF requested_type NOT IN ('student', 'university', 'company') THEN
+    requested_type := 'student';
+  END IF;
+
   INSERT INTO public.profiles (id, name, email, type)
   VALUES (
     new.id,
     COALESCE(new.raw_user_meta_data->>'name', new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
     new.email,
-    COALESCE(new.raw_user_meta_data->>'type', 'student')
+    requested_type
   )
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
-

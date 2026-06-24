@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse, type NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
 
+const publicRoles = new Set(['student', 'university', 'company'])
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
@@ -62,7 +64,7 @@ export async function GET(request: NextRequest) {
   // ── NEW USER (first time with Google) ─────────────────────────────────────
   // Works for both /register and /login — whenever it's a first-time Google auth.
   if (isNewUser || isReg) {
-    const resolvedRole = roleParam || 'student'
+    const resolvedRole = roleParam && publicRoles.has(roleParam) ? roleParam : 'student'
 
     // The DB trigger already created a profile with type='student'.
     // Upsert overwrites it with the role the user actually selected.

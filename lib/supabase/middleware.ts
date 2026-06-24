@@ -33,12 +33,21 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const isAdminSession = request.cookies.get('gc_admin_session')?.value === 'true'
+  let userType: string | null = null
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('type')
+      .eq('id', user.id)
+      .single()
+
+    userType = profile?.type ?? null
+  }
 
   // If unauthenticated and on a protected route, redirect to home
   if (
     !user &&
-    !isAdminSession &&
     request.nextUrl.pathname.startsWith('/dashboard')
   ) {
     const url = request.nextUrl.clone()
@@ -48,7 +57,7 @@ export async function updateSession(request: NextRequest) {
 
   // Admin route protection
   if (
-    !isAdminSession &&
+    (!user || userType !== 'admin') &&
     request.nextUrl.pathname.startsWith('/n_admin/dashboard')
   ) {
     const url = request.nextUrl.clone()

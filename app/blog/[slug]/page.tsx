@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useEffect, useState } from "react"
+import { use, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { PublicLayout } from "@/components/layout/public-layout"
 import { BlogCard } from "@/components/shared/blog-card"
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { createClient } from "@/lib/supabase/client"
 import type { BlogPost } from "@/lib/data/types"
+import { sanitizeHtml } from "@/lib/sanitize-html"
 import { ArrowLeft, Calendar, Clock, User, Loader2, Copy, Check } from "lucide-react"
 import Image from "next/image"
 
@@ -87,6 +88,13 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
     fetchPost()
   }, [slug, supabase])
 
+  // Check if content is HTML (from TipTap) or plain text/markdown (older posts)
+  const isHtml = post?.content.trim().startsWith('<') ?? false
+  const sanitizedContent = useMemo(
+    () => (post ? (isHtml ? sanitizeHtml(post.content) : post.content) : ""),
+    [isHtml, post?.content]
+  )
+
   if (loading) {
     return (
       <PublicLayout>
@@ -116,9 +124,6 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
     )
   }
 
-  // Check if content is HTML (from TipTap) or plain text/markdown (older posts)
-  const isHtml = post.content.trim().startsWith('<')
-
   const handleCopy = async () => {
     try {
       let textToCopy = post.content;
@@ -126,7 +131,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
       if (isHtml) {
         // Use a temporary DOM element to reliably strips tags and parse HTML entities 
         const tempElement = document.createElement('div');
-        tempElement.innerHTML = post.content;
+        tempElement.innerHTML = sanitizedContent;
         textToCopy = tempElement.textContent || tempElement.innerText || "";
       }
       textToCopy = textToCopy.trim();
@@ -230,7 +235,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
           <div className="mx-auto max-w-3xl">
             <div className="prose prose-lg md:prose-xl max-w-none prose-headings:text-foreground prose-a:text-primary prose-a:font-semibold hover:prose-a:underline prose-strong:text-foreground prose-p:text-muted-foreground prose-li:text-muted-foreground">
               {isHtml ? (
-                <div dangerouslySetInnerHTML={{ __html: post.content }} />
+                <div dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
               ) : (
                 <div className="whitespace-pre-wrap leading-relaxed">{post.content}</div>
               )}

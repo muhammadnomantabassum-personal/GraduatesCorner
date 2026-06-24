@@ -63,8 +63,6 @@ export default function NewBlogPostPage() {
     const readTime = `${Math.max(1, Math.ceil(wordCount / 200))} min read`
     const slug = title.toLowerCase().replace(/[^\w\s]/gi, '').replace(/\s+/g, '-')
 
-    const isSystemAdmin = user.type === 'admin';
-
     const { error } = await supabase
       .from('blog_posts')
       .insert({
@@ -76,8 +74,8 @@ export default function NewBlogPostPage() {
         category,
         cover_image: coverImage || FALLBACK_COVER,
         read_time: readTime,
-        posted_by_user_id: isSystemAdmin ? null : user.id,
-        status: isSystemAdmin ? 'approved' : 'pending'
+        posted_by_user_id: user.id,
+        status: 'pending'
       })
 
     setIsSubmitting(false)

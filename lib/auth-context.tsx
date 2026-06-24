@@ -20,7 +20,7 @@ interface AuthContextType {
   isLoggedIn: boolean
   hasSession: boolean
   login: (email: string, password: string) => Promise<boolean>
-  adminLogin: (username: string, password: string) => Promise<boolean>
+  adminLogin: (email: string, password: string) => Promise<boolean>
   logout: () => Promise<void>
   refreshProfile: () => Promise<void>
   updateProfile: (updates: Partial<AppUser>) => Promise<void>
@@ -150,21 +150,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Handle initial page load — fires once when the listener is created
       if (event === "INITIAL_SESSION") {
         if (!session?.user) {
-          const isAdmin =
-            typeof window !== "undefined" &&
-            localStorage.getItem("gc_admin_session") === "true"
-          setHasSession(isAdmin)
-          setUser(
-            isAdmin
-              ? {
-                id: "admin-id",
-                name: "Administrator",
-                email: "admin@graduatecorner.com",
-                type: "admin",
-                createdAt: new Date().toISOString(),
-              }
-              : null
-          )
+          setHasSession(false)
+          setUser(null)
           setLoading(false)
           return
         }
@@ -224,29 +211,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const adminLogin = async (
-    username: string,
+    email: string,
     password: string
   ): Promise<boolean> => {
-    const { data, error } = await supabase
-      .from("admin_users")
-      .select("*")
-      .eq("username", username)
-      .eq("password", password)
-      .single()
-
-    if (error || !data) return false
-
-    localStorage.setItem("gc_admin_session", "true")
-    document.cookie =
-      "gc_admin_session=true; path=/; max-age=86400; SameSite=Lax"
-
-    setUser({
-      id: "admin-id",
-      name: "Administrator",
-      email: "admin@graduatecorner.com",
-      type: "admin",
-      createdAt: new Date().toISOString(),
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     })
+
+    if (error || !data.user) return false
+
+    const appUser = await fetchProfile(data.user)
+    if (appUser.type !== "admin") {
+      await supabase.auth.signOut()
+      return false
+    }
+
+    setUser(appUser)
     setHasSession(true)
     return true
   }
@@ -259,13 +240,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear UI state
       setUser(null)
       setHasSession(false)
-
-      // Clean up admin session markers
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("gc_admin_session")
-      }
-      document.cookie =
-        "gc_admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
 
       await supabase.auth.signOut()
       

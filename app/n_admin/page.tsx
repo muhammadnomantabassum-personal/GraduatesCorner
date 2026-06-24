@@ -15,7 +15,7 @@ import {
 import { toast } from "sonner"
 
 export default function AdminLoginPage() {
-  const [username, setUsername] = useState("admin")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -24,20 +24,20 @@ export default function AdminLoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!username || !password) {
+    if (!email || !password) {
       toast.error("Please fill in all fields")
       return
     }
 
     setIsSubmitting(true)
-    const success = await adminLogin(username, password)
+    const success = await adminLogin(email, password)
     setIsSubmitting(false)
 
     if (success) {
       toast.success("Welcome back, Admin!")
       router.push("/n_admin/dashboard")
     } else {
-      toast.error("Invalid admin credentials")
+      toast.error("Invalid admin account or password")
     }
   }
 
@@ -67,15 +67,15 @@ export default function AdminLoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label htmlFor="username" className="text-[13px] font-medium text-foreground">
-                Username
+              <label htmlFor="email" className="text-[13px] font-medium text-foreground">
+                Admin Email
               </label>
               <Input
-                id="username"
-                type="text"
-                placeholder="admin"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                type="email"
+                placeholder="admin@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="h-10 rounded-lg border-border bg-background px-3.5 text-[13px]"
               />
             </div>

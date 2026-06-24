@@ -18,7 +18,9 @@ ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (
   bucket_id = 'avatars' AND
-  (regexp_split_to_array(name, '/'))[1] = auth.uid()::text
+  (regexp_split_to_array(name, '/'))[1] = auth.uid()::text AND
+  (metadata->>'mimetype') IN ('image/jpeg', 'image/png', 'image/webp', 'image/gif') AND
+  (metadata->>'size')::bigint <= 2097152
 );
 
 -- 4. Policy: Allow users to delete their own avatars

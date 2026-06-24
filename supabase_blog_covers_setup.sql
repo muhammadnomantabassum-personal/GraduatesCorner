@@ -16,7 +16,9 @@ ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (
   bucket_id = 'blog-covers' AND
-  (regexp_split_to_array(name, '/'))[1] = auth.uid()::text
+  (regexp_split_to_array(name, '/'))[1] = auth.uid()::text AND
+  (metadata->>'mimetype') IN ('image/png', 'image/webp') AND
+  (metadata->>'size')::bigint <= 1048576
 );
 
 -- 4. Policy: Allow users to delete their own blog covers

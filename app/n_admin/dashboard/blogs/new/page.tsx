@@ -75,7 +75,7 @@ export default function AdminNewBlogPage() {
         category,
         cover_image: coverImage || FALLBACK_COVER,
         read_time: readTime,
-        posted_by_user_id: null, // Admin posts don't need a user UUID reference
+        posted_by_user_id: user.id,
         status: 'approved' // Admin posts are approved immediately
       })
 

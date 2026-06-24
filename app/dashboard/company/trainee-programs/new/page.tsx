@@ -106,8 +106,6 @@ export default function NewTraineeProgramPage() {
     }
 
     setIsSubmitting(true)
-    
-    const isSystemAdmin = user.type === 'admin';
 
     const { error } = await supabase
       .from('trainee_programs')
@@ -122,8 +120,8 @@ export default function NewTraineeProgramPage() {
         deadline,
         external_url: externalUrl,
         posted_by: user.type,
-        posted_by_user_id: isSystemAdmin ? null : user.id,
-        status: isSystemAdmin ? 'approved' : 'pending'
+        posted_by_user_id: user.id,
+        status: 'pending'
       })
 
     setIsSubmitting(false)

@@ -91,8 +91,6 @@ export default function NewUniversityPhDPositionPage() {
     }
 
     setIsSubmitting(true)
-    
-    const isSystemAdmin = user.type === 'admin';
 
     const { error } = await supabase
       .from('theses')
@@ -108,8 +106,8 @@ export default function NewUniversityPhDPositionPage() {
         organization: user.organization || user.name || "University",
         organization_type: 'university',
         posted_by: user.type,
-        posted_by_user_id: isSystemAdmin ? null : user.id,
-        status: isSystemAdmin ? 'approved' : 'pending'
+        posted_by_user_id: user.id,
+        status: 'pending'
       })
 
     setIsSubmitting(false)

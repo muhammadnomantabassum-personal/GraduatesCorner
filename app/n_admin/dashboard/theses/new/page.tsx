@@ -108,7 +108,7 @@ export default function AdminNewThesisPage() {
         organization: organization || "Admin",
         organization_type: organizationType,
         posted_by: 'admin',
-        posted_by_user_id: user.type === 'admin' ? null : user.id,
+        posted_by_user_id: user.id,
         status: 'approved'
       })
 
