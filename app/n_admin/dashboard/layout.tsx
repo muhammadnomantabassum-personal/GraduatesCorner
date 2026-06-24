@@ -97,7 +97,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
       <aside className="hidden w-72 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex">
         <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-6">
           <GraduationCap className="h-6 w-6 text-sidebar-primary" />
-          <span className="font-bold">GraduatesCorner</span>
+          <span className="font-bold">Graduates Corner</span>
           <span className="ml-auto rounded-full bg-sidebar-primary/10 px-2 py-0.5 text-[9px] font-semibold text-sidebar-primary">
             ADMIN
           </span>

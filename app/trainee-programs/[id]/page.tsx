@@ -169,7 +169,7 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
             <span className="flex items-center gap-1.5">
               <Building2 className="h-4 w-4" /> {program.company}
               {program.postedBy === "admin" && (
-                <span className="text-primary-foreground/40">· by GraduatesCorner</span>
+                <span className="text-primary-foreground/40">· by Graduates Corner</span>
               )}
             </span>
             <span className="flex items-center gap-1.5">

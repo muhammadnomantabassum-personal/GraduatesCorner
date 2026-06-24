@@ -160,7 +160,7 @@ export function GlobalSearchCommand() {
       <CommandDialog
         open={open}
         onOpenChange={setOpen}
-        title="Search GraduatesCorner"
+        title="Search Graduates Corner"
         description="Search for pages, theses, programs, and blog posts"
       >
         <CommandInput 

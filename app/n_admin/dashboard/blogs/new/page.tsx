@@ -71,7 +71,7 @@ export default function AdminNewBlogPage() {
         slug,
         excerpt,
         content,
-        author: "GraduatesCorner Team", // Default for admin posts
+        author: "Graduates Corner Team", // Default for admin posts
         category,
         cover_image: coverImage || FALLBACK_COVER,
         read_time: readTime,

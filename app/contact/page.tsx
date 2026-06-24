@@ -106,7 +106,7 @@ export default function ContactPage() {
                 <p className="text-[13px] leading-[1.65] text-muted-foreground">
                   <span className="font-medium text-foreground">Partnership inquiries?</span>{" "}
                   If you&apos;re a university or company interested in listing opportunities on
-                  GraduatesCorner, please include your organization name and website in your message.
+                  Graduates Corner, please include your organization name and website in your message.
                 </p>
               </div>
             </div>

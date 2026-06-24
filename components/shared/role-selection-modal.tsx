@@ -96,9 +96,7 @@ export function RoleSelectionModal({ open, onClose, userId }: RoleSelectionModal
 
       onClose()
       
-      // Redirect to the appropriate dashboard based on the new role
-      const targetPath = selectedRole === 'admin' ? "/n_admin/dashboard" : `/dashboard/${selectedRole}`
-      router.push(targetPath)
+      router.push(`/dashboard/${selectedRole}`)
     } catch (error: any) {
       console.error("Setup error:", error)
       toast.error(error.message || "Failed to update role")
@@ -122,7 +120,7 @@ export function RoleSelectionModal({ open, onClose, userId }: RoleSelectionModal
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">How will you use GraduatesCorner?</DialogTitle>
+          <DialogTitle className="text-xl font-bold">How will you use Graduates Corner?</DialogTitle>
           <DialogDescription>
             Select your role to personalize your experience.
           </DialogDescription>

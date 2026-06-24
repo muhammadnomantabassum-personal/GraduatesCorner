@@ -61,7 +61,7 @@ export default function TestimonialsPage() {
         <div className="mx-auto max-w-7xl">
           <h1 className="mb-3 text-3xl font-bold lg:text-4xl">Testimonials</h1>
           <p className="text-lg text-primary-foreground/80">
-            Hear from students, universities, and companies who use GraduatesCorner
+            Hear from students, universities, and companies who use Graduates Corner
           </p>
         </div>
       </section>
@@ -102,7 +102,7 @@ export default function TestimonialsPage() {
             <GraduationCap className="mx-auto mb-4 h-10 w-10 text-primary" />
             <h2 className="mb-2 text-xl font-semibold text-foreground">Share Your Experience</h2>
             <p className="mb-6 text-muted-foreground">
-              Have you used GraduatesCorner? Log in to share your story with the community.
+              Have you used Graduates Corner? Log in to share your story with the community.
             </p>
             <Link href="/login">
               <Button>Log In to Submit a Testimonial</Button>

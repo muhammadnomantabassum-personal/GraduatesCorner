@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { ProfilePhotoSection } from "@/components/shared/profile-photo-section"
 import type { BlogPost, Testimonial } from "@/lib/data/types"
 import {
@@ -21,7 +22,6 @@ import {
   Loader2,
   Heart,
   Send,
-  Badge
 } from "lucide-react"
 
 export default function StudentDashboard() {

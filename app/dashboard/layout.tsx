@@ -174,7 +174,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex">
         <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-6">
           <GraduationCap className="h-6 w-6 text-sidebar-primary" />
-          <span className="font-bold">GraduatesCorner</span>
+          <span className="font-bold">Graduates Corner</span>
         </div>
         <nav className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
           {sections.map((section, idx) => (

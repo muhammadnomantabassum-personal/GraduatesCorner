@@ -151,7 +151,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
     // We ignore empty paragraphs comparison to prevent infinite loops or cursor jumps
     const currentContent = editor.getHTML()
     if (value !== currentContent && value !== "" && (currentContent === "<p></p>" || currentContent === "")) {
-      editor.commands.setContent(value, false)
+      editor.commands.setContent(value, { emitUpdate: false })
     }
   }, [value, editor])
 

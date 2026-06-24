@@ -25,7 +25,7 @@ export function AuthBrandingPanel() {
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-foreground/10 backdrop-blur-sm xl:h-9 xl:w-9 xl:rounded-xl">
           <GraduationCap className="h-4 w-4 text-primary-foreground xl:h-[18px] xl:w-[18px]" />
         </div>
-        <span className="text-[15px] font-semibold tracking-tight text-primary-foreground xl:text-base">GraduatesCorner</span>
+        <span className="text-[15px] font-semibold tracking-tight text-primary-foreground xl:text-base">Graduates Corner</span>
       </Link>
 
       {/* Hero text */}

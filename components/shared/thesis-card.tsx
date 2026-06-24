@@ -24,7 +24,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
   const hiddenSubjectCount = subjects.length - MAX_VISIBLE_SUBJECTS
 
   return (
-    <Card className={`group relative flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isPhD ? "ring-1 ring-accent/15" : ""
+    <Card className={`group relative flex flex-col border-border/70 bg-card/92 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_22px_55px_rgba(22,70,65,0.12)] ${isPhD ? "ring-1 ring-accent/20" : ""
       }`}>
       {user?.type === "student" && (
         <button
@@ -72,7 +72,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
             )}
             <span className="truncate">{thesis.organization}</span>
             {thesis.postedBy === "admin" && (
-              <span className="shrink-0 text-[11px] text-muted-foreground/50">· by GraduatesCorner</span>
+              <span className="shrink-0 text-[11px] text-muted-foreground/50">· by Graduates Corner</span>
             )}
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -115,7 +115,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
         <div className="flex w-full justify-end">
           <Link
             href={`/theses/${thesis.id}`}
-            className="rounded-lg px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:bg-accent hover:text-white hover:shadow-md hover:shadow-accent/25 active:scale-[0.97]"
+            className="rounded-lg px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-md hover:shadow-accent/25 active:scale-[0.97]"
           >
             View Details
           </Link>

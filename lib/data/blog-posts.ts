@@ -114,7 +114,7 @@ Companies gain access to cutting-edge research, fresh perspectives on complex pr
 
 ## How to Find These Opportunities
 
-Check company career pages, university research partnership announcements, and platforms like GraduatesCorner that list industry-sponsored positions alongside traditional academic ones.
+Check company career pages, university research partnership announcements, and platforms like Graduates Corner that list industry-sponsored positions alongside traditional academic ones.
 
 ## Things to Consider
 
@@ -238,7 +238,7 @@ The most successful tech professionals combine deep technical knowledge with str
 
 ## Getting the Position
 
-I found the position through GraduatesCorner and applied with my CV and a short cover letter. The interview process included a technical assessment and a behavioral interview.
+I found the position through Graduates Corner and applied with my CV and a short cover letter. The interview process included a technical assessment and a behavioral interview.
 
 ## Day-to-Day Work
 

@@ -65,8 +65,8 @@ export function Navbar() {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-200 ${scrolled
-        ? "border-b border-slate-200/80 bg-[#FAFAFB] shadow-md"
-        : "border-b border-slate-200/40 bg-[#FAFAFB] shadow-[0_1px_3px_0_rgba(0,0,0,0.702)]"
+        ? "border-b border-border/80 bg-background/90 shadow-[0_10px_40px_rgba(22,70,65,0.10)] backdrop-blur-xl"
+        : "border-b border-border/50 bg-background/75 shadow-[0_1px_0_rgba(22,70,65,0.08)] backdrop-blur-xl"
         }`}
     >
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
@@ -75,21 +75,21 @@ export function Navbar() {
           {/* Logo */}
           <Link
             href="/"
-            className="group flex shrink-0 items-center gap-2.5 transition-opacity duration-200 hover:opacity-80"
+            className="group flex shrink-0 items-center gap-2.5 transition-opacity duration-200 hover:opacity-90"
           >
-            <div className={`flex items-center justify-center rounded-lg bg-primary shadow-sm transition-all duration-200 ${scrolled ? "h-7 w-7" : "h-8 w-8"
+            <div className={`flex items-center justify-center rounded-lg bg-primary shadow-[0_10px_25px_rgba(23,96,88,0.24)] ring-1 ring-primary/15 transition-all duration-200 ${scrolled ? "h-7 w-7" : "h-8 w-8"
               }`}>
               <GraduationCap className={`text-primary-foreground transition-all duration-200 ${scrolled ? "h-4 w-4" : "h-4.5 w-4.5"
                 }`} />
             </div>
-            <span className={`font-semibold tracking-tight text-foreground transition-all duration-200 ${scrolled ? "text-[15px]" : "text-[17px]"
+            <span className={`brand-wordmark font-semibold text-foreground transition-all duration-200 ${scrolled ? "text-[15px]" : "text-[17px]"
               }`}>
-              GraduatesCorner
+              Graduates Corner
             </span>
           </Link>
 
           {/* Desktop Navigation — pill bar */}
-          <div className="hidden items-center rounded-full bg-secondary/80 p-1 ring-1 ring-border/40 lg:flex">
+          <div className="hidden items-center rounded-full bg-card/85 p-1 shadow-sm ring-1 ring-border/70 backdrop-blur lg:flex">
             {navItems.map((item) => {
               const active = isActive(item.href)
               return (
@@ -97,8 +97,8 @@ export function Navbar() {
                   key={item.href}
                   href={item.href}
                   className={`relative rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-all duration-200 ${active
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-primary text-primary-foreground shadow-[0_8px_18px_rgba(23,96,88,0.18)]"
+                    : "text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
                     }`}
                 >
                   {item.label}
@@ -153,7 +153,7 @@ export function Navbar() {
                   <Link href="/register">
                     <Button
                       size="sm"
-                      className="h-8 rounded-lg text-[13px] font-medium shadow-sm"
+                      className="h-8 rounded-lg bg-accent text-[13px] font-semibold text-accent-foreground shadow-[0_10px_22px_rgba(184,116,38,0.22)] hover:bg-accent/90"
                     >
                       Get Started
                     </Button>
@@ -187,8 +187,8 @@ export function Navbar() {
                       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
                         <GraduationCap className="h-3.5 w-3.5 text-primary-foreground" />
                       </div>
-                      <span className="text-sm font-semibold text-foreground">
-                        GraduatesCorner
+                      <span className="brand-wordmark text-sm font-semibold text-foreground">
+                        Graduates Corner
                       </span>
                     </Link>
                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground" onClick={() => setOpen(false)}>

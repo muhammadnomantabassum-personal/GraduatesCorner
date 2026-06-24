@@ -228,41 +228,49 @@ function HomePageContent() {
   return (
     <PublicLayout>
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-primary px-4 py-20 text-primary-foreground lg:py-28">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/20 via-transparent to-transparent" />
-        <div className="relative mx-auto max-w-7xl">
-          <div className="mx-auto max-w-3xl text-center">
-            <Badge className="mb-6 bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/20">
+      <section className="relative min-h-[680px] overflow-hidden px-4 py-20 text-primary-foreground lg:py-28">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?q=80&w=2200&auto=format&fit=crop')",
+          }}
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,53,48,0.94)_0%,rgba(15,53,48,0.82)_44%,rgba(15,53,48,0.44)_100%)]" />
+        <div className="absolute inset-x-0 bottom-0 h-36 bg-[linear-gradient(180deg,transparent_0%,var(--background)_100%)]" />
+        <div className="relative mx-auto flex max-w-7xl items-center">
+          <div className="max-w-3xl">
+            <Badge className="mb-6 border border-primary-foreground/20 bg-primary-foreground/12 px-3 py-1 text-primary-foreground shadow-sm backdrop-blur hover:bg-primary-foreground/18">
               Trusted by 120+ Universities & Companies
             </Badge>
-            <h1 className="mb-6 text-balance text-4xl font-bold tracking-tight lg:text-5xl xl:text-6xl">
-              Find Your Perfect Academic Opportunity
+            <h1 className="mb-6 max-w-3xl text-balance text-5xl font-bold text-primary-foreground lg:text-6xl xl:text-7xl">
+              Shape your next academic move with Graduates Corner
             </h1>
-            <h2 className="mb-8 text-pretty text-lg leading-relaxed text-primary-foreground/80 lg:text-xl font-normal">
+            <h2 className="mb-8 max-w-2xl text-pretty text-lg font-normal leading-relaxed text-primary-foreground/82 lg:text-xl">
               Discover master thesis, PhD positions, and graduate trainee programs from top
               universities and leading companies across Sweden and all over the world.
             </h2>
 
             {/* Functional Search Bar */}
-            <div className="relative mx-auto max-w-xl" ref={searchRef}>
-              <div className="flex items-center gap-2 rounded-lg bg-primary-foreground/10 p-2 backdrop-blur-sm">
-                <div className="flex flex-1 items-center gap-2 rounded-md bg-card px-4 py-2.5">
-                  <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
+            <div className="relative max-w-2xl" ref={searchRef}>
+              <div className="surface-glass flex flex-col gap-2 rounded-2xl border border-primary-foreground/18 bg-primary-foreground/12 p-2 backdrop-blur-xl sm:flex-row">
+                <div className="flex min-h-12 flex-1 items-center gap-3 rounded-xl bg-card px-4 shadow-inner">
+                  <Search className="h-5 w-5 shrink-0 text-primary" />
                   <input
                     type="text"
                     placeholder="Search thesis, programs, topics..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
-                    className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                    className="w-full bg-transparent text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
                   />
                   {searchQuery && (
-                    <button onClick={() => setSearchQuery("")} className="p-1 hover:bg-muted rounded-full">
+                    <button onClick={() => setSearchQuery("")} className="rounded-full p-1 hover:bg-muted">
                       <X className="h-4 w-4 text-muted-foreground" />
                     </button>
                   )}
                 </div>
-                <Button className="shrink-0 bg-accent text-accent-foreground hover:bg-accent/90">
+                <Button className="min-h-12 shrink-0 rounded-xl bg-accent px-6 font-semibold text-accent-foreground shadow-[0_12px_28px_rgba(184,116,38,0.28)] hover:bg-accent/90">
                   {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
                 </Button>
               </div>
@@ -313,11 +321,11 @@ function HomePageContent() {
               )}
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <div className="mt-7 flex flex-wrap items-center gap-3">
               <Link href="/master-thesis">
                 <Button
                   variant="outline"
-                  className="gap-2 border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                  className="gap-2 rounded-xl border-primary-foreground/30 bg-primary-foreground/8 text-primary-foreground backdrop-blur hover:bg-primary-foreground/16 hover:text-primary-foreground"
                 >
                   <BookOpen className="h-4 w-4" />
                   Master's Thesis
@@ -326,7 +334,7 @@ function HomePageContent() {
               <Link href="/phd-positions">
                 <Button
                   variant="outline"
-                  className="gap-2 border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                  className="gap-2 rounded-xl border-primary-foreground/30 bg-primary-foreground/8 text-primary-foreground backdrop-blur hover:bg-primary-foreground/16 hover:text-primary-foreground"
                 >
                   <GraduationCap className="h-4 w-4" />
                   PhD Positions
@@ -335,7 +343,7 @@ function HomePageContent() {
               <Link href="/trainee-programs">
                 <Button
                   variant="outline"
-                  className="gap-2 border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                  className="gap-2 rounded-xl border-primary-foreground/30 bg-primary-foreground/8 text-primary-foreground backdrop-blur hover:bg-primary-foreground/16 hover:text-primary-foreground"
                 >
                   <Briefcase className="h-4 w-4" />
                   Trainee Programs
@@ -347,13 +355,15 @@ function HomePageContent() {
       </section>
 
       {/* Stats Section */}
-      <section className="border-b border-border bg-card px-4 py-12">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 lg:grid-cols-4 lg:gap-8">
+      <section className="relative -mt-16 px-4 pb-12">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 rounded-2xl border border-border/70 bg-card/92 p-4 shadow-[0_22px_70px_rgba(22,70,65,0.12)] backdrop-blur lg:grid-cols-4 lg:gap-4">
           {stats.map((stat) => (
-            <div key={stat.label} className="flex flex-col items-center gap-2 text-center">
-              <stat.icon className="h-8 w-8 text-primary" />
+            <div key={stat.label} className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl bg-secondary/55 p-4 text-center ring-1 ring-border/40">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                <stat.icon className="h-5 w-5" />
+              </div>
               <span className="text-3xl font-bold text-foreground">{stat.value}</span>
-              <span className="text-sm text-muted-foreground">{stat.label}</span>
+              <span className="text-sm font-medium text-muted-foreground">{stat.label}</span>
             </div>
           ))}
         </div>
@@ -369,7 +379,7 @@ function HomePageContent() {
           {/* PhD Positions */}
           <section className="px-4 py-16 lg:py-20">
             <div className="mx-auto max-w-7xl">
-              <div className="mb-10 flex items-end justify-between">
+              <div className="mb-10 flex items-end justify-between border-b border-border/70 pb-5">
                 <div>
                   <h3 className="mb-2 text-2xl font-bold text-foreground lg:text-3xl">
                     PhD Positions
@@ -404,9 +414,9 @@ function HomePageContent() {
           </section>
 
           {/* Master's Thesis Positions */}
-          <section className="bg-secondary/50 px-4 py-16 lg:py-20">
+          <section className="border-y border-border/50 bg-card/58 px-4 py-16 lg:py-20">
             <div className="mx-auto max-w-7xl">
-              <div className="mb-10 flex items-end justify-between">
+              <div className="mb-10 flex items-end justify-between border-b border-border/70 pb-5">
                 <div>
                   <h3 className="mb-2 text-2xl font-bold text-foreground lg:text-3xl">
                     Master's Thesis Positions
@@ -443,7 +453,7 @@ function HomePageContent() {
           {/* Featured Trainee Programs */}
           <section className="px-4 py-16 lg:py-20">
             <div className="mx-auto max-w-7xl">
-              <div className="mb-10 flex items-end justify-between">
+              <div className="mb-10 flex items-end justify-between border-b border-border/70 pb-5">
                 <div>
                   <h3 className="mb-2 text-2xl font-bold text-foreground lg:text-3xl">
                     Graduate Trainee Programs
@@ -478,9 +488,9 @@ function HomePageContent() {
           </section>
 
           {/* Blog Highlights */}
-          <section className="bg-secondary/50 px-4 py-16 lg:py-20">
+          <section className="border-y border-border/50 bg-card/58 px-4 py-16 lg:py-20">
             <div className="mx-auto max-w-7xl">
-              <div className="mb-10 flex items-end justify-between">
+              <div className="mb-10 flex items-end justify-between border-b border-border/70 pb-5">
                 <div>
                   <h3 className="mb-2 text-2xl font-bold text-foreground lg:text-3xl">From Our Blog</h3>
                   <p className="text-muted-foreground">
@@ -513,7 +523,7 @@ function HomePageContent() {
                   What Our Community Says
                 </h3>
                 <p className="text-muted-foreground">
-                  Hear from students, universities, and companies who use GraduatesCorner
+                  Hear from students, universities, and companies who use Graduates Corner
                 </p>
               </div>
               {testimonials.length > 0 ? (
@@ -533,19 +543,28 @@ function HomePageContent() {
       {/* CTA Section */}
       <section className="px-4 py-16 lg:py-20">
         <div className="mx-auto max-w-7xl">
-          <div className="rounded-2xl bg-primary px-8 py-12 text-center text-primary-foreground lg:px-16 lg:py-16">
+          <div className="relative overflow-hidden rounded-2xl bg-primary px-8 py-12 text-center text-primary-foreground shadow-[0_24px_80px_rgba(22,70,65,0.20)] ring-1 ring-primary/20 lg:px-16 lg:py-16">
+            <div
+              className="absolute inset-0 bg-cover bg-center opacity-20"
+              style={{
+                backgroundImage:
+                  "url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=1800&auto=format&fit=crop')",
+              }}
+            />
+            <div className="absolute inset-0 bg-primary/84" />
+            <div className="relative">
             <h2 className="mb-4 text-balance text-3xl font-bold lg:text-4xl">
               Ready to Start Your Journey?
             </h2>
             <p className="mx-auto mb-8 max-w-2xl text-pretty text-lg text-primary-foreground/80">
               Whether you are a student looking for opportunities, a university posting positions, or a
-              company seeking fresh talent — GraduatesCorner connects you with the right people.
+              company seeking fresh talent, Graduates Corner connects you with the right people.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/register">
                 <Button
                   size="lg"
-                  className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90"
+                  className="gap-2 rounded-xl bg-accent text-accent-foreground shadow-[0_14px_32px_rgba(184,116,38,0.30)] hover:bg-accent/90"
                 >
                   <GraduationCap className="h-5 w-5" />
                   Create Free Account
@@ -555,12 +574,13 @@ function HomePageContent() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="gap-2 border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                  className="gap-2 rounded-xl border-primary-foreground/30 bg-primary-foreground/8 text-primary-foreground backdrop-blur hover:bg-primary-foreground/14 hover:text-primary-foreground"
                 >
                   <Building2 className="h-5 w-5" />
                   Learn More
                 </Button>
               </Link>
+            </div>
             </div>
           </div>
         </div>

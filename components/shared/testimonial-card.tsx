@@ -15,7 +15,7 @@ export function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
   }
 
   return (
-    <Card className="flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+    <Card className="flex flex-col border-border/70 bg-card/92 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_22px_55px_rgba(22,70,65,0.12)]">
       <CardContent className="flex flex-1 flex-col gap-4 p-6">
         <div className="flex items-center gap-1">
           {Array.from({ length: 5 }).map((_, i) => (

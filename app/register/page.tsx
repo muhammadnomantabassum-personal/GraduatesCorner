@@ -163,7 +163,7 @@ function RegisterForm() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <GraduationCap className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="text-sm font-semibold text-foreground">GraduatesCorner</span>
+              <span className="text-sm font-semibold text-foreground">Graduates Corner</span>
             </Link>
 
             <div className="mb-6">
@@ -171,7 +171,7 @@ function RegisterForm() {
                 Create your account
               </h2>
               <p className="mt-1 text-[13px] text-muted-foreground">
-                Join GraduatesCorner today
+                Join Graduates Corner today
               </p>
             </div>
 
@@ -298,7 +298,7 @@ function RegisterForm() {
         </div>
 
         <div className="shrink-0 border-t border-border/50 px-6 py-3 text-center text-[11px] text-muted-foreground">
-          © {new Date().getFullYear()} GraduatesCorner. All rights reserved.
+          © {new Date().getFullYear()} Graduates Corner. All rights reserved.
         </div>
       </div>
     </div>
