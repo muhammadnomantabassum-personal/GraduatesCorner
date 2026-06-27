@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Github, GraduationCap, Linkedin, Mail } from "lucide-react"
+import { Github, GraduationCap, Linkedin, Mail, MapPin, ShieldCheck, Sparkles } from "lucide-react"
 
 const footerLinks = {
   platform: [
@@ -28,12 +28,12 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-primary/20 bg-primary">
+    <footer className="border-t border-primary/20 bg-[linear-gradient(135deg,#102844_0%,#153d61_52%,#12372f_100%)]">
       <div className="mx-auto max-w-7xl px-6 pb-10 pt-14 lg:px-8">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-12">
           <div className="lg:col-span-5">
             <Link href="/" className="inline-flex items-center gap-2.5 transition-opacity hover:opacity-90">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-accent-foreground shadow-[0_14px_30px_rgba(184,116,38,0.24)]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-accent-foreground shadow-[0_14px_30px_rgba(67,206,145,0.24)]">
                 <GraduationCap className="h-[18px] w-[18px]" />
               </div>
               <span className="brand-wordmark text-[17px] font-bold text-primary-foreground">
@@ -44,6 +44,21 @@ export function Footer() {
               Connecting ambitious graduates with world-class academic and professional
               opportunities across Sweden and all over the world.
             </p>
+
+            <div className="mt-6 grid max-w-sm gap-2 text-[13px] text-primary-foreground/72">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-accent" />
+                AI-ready discovery for thesis, PhD, and graduate tracks
+              </div>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-accent" />
+                Curated opportunities with role-based dashboards
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-accent" />
+                Built for Sweden, Europe, and global candidates
+              </div>
+            </div>
 
             <div className="mt-6 flex items-center gap-3">
               {socialLinks.map((social) => (

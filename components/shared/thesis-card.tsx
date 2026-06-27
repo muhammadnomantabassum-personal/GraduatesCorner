@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MapPin, Calendar, Building2, GraduationCap, BookOpen, Heart, Tags } from "lucide-react"
+import { MapPin, Calendar, Building2, GraduationCap, BookOpen, Heart, Tags, ArrowUpRight, ShieldCheck } from "lucide-react"
 import type { Thesis } from "@/lib/data/types"
 import { useAuth } from "@/lib/auth-context"
 import { useWishlist } from "@/lib/wishlist-context"
@@ -24,8 +24,9 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
   const hiddenSubjectCount = subjects.length - MAX_VISIBLE_SUBJECTS
 
   return (
-    <Card className={`group relative flex flex-col border-border/70 bg-card/92 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_22px_55px_rgba(22,70,65,0.12)] ${isPhD ? "ring-1 ring-accent/20" : ""
+    <Card className={`premium-border group relative flex min-h-[360px] flex-col overflow-hidden border-border/70 bg-card/94 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_55px_rgba(15,36,61,0.13)] ${isPhD ? "ring-1 ring-accent/20" : ""
       }`}>
+      <div className={`h-1.5 w-full ${isPhD ? "bg-accent" : "bg-primary"}`} />
       {user?.type === "student" && (
         <button
           onClick={(e) => {
@@ -40,7 +41,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
         </button>
       )}
       <CardHeader className="pb-2">
-        <div className="mb-1 flex items-center justify-between">
+        <div className="mb-1 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             {/* Type badge */}
             <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-[5px] text-[11px] font-semibold tracking-wide ${isPhD
@@ -51,6 +52,12 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
               {isPhD ? "PhD Position" : "Master's Thesis"}
             </span>
           </div>
+          {thesis.postedBy === "admin" && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1 text-[10px] font-semibold text-secondary-foreground">
+              <ShieldCheck className="h-3 w-3" />
+              Verified
+            </span>
+          )}
         </div>
 
         <Link href={`/theses/${thesis.id}`}>
@@ -72,7 +79,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
             )}
             <span className="truncate">{thesis.organization}</span>
             {thesis.postedBy === "admin" && (
-              <span className="shrink-0 text-[11px] text-muted-foreground/50">· by Graduates Corner</span>
+              <span className="shrink-0 text-[11px] text-muted-foreground/50">- by Graduates Corner</span>
             )}
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -112,12 +119,16 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
         </div>
       </CardContent>
       <CardFooter className="mt-auto pt-0.5">
-        <div className="flex w-full justify-end">
+        <div className="flex w-full justify-between gap-3">
+          <span className="rounded-lg bg-secondary px-3 py-2 text-xs font-semibold capitalize text-secondary-foreground">
+            {thesis.compensation}
+          </span>
           <Link
             href={`/theses/${thesis.id}`}
-            className="rounded-lg px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-md hover:shadow-accent/25 active:scale-[0.97]"
+            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-md hover:shadow-accent/25 active:scale-[0.97]"
           >
             View Details
+            <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       </CardFooter>

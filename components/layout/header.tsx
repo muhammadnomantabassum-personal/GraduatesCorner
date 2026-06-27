@@ -16,10 +16,13 @@ import {
   Info,
   LayoutDashboard,
   LogOut,
+  Microscope,
+  Sparkles,
 } from "lucide-react"
 
 const navLinks = [
-  { href: "/theses", label: "Theses", icon: BookOpen },
+  { href: "/master-thesis", label: "Master's Thesis", icon: BookOpen },
+  { href: "/phd-positions", label: "PhD Positions", icon: Microscope },
   { href: "/trainee-programs", label: "Trainee Programs", icon: Briefcase },
   { href: "/blog", label: "Blog", icon: Newspaper },
   { href: "/testimonials", label: "Testimonials", icon: MessageSquare },
@@ -37,19 +40,21 @@ export function Header() {
     : "/login"
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+    <header className="sticky top-0 z-50 w-full border-b border-border/70 bg-card/90 shadow-[0_10px_40px_rgba(15,36,61,0.06)] backdrop-blur-xl supports-[backdrop-filter]:bg-card/78">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 lg:px-8">
-        <Link href="/" className="flex items-center gap-2">
-          <GraduationCap className="h-7 w-7 text-primary" />
-          <span className="text-lg font-bold text-foreground">Graduates Corner</span>
+        <Link href="/" className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_12px_28px_rgba(27,75,130,0.22)]">
+            <GraduationCap className="h-5 w-5" />
+          </span>
+          <span className="brand-wordmark text-lg font-bold text-foreground">Graduates Corner</span>
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex">
+        <nav className="hidden items-center gap-1 rounded-full border border-border/80 bg-background/65 p-1 shadow-inner lg:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              className="rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-card hover:text-foreground hover:shadow-sm"
             >
               {link.label}
             </Link>
@@ -83,7 +88,10 @@ export function Header() {
                 </Button>
               </Link>
               <Link href="/register">
-                <Button size="sm">Get Started</Button>
+                <Button size="sm" className="gap-2 shadow-[0_12px_28px_rgba(27,75,130,0.18)]">
+                  <Sparkles className="h-4 w-4" />
+                  Get Started
+                </Button>
               </Link>
             </>
           )}
@@ -101,7 +109,9 @@ export function Header() {
             <div className="flex h-full flex-col">
               <div className="flex items-center justify-between border-b border-border px-4 py-4">
                 <Link href="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
-                  <GraduationCap className="h-6 w-6 text-primary" />
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <GraduationCap className="h-4 w-4" />
+                  </span>
                   <span className="font-bold text-foreground">Graduates Corner</span>
                 </Link>
                 <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>

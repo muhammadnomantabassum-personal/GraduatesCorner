@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MapPin, Calendar, Building2, Clock, GraduationCap, Heart, Tags } from "lucide-react"
+import { MapPin, Calendar, Building2, Clock, Heart, Tags, ArrowUpRight, ShieldCheck } from "lucide-react"
 import type { TraineeProgram } from "@/lib/data/types"
 import { useAuth } from "@/lib/auth-context"
 import { useWishlist } from "@/lib/wishlist-context"
@@ -23,7 +23,8 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
   const hiddenFieldCount = fields.length - MAX_VISIBLE_FIELDS
 
   return (
-    <Card className="group relative flex flex-col border-border/70 bg-card/92 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_22px_55px_rgba(22,70,65,0.12)]">
+    <Card className="premium-border group relative flex min-h-[360px] flex-col overflow-hidden border-border/70 bg-card/94 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_55px_rgba(15,36,61,0.13)]">
+      <div className="h-1.5 w-full bg-accent" />
       {user?.type === "student" && (
         <button
           onClick={(e) => {
@@ -38,10 +39,16 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
         </button>
       )}
       <CardHeader className="pb-2">
-        <div className="mb-1 flex items-center gap-2">
+        <div className="mb-1 flex items-center justify-between gap-3">
           <Badge className="bg-accent text-accent-foreground hover:bg-accent/90">
             Trainee Program
           </Badge>
+          {program.postedBy === "admin" && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1 text-[10px] font-semibold text-secondary-foreground">
+              <ShieldCheck className="h-3 w-3" />
+              Verified
+            </span>
+          )}
         </div>
         <Link href={`/trainee-programs/${program.id}`}>
           <h3 className="text-balance text-lg font-semibold leading-tight text-foreground transition-colors hover:text-primary">
@@ -58,7 +65,7 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
             <Building2 className="h-4 w-4 shrink-0 text-primary" />
             <span className="truncate">{program.company}</span>
             {program.postedBy === "admin" && (
-              <span className="shrink-0 text-[11px] text-muted-foreground/50">· by Graduates Corner</span>
+              <span className="shrink-0 text-[11px] text-muted-foreground/50">- by Graduates Corner</span>
             )}
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -102,12 +109,16 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
         </div>
       </CardContent>
       <CardFooter className="mt-auto pt-0.5">
-        <div className="flex w-full justify-end">
+        <div className="flex w-full justify-between gap-3">
+          <span className="rounded-lg bg-secondary px-3 py-2 text-xs font-semibold capitalize text-secondary-foreground">
+            {program.compensation}
+          </span>
           <Link
             href={`/trainee-programs/${program.id}`}
-            className="rounded-lg px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-md hover:shadow-accent/25 active:scale-[0.97]"
+            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-md hover:shadow-accent/25 active:scale-[0.97]"
           >
             View Details
+            <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       </CardFooter>
