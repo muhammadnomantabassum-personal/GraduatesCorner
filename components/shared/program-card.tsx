@@ -23,8 +23,8 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
   const hiddenFieldCount = fields.length - MAX_VISIBLE_FIELDS
 
   return (
-    <Card className="premium-border group relative flex min-h-[360px] flex-col overflow-hidden border-border/70 bg-card/94 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_55px_rgba(15,36,61,0.13)]">
-      <div className="h-1.5 w-full bg-accent" />
+    <Card className="premium-border group relative flex min-h-[360px] flex-col overflow-hidden border-border/70 bg-card/94 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_55px_rgba(66,133,244,0.14)]">
+      <div className="h-1.5 w-full bg-[#fbbc05]" />
       {user?.type === "student" && (
         <button
           onClick={(e) => {

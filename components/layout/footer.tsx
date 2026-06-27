@@ -28,34 +28,34 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-primary/20 bg-[linear-gradient(135deg,#102844_0%,#153d61_52%,#12372f_100%)]">
+    <footer className="border-t border-primary/20 bg-[linear-gradient(135deg,#f8fbff_0%,#eef5ff_46%,#eaf7ef_100%)]">
       <div className="mx-auto max-w-7xl px-6 pb-10 pt-14 lg:px-8">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-12">
           <div className="lg:col-span-5">
             <Link href="/" className="inline-flex items-center gap-2.5 transition-opacity hover:opacity-90">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-accent-foreground shadow-[0_14px_30px_rgba(67,206,145,0.24)]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_14px_30px_rgba(66,133,244,0.20)]">
                 <GraduationCap className="h-[18px] w-[18px]" />
               </div>
-              <span className="brand-wordmark text-[17px] font-bold text-primary-foreground">
+              <span className="brand-wordmark text-[17px] font-bold text-foreground">
                 Graduates Corner
               </span>
             </Link>
-            <p className="mt-4 max-w-sm text-[14px] leading-[1.75] text-primary-foreground/68">
+            <p className="mt-4 max-w-sm text-[14px] leading-[1.75] text-muted-foreground">
               Connecting ambitious graduates with world-class academic and professional
               opportunities across Sweden and all over the world.
             </p>
 
-            <div className="mt-6 grid max-w-sm gap-2 text-[13px] text-primary-foreground/72">
+            <div className="mt-6 grid max-w-sm gap-2 text-[13px] text-muted-foreground">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-accent" />
+                <Sparkles className="h-4 w-4 text-[#fbbc05]" />
                 AI-ready discovery for thesis, PhD, and graduate tracks
               </div>
               <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-accent" />
+                <ShieldCheck className="h-4 w-4 text-[#34a853]" />
                 Curated opportunities with role-based dashboards
               </div>
               <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-accent" />
+                <MapPin className="h-4 w-4 text-[#ea4335]" />
                 Built for Sweden, Europe, and global candidates
               </div>
             </div>
@@ -68,7 +68,7 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-foreground/[0.08] text-primary-foreground/55 transition-all hover:bg-accent hover:text-accent-foreground"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-white text-muted-foreground shadow-sm transition-all hover:border-primary/30 hover:bg-primary hover:text-primary-foreground"
                 >
                   <social.icon className="h-4 w-4" />
                 </a>
@@ -83,8 +83,8 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-primary-foreground/10 pt-7">
-          <p className="text-center text-[13px] text-primary-foreground/45">
+        <div className="mt-12 border-t border-border pt-7">
+          <p className="text-center text-[13px] text-muted-foreground">
             Copyright {new Date().getFullYear()} Graduates Corner. All rights reserved.
           </p>
         </div>
@@ -102,7 +102,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h3 className="mb-4 text-[12px] font-semibold uppercase tracking-[0.1em] text-accent">
+      <h3 className="mb-4 text-[12px] font-semibold uppercase tracking-[0.1em] text-primary">
         {title}
       </h3>
       <ul className="flex flex-col gap-3">
@@ -110,7 +110,7 @@ function FooterColumn({
           <li key={link.label}>
             <Link
               href={link.href}
-              className="text-[13.5px] font-medium text-primary-foreground/68 transition-colors hover:text-primary-foreground"
+              className="text-[13.5px] font-medium text-muted-foreground transition-colors hover:text-primary"
             >
               {link.label}
             </Link>

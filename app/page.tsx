@@ -310,7 +310,8 @@ function HomePageContent() {
               "url('https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?q=80&w=2400&auto=format&fit=crop')",
           }}
         />
-        <div className="absolute inset-0 bg-[linear-gradient(105deg,rgba(13,31,52,0.96)_0%,rgba(18,55,47,0.88)_45%,rgba(13,31,52,0.48)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(105deg,rgba(24,74,156,0.92)_0%,rgba(66,133,244,0.78)_46%,rgba(255,255,255,0.22)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_24%,rgba(251,188,5,0.20),transparent_18rem),radial-gradient(circle_at_42%_72%,rgba(52,168,83,0.18),transparent_24rem),radial-gradient(circle_at_18%_18%,rgba(234,67,53,0.12),transparent_18rem)]" />
         <div className="absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(180deg,transparent_0%,var(--background)_100%)]" />
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
@@ -327,7 +328,7 @@ function HomePageContent() {
             </p>
 
             <div className="mt-8 max-w-2xl" ref={searchRef}>
-              <div className="premium-border relative flex flex-col gap-2 rounded-2xl bg-primary-foreground/12 p-2 shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:flex-row">
+              <div className="premium-border relative flex flex-col gap-2 rounded-2xl bg-primary-foreground/18 p-2 shadow-[0_24px_80px_rgba(66,133,244,0.24)] backdrop-blur-xl sm:flex-row">
                 <div className="flex min-h-14 flex-1 items-center gap-3 rounded-xl bg-card px-4 shadow-inner">
                   <Search className="h-5 w-5 shrink-0 text-primary" />
                   <input
@@ -344,7 +345,7 @@ function HomePageContent() {
                     </button>
                   )}
                 </div>
-                <Button className="min-h-14 shrink-0 gap-2 rounded-xl px-6 font-semibold shadow-[0_14px_32px_rgba(67,206,145,0.22)]">
+                <Button className="min-h-14 shrink-0 gap-2 rounded-xl px-6 font-semibold shadow-[0_14px_32px_rgba(66,133,244,0.24)]">
                   {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
                   Search
                 </Button>
@@ -409,7 +410,7 @@ function HomePageContent() {
             </div>
           </div>
 
-          <div className="premium-border relative rounded-2xl bg-card/92 p-5 text-foreground shadow-[0_28px_90px_rgba(0,0,0,0.26)] backdrop-blur">
+          <div className="premium-border relative rounded-2xl bg-card/94 p-5 text-foreground shadow-[0_28px_90px_rgba(66,133,244,0.20)] backdrop-blur">
             <div className="flex items-center justify-between border-b border-border/70 pb-4">
               <div>
                 <p className="text-xs font-semibold uppercase text-primary">Match cockpit</p>
@@ -467,10 +468,10 @@ function HomePageContent() {
       </section>
 
       <section className="relative -mt-16 px-4 pb-12">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 rounded-2xl border border-border/70 bg-card/92 p-4 shadow-[0_22px_70px_rgba(15,36,61,0.12)] backdrop-blur lg:grid-cols-4 lg:gap-4">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 rounded-2xl border border-border/70 bg-card/94 p-4 shadow-[0_22px_70px_rgba(66,133,244,0.14)] backdrop-blur lg:grid-cols-4 lg:gap-4">
           {stats.map((stat) => (
             <div key={stat.label} className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl bg-secondary/55 p-4 text-center ring-1 ring-border/40">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_10px_24px_rgba(66,133,244,0.20)]">
                 <stat.icon className="h-5 w-5" />
               </div>
               <span className="text-3xl font-bold text-foreground">{stat.value}</span>
@@ -620,7 +621,7 @@ function HomePageContent() {
 
       <section className="px-4 py-16 lg:py-20">
         <div className="mx-auto max-w-7xl">
-          <div className="relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#102844_0%,#184f76_55%,#12372f_100%)] px-8 py-12 text-center text-primary-foreground shadow-[0_24px_80px_rgba(15,36,61,0.22)] ring-1 ring-primary/20 lg:px-16 lg:py-16">
+          <div className="relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#1a73e8_0%,#4285f4_48%,#34a853_100%)] px-8 py-12 text-center text-primary-foreground shadow-[0_24px_80px_rgba(66,133,244,0.24)] ring-1 ring-primary/20 lg:px-16 lg:py-16">
             <div
               className="absolute inset-0 bg-cover bg-center opacity-20"
               style={{
@@ -640,7 +641,7 @@ function HomePageContent() {
               </p>
               <div className="flex flex-wrap items-center justify-center gap-4">
                 <Link href="/register">
-                  <Button size="lg" className="gap-2 rounded-xl bg-accent text-accent-foreground shadow-[0_14px_32px_rgba(67,206,145,0.26)] hover:bg-accent/90">
+                  <Button size="lg" className="gap-2 rounded-xl bg-white text-[#1a73e8] shadow-[0_14px_32px_rgba(255,255,255,0.24)] hover:bg-white/92">
                     <GraduationCap className="h-5 w-5" />
                     Create Free Account
                   </Button>

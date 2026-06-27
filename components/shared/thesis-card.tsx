@@ -24,9 +24,9 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
   const hiddenSubjectCount = subjects.length - MAX_VISIBLE_SUBJECTS
 
   return (
-    <Card className={`premium-border group relative flex min-h-[360px] flex-col overflow-hidden border-border/70 bg-card/94 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_55px_rgba(15,36,61,0.13)] ${isPhD ? "ring-1 ring-accent/20" : ""
+    <Card className={`premium-border group relative flex min-h-[360px] flex-col overflow-hidden border-border/70 bg-card/94 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_55px_rgba(66,133,244,0.14)] ${isPhD ? "ring-1 ring-accent/20" : ""
       }`}>
-      <div className={`h-1.5 w-full ${isPhD ? "bg-accent" : "bg-primary"}`} />
+      <div className={`h-1.5 w-full ${isPhD ? "bg-[#34a853]" : "bg-primary"}`} />
       {user?.type === "student" && (
         <button
           onClick={(e) => {

@@ -14,7 +14,7 @@ export function BlogCard({ post, featured = false }: { post: BlogPost; featured?
 
   if (featured) {
     return (
-      <Card className="overflow-hidden border-border/70 bg-card/92 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_22px_55px_rgba(22,70,65,0.12)]">
+      <Card className="overflow-hidden border-border/70 bg-card/92 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_22px_55px_rgba(66,133,244,0.14)]">
         <div className="grid md:grid-cols-2">
           <div className="relative aspect-video bg-secondary md:aspect-auto md:min-h-[280px]">
             {post.coverImage ? (
@@ -74,7 +74,7 @@ export function BlogCard({ post, featured = false }: { post: BlogPost; featured?
   }
 
   return (
-    <Card className="flex flex-col overflow-hidden border-border/70 bg-card/92 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_22px_55px_rgba(22,70,65,0.12)]">
+    <Card className="flex flex-col overflow-hidden border-border/70 bg-card/92 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_22px_55px_rgba(66,133,244,0.14)]">
       <div className="relative aspect-video bg-secondary">
         {post.coverImage ? (
           <Image
