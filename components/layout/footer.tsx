@@ -21,9 +21,9 @@ const footerLinks = {
 }
 
 const socialLinks = [
-  { label: "LinkedIn", href: "https://linkedin.com", icon: Linkedin },
-  { label: "GitHub", href: "https://github.com", icon: Github },
-  { label: "Email", href: "mailto:hello@graduatecorner.com", icon: Mail },
+  { label: "LinkedIn", href: "https://www.linkedin.com/company/graduatescorner/", icon: Linkedin },
+  { label: "GitHub", href: "https://github.com/muhammadnomantabassum-personal", icon: Github },
+  { label: "Email", href: "mailto:admin@graduatescorner.com", icon: Mail },
 ]
 
 export function Footer() {
