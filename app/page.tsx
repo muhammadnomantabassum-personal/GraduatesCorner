@@ -173,8 +173,8 @@ function HomePageContent() {
       setLoading(true)
       try {
         const [{ data: thesesData }, { data: progData }, { data: postsData }, { data: testData }] = await Promise.all([
-          supabase.from("theses").select("*").eq("status", "approved").limit(6),
-          supabase.from("trainee_programs").select("*").eq("status", "approved").limit(3),
+          supabase.from("theses").select("*, profiles:posted_by_user_id (is_verified, verification_badge)").eq("status", "approved").limit(6),
+          supabase.from("trainee_programs").select("*, profiles:posted_by_user_id (is_verified, verification_badge)").eq("status", "approved").limit(3),
           supabase.from("blog_posts").select("*, profiles(avatar)").eq("status", "approved").order("created_at", { ascending: false }).limit(3),
           supabase.from("testimonials").select("*, profiles(avatar)").eq("status", "approved").limit(3),
         ])
@@ -196,6 +196,8 @@ function HomePageContent() {
             externalUrl: t.external_url,
             status: t.status,
             createdAt: t.created_at,
+            organizationVerified: t.posted_by === "admin" || Boolean(t.profiles?.is_verified),
+            verificationBadge: t.profiles?.verification_badge || "verified",
           })))
         }
 
@@ -215,6 +217,8 @@ function HomePageContent() {
             externalUrl: p.external_url,
             status: p.status,
             createdAt: p.created_at,
+            organizationVerified: p.posted_by === "admin" || Boolean(p.profiles?.is_verified),
+            verificationBadge: p.profiles?.verification_badge || "verified",
           })))
         }
 

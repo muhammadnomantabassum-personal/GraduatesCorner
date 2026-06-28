@@ -28,8 +28,8 @@ export default function StudentAppliedPage() {
         .select(`
           thesis_id,
           program_id,
-          theses (*),
-          trainee_programs (*)
+          theses (*, profiles:posted_by_user_id (is_verified, verification_badge)),
+          trainee_programs (*, profiles:posted_by_user_id (is_verified, verification_badge))
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
@@ -55,6 +55,8 @@ export default function StudentAppliedPage() {
             externalUrl: item.theses.external_url,
             status: item.theses.status,
             createdAt: item.theses.created_at,
+            organizationVerified: item.theses.posted_by === "admin" || Boolean(item.theses.profiles?.is_verified),
+            verificationBadge: item.theses.profiles?.verification_badge || "verified",
           }))
         
         const programs = data
@@ -74,6 +76,8 @@ export default function StudentAppliedPage() {
             externalUrl: item.trainee_programs.external_url,
             status: item.trainee_programs.status,
             createdAt: item.trainee_programs.created_at,
+            organizationVerified: item.trainee_programs.posted_by === "admin" || Boolean(item.trainee_programs.profiles?.is_verified),
+            verificationBadge: item.trainee_programs.profiles?.verification_badge || "verified",
           }))
 
         setAppliedTheses(theses)
@@ -93,7 +97,7 @@ export default function StudentAppliedPage() {
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Applied Posts</h1>
-          <p className="text-sm text-muted-foreground">Posts where you clicked "Apply on Company Website"</p>
+          <p className="text-sm text-muted-foreground">Posts where you clicked &ldquo;Apply on Company Website&rdquo;</p>
         </div>
         <Badge variant="outline" className="h-7 gap-1.5 px-3 font-medium">
           <Send className="h-3.5 w-3.5 text-primary" />
@@ -122,7 +126,7 @@ export default function StudentAppliedPage() {
             </div>
             <h3 className="text-xl font-semibold text-foreground">No applications yet</h3>
             <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-              You haven't applied to any posts yet. Browse opportunities and click apply to track them here.
+              You haven&apos;t applied to any posts yet. Browse opportunities and click apply to track them here.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href="/master-thesis">

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Calendar, Building2, GraduationCap, BookOpen, Heart, Tags, ArrowUpRight, ShieldCheck } from "lucide-react"
 import type { Thesis } from "@/lib/data/types"
 import { useWishlist } from "@/lib/wishlist-context"
+import { VerifiedBadge } from "@/components/shared/verified-badge"
 
 export function ThesisCard({ thesis }: { thesis: Thesis }) {
   const { isInWishlist, toggleWishlist } = useWishlist()
@@ -14,6 +15,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
   const [showAllSubjects, setShowAllSubjects] = useState(false)
 
   const isLiked = isInWishlist(thesis.id, "thesis")
+  const isVerified = thesis.organizationVerified || thesis.postedBy === "admin"
   const daysUntilDeadline = Math.ceil(
     (new Date(thesis.deadline).getTime() - new Date().setHours(0, 0, 0, 0)) / 86_400_000
   )
@@ -64,8 +66,8 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
               {isPhD ? "PhD Position" : "Master's Thesis"}
             </span>
           </div>
-          {thesis.postedBy === "admin" && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1 text-[10px] font-semibold text-secondary-foreground">
+          {isVerified && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#1877F2]/10 px-2 py-1 text-[10px] font-semibold text-[#1877F2] ring-1 ring-[#1877F2]/15">
               <ShieldCheck className="h-3 w-3" />
               Verified
             </span>
@@ -90,6 +92,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
               <Building2 className="h-4 w-4 shrink-0 text-primary" />
             )}
             <span className="truncate">{thesis.organization}</span>
+            {isVerified && <VerifiedBadge compact badge={thesis.verificationBadge} />}
             {thesis.postedBy === "admin" && (
               <span className="shrink-0 text-[11px] text-muted-foreground/50">- by Graduates Corner</span>
             )}

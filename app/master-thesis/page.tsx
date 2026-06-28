@@ -21,6 +21,7 @@ export default function MasterThesisPage() {
     field: [],
     location: [],
     compensation: [],
+    trust: [],
   })
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export default function MasterThesisPage() {
       setLoading(true)
       const { data, error } = await supabase
         .from('theses')
-        .select('*')
+        .select('*, profiles:posted_by_user_id (is_verified, verification_badge)')
         .eq('status', 'approved')
         .eq('type', 'master')
 
@@ -52,6 +53,8 @@ export default function MasterThesisPage() {
           externalUrl: t.external_url,
           status: t.status,
           createdAt: t.created_at,
+          organizationVerified: t.posted_by === "admin" || Boolean(t.profiles?.is_verified),
+          verificationBadge: t.profiles?.verification_badge || "verified",
         }))
         setTheses(formattedData)
       }
@@ -72,7 +75,7 @@ export default function MasterThesisPage() {
   }
 
   const handleClearAll = () => {
-    setFilters({ field: [], location: [], compensation: [] })
+    setFilters({ field: [], location: [], compensation: [], trust: [] })
   }
 
   const activeFilterCount = Object.values(filters).reduce(
@@ -168,6 +171,18 @@ export default function MasterThesisPage() {
           },
         ],
       },
+      {
+        id: "trust",
+        label: "Trust",
+        type: "checkbox" as const,
+        options: [
+          {
+            value: "verified",
+            label: "Verified organizations",
+            count: theses.filter((t) => t.organizationVerified || t.postedBy === "admin").length,
+          },
+        ],
+      },
     ]
   }, [theses])
 
@@ -205,6 +220,10 @@ export default function MasterThesisPage() {
       .filter((t) => {
         if (filters.compensation.length === 0) return true
         return filters.compensation.includes(t.compensation)
+      })
+      .filter((t) => {
+        if (filters.trust.length === 0) return true
+        return t.organizationVerified || t.postedBy === "admin"
       })
   }, [theses, search, filters])
 

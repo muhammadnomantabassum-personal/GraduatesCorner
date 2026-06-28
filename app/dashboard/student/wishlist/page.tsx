@@ -44,8 +44,8 @@ export default function StudentWishlistPage() {
         .select(`
           thesis_id,
           program_id,
-          theses (*),
-          trainee_programs (*)
+          theses (*, profiles:posted_by_user_id (is_verified, verification_badge)),
+          trainee_programs (*, profiles:posted_by_user_id (is_verified, verification_badge))
         `)
         .eq("user_id", user.id)
 
@@ -70,6 +70,8 @@ export default function StudentWishlistPage() {
             externalUrl: item.theses.external_url,
             status: item.theses.status,
             createdAt: item.theses.created_at,
+            organizationVerified: item.theses.posted_by === "admin" || Boolean(item.theses.profiles?.is_verified),
+            verificationBadge: item.theses.profiles?.verification_badge || "verified",
           }))
 
         const programs = data
@@ -89,6 +91,8 @@ export default function StudentWishlistPage() {
             externalUrl: item.trainee_programs.external_url,
             status: item.trainee_programs.status,
             createdAt: item.trainee_programs.created_at,
+            organizationVerified: item.trainee_programs.posted_by === "admin" || Boolean(item.trainee_programs.profiles?.is_verified),
+            verificationBadge: item.trainee_programs.profiles?.verification_badge || "verified",
           }))
 
         setWishlistTheses(theses)

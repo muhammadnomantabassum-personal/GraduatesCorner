@@ -7,12 +7,14 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Calendar, Building2, Clock, Heart, Tags, ArrowUpRight, ShieldCheck } from "lucide-react"
 import type { TraineeProgram } from "@/lib/data/types"
 import { useWishlist } from "@/lib/wishlist-context"
+import { VerifiedBadge } from "@/components/shared/verified-badge"
 
 export function ProgramCard({ program }: { program: TraineeProgram }) {
   const { isInWishlist, toggleWishlist } = useWishlist()
   const [showAllFields, setShowAllFields] = useState(false)
 
   const isLiked = isInWishlist(program.id, "program")
+  const isVerified = program.organizationVerified || program.postedBy === "admin"
   const daysUntilDeadline = Math.ceil(
     (new Date(program.deadline).getTime() - new Date().setHours(0, 0, 0, 0)) / 86_400_000
   )
@@ -55,8 +57,8 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
           <Badge className="bg-accent text-accent-foreground hover:bg-accent/90">
             Trainee Program
           </Badge>
-          {program.postedBy === "admin" && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1 text-[10px] font-semibold text-secondary-foreground">
+          {isVerified && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#1877F2]/10 px-2 py-1 text-[10px] font-semibold text-[#1877F2] ring-1 ring-[#1877F2]/15">
               <ShieldCheck className="h-3 w-3" />
               Verified
             </span>
@@ -76,6 +78,7 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Building2 className="h-4 w-4 shrink-0 text-primary" />
             <span className="truncate">{program.company}</span>
+            {isVerified && <VerifiedBadge compact badge={program.verificationBadge} />}
             {program.postedBy === "admin" && (
               <span className="shrink-0 text-[11px] text-muted-foreground/50">- by Graduates Corner</span>
             )}

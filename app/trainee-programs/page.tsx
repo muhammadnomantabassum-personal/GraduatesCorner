@@ -33,6 +33,7 @@ export default function TraineeProgramsPage() {
     location: [],
     compensation: [],
     duration: [],
+    trust: [],
   })
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export default function TraineeProgramsPage() {
       setLoading(true)
       const { data, error } = await supabase
         .from('trainee_programs')
-        .select('*')
+        .select('*, profiles:posted_by_user_id (is_verified, verification_badge)')
         .eq('status', 'approved')
 
       if (error) {
@@ -61,6 +62,8 @@ export default function TraineeProgramsPage() {
           externalUrl: p.external_url,
           status: p.status,
           createdAt: p.created_at,
+          organizationVerified: p.posted_by === "admin" || Boolean(p.profiles?.is_verified),
+          verificationBadge: p.profiles?.verification_badge || "verified",
         }))
         setPrograms(formattedData)
       }
@@ -81,7 +84,7 @@ export default function TraineeProgramsPage() {
   }
 
   const handleClearAll = () => {
-    setFilters({ field: [], location: [], compensation: [], duration: [] })
+    setFilters({ field: [], location: [], compensation: [], duration: [], trust: [] })
   }
 
   const activeFilterCount = Object.values(filters).reduce(
@@ -194,6 +197,18 @@ export default function TraineeProgramsPage() {
           count: durCounts[d.value] || 0,
         })),
       },
+      {
+        id: "trust",
+        label: "Trust",
+        type: "checkbox" as const,
+        options: [
+          {
+            value: "verified",
+            label: "Verified companies",
+            count: programs.filter((p) => p.organizationVerified || p.postedBy === "admin").length,
+          },
+        ],
+      },
     ]
   }, [programs])
 
@@ -236,6 +251,10 @@ export default function TraineeProgramsPage() {
         if (filters.duration.length === 0) return true
         const months = p.duration.replace(/[^0-9]/g, "")
         return filters.duration.includes(months)
+      })
+      .filter((p) => {
+        if (filters.trust.length === 0) return true
+        return p.organizationVerified || p.postedBy === "admin"
       })
   }, [programs, search, filters])
 

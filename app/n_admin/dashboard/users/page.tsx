@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo } from "react"
 import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { VerifiedBadge } from "@/components/shared/verified-badge"
 import {
   Select,
   SelectContent,
@@ -20,6 +22,8 @@ import {
   Mail,
   CalendarDays,
   Loader2,
+  ShieldCheck,
+  ShieldX,
 } from "lucide-react"
 import type { User, UserType } from "@/lib/data/types"
 import { toast } from "sonner"
@@ -31,6 +35,7 @@ export default function AdminUsersPage() {
   const [activeTab, setActiveTab] = useState<FilterTab>("all")
   const [allUsers, setAllUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -51,7 +56,12 @@ export default function AdminUsersPage() {
           organization: u.organization,
           bio: u.bio,
           avatar: u.avatar,
-          createdAt: u.created_at
+          createdAt: u.created_at,
+          isVerified: u.is_verified ?? false,
+          verifiedAt: u.verified_at ?? undefined,
+          verifiedBy: u.verified_by ?? undefined,
+          verificationNote: u.verification_note ?? undefined,
+          verificationBadge: u.verification_badge ?? undefined,
         })))
       }
       setLoading(false)
@@ -59,6 +69,46 @@ export default function AdminUsersPage() {
 
     fetchUsers()
   }, [supabase])
+
+  const handleVerification = async (targetUser: User, shouldVerify: boolean) => {
+    if (!["company", "university"].includes(targetUser.type)) {
+      toast.error("Only company and university profiles can be verified")
+      return
+    }
+
+    setUpdatingId(targetUser.id)
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        is_verified: shouldVerify,
+        verified_at: shouldVerify ? new Date().toISOString() : null,
+        verified_by: shouldVerify ? "admin" : null,
+        verification_note: shouldVerify ? "Manually verified by GraduatesCorner admin" : null,
+        verification_badge: "verified",
+      })
+      .eq("id", targetUser.id)
+
+    if (error) {
+      toast.error(shouldVerify ? "Failed to verify profile" : "Failed to remove verification")
+    } else {
+      setAllUsers((current) =>
+        current.map((u) =>
+          u.id === targetUser.id
+            ? {
+              ...u,
+              isVerified: shouldVerify,
+              verifiedAt: shouldVerify ? new Date().toISOString() : undefined,
+              verifiedBy: shouldVerify ? "admin" : undefined,
+              verificationNote: shouldVerify ? "Manually verified by GraduatesCorner admin" : undefined,
+              verificationBadge: "verified",
+            }
+            : u
+        )
+      )
+      toast.success(shouldVerify ? "Profile verified with blue tick" : "Verification removed")
+    }
+    setUpdatingId(null)
+  }
 
   const nonAdminUsers = useMemo(() => 
     allUsers.filter((u) => u.type !== "admin"),
@@ -77,6 +127,7 @@ export default function AdminUsersPage() {
     company: nonAdminUsers.filter((u) => u.type === "company").length,
     admin: 0,
   }
+  const verifiedCount = nonAdminUsers.filter((u) => u.isVerified).length
 
   const tabs: { key: FilterTab; label: string; icon: typeof Users }[] = [
     { key: "all", label: "All Users", icon: Users },
@@ -93,12 +144,18 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <div className="mb-6">
+    <div className="mx-auto max-w-5xl">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
         <h1 className="text-lg font-bold text-foreground sm:text-xl">Registered Users</h1>
         <p className="text-sm text-muted-foreground">
-          All registered students, universities, and companies
+          Manage users and manually verify trusted universities and companies
         </p>
+        </div>
+        <Badge className="w-fit gap-1.5 bg-[#1877F2] text-white hover:bg-[#1877F2]">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          {verifiedCount} verified profiles
+        </Badge>
       </div>
 
       {/* Mobile: Select dropdown */}
@@ -175,9 +232,14 @@ export default function AdminUsersPage() {
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-foreground">
-                          {u.organization || u.name}
-                        </p>
+                        <div className="flex min-w-0 items-center gap-2">
+                          <p className="truncate text-sm font-semibold text-foreground">
+                            {u.organization || u.name}
+                          </p>
+                          {u.isVerified && (
+                            <VerifiedBadge compact badge={u.verificationBadge} />
+                          )}
+                        </div>
                         {u.bio && (
                           <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
                             {u.bio}
@@ -199,12 +261,32 @@ export default function AdminUsersPage() {
                         </div>
                       </div>
                     </div>
-                    <Badge
-                      variant="secondary"
-                      className={`self-start shrink-0 text-[10px] sm:self-auto ${config?.color || ""}`}
-                    >
-                      {config?.label || u.type}
-                    </Badge>
+                    <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                      <Badge
+                        variant="secondary"
+                        className={`self-start shrink-0 text-[10px] sm:self-auto ${config?.color || ""}`}
+                      >
+                        {config?.label || u.type}
+                      </Badge>
+                      {["company", "university"].includes(u.type) && (
+                        <Button
+                          size="sm"
+                          variant={u.isVerified ? "outline" : "default"}
+                          disabled={updatingId === u.id}
+                          onClick={() => handleVerification(u, !u.isVerified)}
+                          className={`h-8 gap-1.5 text-xs ${u.isVerified ? "text-muted-foreground" : "bg-[#1877F2] text-white hover:bg-[#0f66d8]"}`}
+                        >
+                          {updatingId === u.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : u.isVerified ? (
+                            <ShieldX className="h-3.5 w-3.5" />
+                          ) : (
+                            <ShieldCheck className="h-3.5 w-3.5" />
+                          )}
+                          {u.isVerified ? "Remove tick" : "Verify"}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

@@ -10,6 +10,11 @@ export interface User {
   avatar?: string
   createdAt: string
   welcomeEmailSent?: boolean
+  isVerified?: boolean
+  verifiedAt?: string
+  verifiedBy?: string
+  verificationNote?: string
+  verificationBadge?: "verified" | "trusted" | "featured"
 }
 
 export type ThesisType = "master" | "phd"
@@ -34,6 +39,8 @@ export interface Thesis {
   createdAt: string
   creatorName?: string
   creatorType?: string
+  organizationVerified?: boolean
+  verificationBadge?: "verified" | "trusted" | "featured"
 }
 
 export interface TraineeProgram {
@@ -51,6 +58,8 @@ export interface TraineeProgram {
   externalUrl: string
   status: ApprovalStatus
   createdAt: string
+  organizationVerified?: boolean
+  verificationBadge?: "verified" | "trusted" | "featured"
 }
 
 export interface BlogPost {

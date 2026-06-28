@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth-context"
 import type { TraineeProgram } from "@/lib/data/types"
+import { VerifiedBadge } from "@/components/shared/verified-badge"
 import {
   ArrowLeft,
   MapPin,
@@ -36,7 +37,7 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
       setLoading(true)
       const { data, error } = await supabase
         .from('trainee_programs')
-        .select('*')
+        .select('*, profiles:posted_by_user_id (is_verified, verification_badge)')
         .eq('id', id)
         .single()
 
@@ -58,6 +59,8 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
           externalUrl: data.external_url,
           status: data.status,
           createdAt: data.created_at,
+          organizationVerified: data.posted_by === "admin" || Boolean(data.profiles?.is_verified),
+          verificationBadge: data.profiles?.verification_badge || "verified",
         }
         setProgram(formattedProgram)
 
@@ -68,7 +71,7 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
 
         const { data: relatedData } = await supabase
           .from('trainee_programs')
-          .select('*')
+          .select('*, profiles:posted_by_user_id (is_verified, verification_badge)')
           .eq('status', 'approved')
           .neq('id', data.id)
           .limit(30) // fetch broader pool, filter client-side
@@ -100,6 +103,8 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
             externalUrl: p.external_url,
             status: p.status,
             createdAt: p.created_at,
+            organizationVerified: p.posted_by === "admin" || Boolean(p.profiles?.is_verified),
+            verificationBadge: p.profiles?.verification_badge || "verified",
           })))
         }
       }
@@ -168,6 +173,9 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
           <div className="flex flex-wrap items-center gap-4 text-sm text-primary-foreground/80">
             <span className="flex items-center gap-1.5">
               <Building2 className="h-4 w-4" /> {program.company}
+              {(program.organizationVerified || program.postedBy === "admin") && (
+                <VerifiedBadge badge={program.verificationBadge} className="bg-white text-[#1877F2]" />
+              )}
               {program.postedBy === "admin" && (
                 <span className="text-primary-foreground/40">· by Graduates Corner</span>
               )}

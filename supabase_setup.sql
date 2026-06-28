@@ -10,10 +10,20 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   bio TEXT,
   avatar TEXT,
   welcome_email_sent BOOLEAN DEFAULT FALSE,
+  is_verified BOOLEAN DEFAULT FALSE,
+  verified_at TIMESTAMPTZ,
+  verified_by TEXT,
+  verification_note TEXT,
+  verification_badge TEXT DEFAULT 'verified' CHECK (verification_badge IN ('verified', 'trusted', 'featured')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS welcome_email_sent BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verified_by TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verification_note TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verification_badge TEXT DEFAULT 'verified';
 
 -- 2. Theses
 CREATE TABLE IF NOT EXISTS public.theses (

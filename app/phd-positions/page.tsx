@@ -21,6 +21,7 @@ export default function PhDPositionsPage() {
     field: [],
     location: [],
     compensation: [],
+    trust: [],
   })
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export default function PhDPositionsPage() {
       setLoading(true)
       const { data, error } = await supabase
         .from('theses')
-        .select('*')
+        .select('*, profiles:posted_by_user_id (is_verified, verification_badge)')
         .eq('status', 'approved')
         .eq('type', 'phd')
 
@@ -51,6 +52,8 @@ export default function PhDPositionsPage() {
           externalUrl: t.external_url,
           status: t.status,
           createdAt: t.created_at,
+          organizationVerified: t.posted_by === "admin" || Boolean(t.profiles?.is_verified),
+          verificationBadge: t.profiles?.verification_badge || "verified",
         }))
         setTheses(formattedData)
       }
@@ -71,7 +74,7 @@ export default function PhDPositionsPage() {
   }
 
   const handleClearAll = () => {
-    setFilters({ field: [], location: [], compensation: [] })
+    setFilters({ field: [], location: [], compensation: [], trust: [] })
   }
 
   const activeFilterCount = Object.values(filters).reduce(
@@ -166,6 +169,18 @@ export default function PhDPositionsPage() {
           },
         ],
       },
+      {
+        id: "trust",
+        label: "Trust",
+        type: "checkbox" as const,
+        options: [
+          {
+            value: "verified",
+            label: "Verified organizations",
+            count: theses.filter((t) => t.organizationVerified || t.postedBy === "admin").length,
+          },
+        ],
+      },
     ]
   }, [theses])
 
@@ -203,6 +218,10 @@ export default function PhDPositionsPage() {
       .filter((t) => {
         if (filters.compensation.length === 0) return true
         return filters.compensation.includes(t.compensation)
+      })
+      .filter((t) => {
+        if (filters.trust.length === 0) return true
+        return t.organizationVerified || t.postedBy === "admin"
       })
   }, [theses, search, filters])
 

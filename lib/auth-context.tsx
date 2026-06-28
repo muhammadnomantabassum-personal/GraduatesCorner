@@ -60,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     avatar: authUser.user_metadata?.avatar_url || undefined,
     createdAt: authUser.created_at || new Date().toISOString(),
     welcomeEmailSent: false,
+    isVerified: false,
   }), [])
 
   // Fetch profile from DB — no retries, instant fallback prevents spinner
@@ -87,6 +88,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           avatar: p.avatar || authUser.user_metadata?.avatar_url || undefined,
           createdAt: p.created_at,
           welcomeEmailSent: p.welcome_email_sent ?? false,
+          isVerified: p.is_verified ?? false,
+          verifiedAt: p.verified_at ?? undefined,
+          verifiedBy: p.verified_by ?? undefined,
+          verificationNote: p.verification_note ?? undefined,
+          verificationBadge: p.verification_badge ?? undefined,
         }
       }
     } catch {

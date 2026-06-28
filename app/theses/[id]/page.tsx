@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth-context"
 import type { Thesis } from "@/lib/data/types"
+import { VerifiedBadge } from "@/components/shared/verified-badge"
 import {
   ArrowLeft,
   MapPin,
@@ -37,7 +38,7 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
       setLoading(true)
       const { data, error } = await supabase
         .from('theses')
-        .select('*')
+        .select('*, profiles:posted_by_user_id (is_verified, verification_badge)')
         .eq('id', id)
         .single()
 
@@ -60,6 +61,8 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
           externalUrl: data.external_url,
           status: data.status,
           createdAt: data.created_at,
+          organizationVerified: data.posted_by === "admin" || Boolean(data.profiles?.is_verified),
+          verificationBadge: data.profiles?.verification_badge || "verified",
         }
         setThesis(formattedThesis)
 
@@ -70,7 +73,7 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
 
         const { data: relatedData } = await supabase
           .from('theses')
-          .select('*')
+          .select('*, profiles:posted_by_user_id (is_verified, verification_badge)')
           .eq('status', 'approved')
           .neq('id', data.id)
           .limit(30) // fetch broader pool, filter client-side
@@ -103,6 +106,8 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
             externalUrl: t.external_url,
             status: t.status,
             createdAt: t.created_at,
+            organizationVerified: t.posted_by === "admin" || Boolean(t.profiles?.is_verified),
+            verificationBadge: t.profiles?.verification_badge || "verified",
           })))
         }
       }
@@ -177,6 +182,9 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
                 <Building2 className="h-4 w-4" />
               )}
               {thesis.organization}
+              {(thesis.organizationVerified || thesis.postedBy === "admin") && (
+                <VerifiedBadge badge={thesis.verificationBadge} className="bg-white text-[#1877F2]" />
+              )}
               {thesis.postedBy === "admin" && (
                 <span className="text-primary-foreground/40">· by Graduates Corner</span>
               )}
