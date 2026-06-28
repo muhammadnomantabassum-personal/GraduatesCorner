@@ -14,6 +14,7 @@ import {
   Home,
   BookOpen,
   Briefcase,
+  Heart,
   Newspaper,
   Info,
   LayoutDashboard,
@@ -120,6 +121,18 @@ export function Navbar() {
                 </div>
               ) : isLoggedIn ? (
                 <>
+                  {user?.type === "student" && (
+                    <Link href="/dashboard/student/wishlist">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 gap-1.5 rounded-lg text-[13px] font-medium text-muted-foreground hover:bg-[#ea4335]/10 hover:text-[#ea4335]"
+                      >
+                        <Heart className="h-3.5 w-3.5" />
+                        Wishlist
+                      </Button>
+                    </Link>
+                  )}
                   <Link href={dashboardPath}>
                     <Button
                       variant="ghost"
@@ -225,6 +238,17 @@ export function Navbar() {
                       </div>
                     ) : isLoggedIn ? (
                       <div className="flex flex-col gap-2">
+                        {user?.type === "student" && (
+                          <Link href="/dashboard/student/wishlist" onClick={() => setOpen(false)}>
+                            <Button
+                              variant="outline"
+                              className="w-full justify-start gap-2 text-[13px] hover:border-[#ea4335]/30 hover:bg-[#ea4335]/10 hover:text-[#ea4335]"
+                            >
+                              <Heart className="h-4 w-4" />
+                              Wishlist
+                            </Button>
+                          </Link>
+                        )}
                         <Link href={dashboardPath} onClick={() => setOpen(false)}>
                           <Button
                             variant="outline"

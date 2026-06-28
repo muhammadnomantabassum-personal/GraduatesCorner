@@ -18,11 +18,13 @@ import {
   BookOpen,
   Briefcase,
   Building2,
+  CalendarClock,
   CheckCircle2,
   Cpu,
   FileText,
   Globe2,
   GraduationCap,
+  Heart,
   Layers3,
   Loader2,
   MapPin,
@@ -101,6 +103,33 @@ const platformPillars = [
     title: "Decision-ready profiles",
     copy: "Cards surface field, deadline, compensation, organization, and location without forcing users into detail pages.",
     icon: Target,
+  },
+]
+
+const userFriendlyFeatures = [
+  {
+    title: "One-click wishlist",
+    copy: "Students can save thesis, PhD, and trainee opportunities from every card and return to a focused saved workspace.",
+    icon: Heart,
+    color: "text-[#ea4335]",
+  },
+  {
+    title: "Deadline awareness",
+    copy: "Opportunity cards surface time-left signals so candidates can prioritize urgent applications quickly.",
+    icon: CalendarClock,
+    color: "text-[#fbbc05]",
+  },
+  {
+    title: "Smart fit signals",
+    copy: "Search, field tags, compensation chips, and role-specific cards help users compare options without getting lost.",
+    icon: Target,
+    color: "text-primary",
+  },
+  {
+    title: "Guided journeys",
+    copy: "Students, universities, and companies get clear paths into the actions that matter for their role.",
+    icon: Sparkles,
+    color: "text-[#34a853]",
   },
 ]
 
@@ -493,6 +522,50 @@ function HomePageContent() {
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{pillar.copy}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 pb-16">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-8 rounded-3xl border border-border bg-[linear-gradient(135deg,#ffffff_0%,#f5f9ff_48%,#edf8f1_100%)] p-6 shadow-sm lg:grid-cols-[0.85fr_1.15fr] lg:p-8">
+            <div className="flex flex-col justify-center">
+              <Badge variant="outline" className="mb-4 w-fit gap-2 bg-white/70">
+                <Heart className="h-3.5 w-3.5 text-[#ea4335]" />
+                Built around user momentum
+              </Badge>
+              <h2 className="text-balance text-3xl font-bold text-foreground lg:text-4xl">
+                Save, compare, and act on the right opportunities.
+              </h2>
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground lg:text-base">
+                Graduates Corner now makes shortlist building more visible, deadline decisions faster, and exploration more personal for every visitor.
+              </p>
+              <div className="mt-7 flex flex-wrap gap-3">
+                <Link href="/register">
+                  <Button className="gap-2 rounded-xl">
+                    Create account
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/dashboard/student/wishlist">
+                  <Button variant="outline" className="gap-2 rounded-xl bg-white/80">
+                    Open wishlist
+                    <Heart className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {userFriendlyFeatures.map((feature) => (
+                <div key={feature.title} className="rounded-2xl border border-border bg-card/90 p-5 shadow-sm">
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-secondary">
+                    <feature.icon className={`h-5 w-5 ${feature.color}`} />
+                  </div>
+                  <h3 className="text-base font-semibold text-foreground">{feature.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{feature.copy}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

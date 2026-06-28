@@ -4,18 +4,30 @@ import { useState } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { MapPin, Calendar, Building2, Clock, Heart, Tags, ArrowUpRight, ShieldCheck } from "lucide-react"
 import type { TraineeProgram } from "@/lib/data/types"
-import { useAuth } from "@/lib/auth-context"
 import { useWishlist } from "@/lib/wishlist-context"
 
 export function ProgramCard({ program }: { program: TraineeProgram }) {
-  const { user } = useAuth()
   const { isInWishlist, toggleWishlist } = useWishlist()
   const [showAllFields, setShowAllFields] = useState(false)
 
   const isLiked = isInWishlist(program.id, "program")
+  const daysUntilDeadline = Math.ceil(
+    (new Date(program.deadline).getTime() - new Date().setHours(0, 0, 0, 0)) / 86_400_000
+  )
+  const deadlineTone =
+    daysUntilDeadline < 0
+      ? "bg-muted text-muted-foreground"
+      : daysUntilDeadline <= 14
+        ? "bg-[#fbbc05]/15 text-[#996800] ring-1 ring-[#fbbc05]/25"
+        : "bg-[#34a853]/10 text-[#137333] ring-1 ring-[#34a853]/20"
+  const deadlineLabel =
+    daysUntilDeadline < 0
+      ? "Closed"
+      : daysUntilDeadline === 0
+        ? "Due today"
+        : `${daysUntilDeadline} days left`
 
   const fields = program.field.split(",").map((f) => f.trim())
   const MAX_VISIBLE_FIELDS = 2
@@ -25,19 +37,19 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
   return (
     <Card className="premium-border group relative flex min-h-[360px] flex-col overflow-hidden border-border/70 bg-card/94 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_55px_rgba(66,133,244,0.14)]">
       <div className="h-1.5 w-full bg-[#fbbc05]" />
-      {user?.type === "student" && (
-        <button
-          onClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            toggleWishlist(program.id, "program")
-          }}
-          className={`absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-all hover:scale-110 active:scale-95 shadow-sm border border-border/50 ${isLiked ? "text-red-500" : "text-muted-foreground hover:text-red-500"
-            }`}
-        >
-          <Heart className={`h-4.5 w-4.5 ${isLiked ? "fill-current" : ""}`} />
-        </button>
-      )}
+      <button
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          toggleWishlist(program.id, "program")
+        }}
+        aria-label={isLiked ? "Remove from wishlist" : "Save to wishlist"}
+        title={isLiked ? "Remove from wishlist" : "Save to wishlist"}
+        className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-white/90 shadow-sm backdrop-blur-sm transition-all hover:scale-110 active:scale-95 ${isLiked ? "text-[#ea4335]" : "text-muted-foreground hover:text-[#ea4335]"
+          }`}
+      >
+        <Heart className={`h-4.5 w-4.5 ${isLiked ? "fill-current" : ""}`} />
+      </button>
       <CardHeader className="pb-2">
         <div className="mb-1 flex items-center justify-between gap-3">
           <Badge className="bg-accent text-accent-foreground hover:bg-accent/90">
@@ -79,6 +91,9 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4 shrink-0 text-primary" />
             <span>Deadline: {new Date(program.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+            <span className={`ml-auto shrink-0 rounded-md px-2 py-0.5 text-[10px] font-semibold ${deadlineTone}`}>
+              {deadlineLabel}
+            </span>
           </div>
           <div className="flex items-start gap-2 text-sm">
             <Tags className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
