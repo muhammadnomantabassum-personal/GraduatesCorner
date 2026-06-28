@@ -55,6 +55,9 @@ export async function updateSession(request: NextRequest) {
     userType = profile?.type ?? null
   }
 
+  const isLegacyAdminSession =
+    request.cookies.get('gc_admin_session')?.value === 'true'
+
   // If unauthenticated and on a protected route, redirect to home
   if (
     !user &&
@@ -67,6 +70,7 @@ export async function updateSession(request: NextRequest) {
 
   // Admin route protection
   if (
+    !isLegacyAdminSession &&
     (!user || userType !== 'admin') &&
     request.nextUrl.pathname.startsWith('/n_admin/dashboard')
   ) {

@@ -15,7 +15,7 @@ import {
 import { toast } from "sonner"
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState("")
+  const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -24,13 +24,13 @@ export default function AdminLoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email || !password) {
+    if (!identifier || !password) {
       toast.error("Please fill in all fields")
       return
     }
 
     setIsSubmitting(true)
-    const success = await adminLogin(email, password)
+    const success = await adminLogin(identifier, password)
     setIsSubmitting(false)
 
     if (success) {
@@ -68,14 +68,14 @@ export default function AdminLoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <label htmlFor="email" className="text-[13px] font-medium text-foreground">
-                Admin Email
+                Admin Username or Email
               </label>
               <Input
-                id="email"
-                type="email"
-                placeholder="admin@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="identifier"
+                type="text"
+                placeholder="myadmin or admin@example.com"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 className="h-10 rounded-lg border-border bg-background px-3.5 text-[13px]"
               />
             </div>

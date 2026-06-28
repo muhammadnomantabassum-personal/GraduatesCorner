@@ -24,7 +24,7 @@ interface AuthContextType {
   isLoggedIn: boolean
   hasSession: boolean
   login: (email: string, password: string) => Promise<boolean>
-  adminLogin: (email: string, password: string) => Promise<boolean>
+  adminLogin: (identifier: string, password: string) => Promise<boolean>
   logout: () => Promise<void>
   refreshProfile: () => Promise<void>
   updateProfile: (updates: Partial<AppUser>) => Promise<void>
@@ -155,6 +155,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Handle initial page load — fires once when the listener is created
       if (event === "INITIAL_SESSION") {
         if (!session?.user) {
+          const isAdmin =
+            typeof window !== "undefined" &&
+            localStorage.getItem("gc_admin_session") === "true"
+          if (isAdmin) {
+            setHasSession(true)
+            setUser({
+              id: "admin-id",
+              name: "Administrator",
+              email: "admin@graduatescorner.com",
+              type: "admin",
+              createdAt: new Date().toISOString(),
+            })
+            setLoading(false)
+            return
+          }
+
           setHasSession(false)
           setUser(null)
           setLoading(false)
@@ -216,11 +232,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const adminLogin = async (
-    email: string,
+    identifier: string,
     password: string
   ): Promise<boolean> => {
+    const loginId = identifier.trim()
+
+    const { data: legacyAdmin } = await supabase
+      .from("admin_users")
+      .select("*")
+      .eq("username", loginId)
+      .eq("password", password)
+      .maybeSingle()
+
+    if (legacyAdmin) {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("gc_admin_session", "true")
+      }
+      document.cookie =
+        "gc_admin_session=true; path=/; max-age=86400; SameSite=Lax"
+
+      setUser({
+        id: "admin-id",
+        name: "Administrator",
+        email: "admin@graduatescorner.com",
+        type: "admin",
+        createdAt: new Date().toISOString(),
+      })
+      setHasSession(true)
+      return true
+    }
+
+    if (!loginId.includes("@")) return false
+
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
+      email: loginId,
       password,
     })
 
@@ -245,6 +290,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear UI state
       setUser(null)
       setHasSession(false)
+
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("gc_admin_session")
+      }
+      document.cookie =
+        "gc_admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
 
       await supabase.auth.signOut()
       
