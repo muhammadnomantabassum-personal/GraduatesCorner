@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, type ElementType } from "react"
 import { PublicLayout } from "@/components/layout/public-layout"
 import { ThesisCard } from "@/components/shared/thesis-card"
 import { FilterPanel, type FilterSection } from "@/components/shared/filter-panel"
@@ -8,8 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 import type { Thesis } from "@/lib/data/types"
-import { locations } from "@/lib/data/locations"
-import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react"
+import { Search, SlidersHorizontal, X, Loader2, BookOpen, Building2, MapPin, Sparkles, Heart } from "lucide-react"
 
 
 export default function MasterThesisPage() {
@@ -111,8 +110,6 @@ export default function MasterThesisPage() {
         return countB - countA
       })
       .map(([country, cities]) => {
-        // Find cities from our static list for this country to "enrich" but filter by counts
-        const refLoc = locations.find((l) => l.country === country)
         const countryCount = Object.values(cities).reduce((s, c) => s + c, 0)
 
         return {
@@ -211,40 +208,83 @@ export default function MasterThesisPage() {
       })
   }, [theses, search, filters])
 
+  const paidCount = theses.filter((t) => t.compensation === "paid" || t.compensation === "stipend").length
+  const organizationCount = new Set(theses.map((t) => t.organization)).size
+  const locationCount = new Set(theses.map((t) => t.location)).size
+  const popularSubjects = Object.entries(
+    theses.reduce<Record<string, number>>((acc, thesis) => {
+      thesis.subject.split(",").map((s) => s.trim()).filter(Boolean).forEach((subject) => {
+        acc[subject] = (acc[subject] || 0) + 1
+      })
+      return acc
+    }, {})
+  ).sort((a, b) => b[1] - a[1]).slice(0, 4)
+
   return (
     <PublicLayout>
-      {/* Hero */}
-      <section className="border-b border-border bg-primary px-4 py-12 text-primary-foreground lg:py-16">
-        <div className="mx-auto max-w-7xl">
-          <h1 className="mb-3 text-3xl font-bold lg:text-4xl">Master's Thesis Positions</h1>
-          <p className="mb-6 text-lg text-primary-foreground/80">
-            Find master thesis opportunities from universities and companies worldwide
-          </p>
+      <section className="relative overflow-hidden px-4 py-16 text-primary-foreground lg:py-20">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=2200&auto=format&fit=crop')" }}
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(105deg,rgba(26,78,163,0.94)_0%,rgba(66,133,244,0.82)_48%,rgba(52,168,83,0.48)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_76%_20%,rgba(251,188,5,0.22),transparent_20rem)]" />
+        <div className="relative mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_24rem] lg:items-end">
+          <div>
+            <Badge className="mb-5 gap-2 border border-white/20 bg-white/12 text-white backdrop-blur">
+              <BookOpen className="h-3.5 w-3.5" />
+              Thesis discovery studio
+            </Badge>
+            <h1 className="max-w-4xl text-balance text-4xl font-bold tracking-tight lg:text-6xl">Master&apos;s Thesis Positions</h1>
+            <p className="mt-5 max-w-2xl text-pretty text-lg leading-relaxed text-white/82">
+              Discover industry and university thesis projects with smarter filters, deadline awareness, and save-ready opportunity cards.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-2">
+              {popularSubjects.length > 0 ? popularSubjects.map(([subject]) => (
+                <button key={subject} onClick={() => setSearch(subject)} className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur hover:bg-white/18">
+                  {subject}
+                </button>
+              )) : ["AI", "Sustainability", "Engineering", "Business"].map((subject) => (
+                <button key={subject} onClick={() => setSearch(subject)} className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur hover:bg-white/18">
+                  {subject}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-white/18 bg-white/12 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.16)] backdrop-blur-xl">
+            <p className="text-sm font-semibold text-white/78">Opportunity intelligence</p>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <HeroMetric icon={BookOpen} label="Open roles" value={theses.length} />
+              <HeroMetric icon={Building2} label="Organizations" value={organizationCount} />
+              <HeroMetric icon={MapPin} label="Locations" value={locationCount} />
+              <HeroMetric icon={Sparkles} label="Funded" value={paidCount} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative -mt-8 px-4 pb-6">
+        <div className="mx-auto max-w-7xl rounded-2xl border border-border bg-card/95 p-3 shadow-[0_24px_80px_rgba(66,133,244,0.16)] backdrop-blur">
           <div className="flex items-center gap-2">
-            <div className="flex flex-1 items-center gap-2 rounded-lg bg-card px-4 py-2.5">
-              <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
+            <div className="flex min-h-12 flex-1 items-center gap-3 rounded-xl bg-background px-4">
+              <Search className="h-5 w-5 shrink-0 text-primary" />
               <input
                 type="text"
                 placeholder="Search by title, subject, organization..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                className="w-full bg-transparent text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
               {search && (
-                <button onClick={() => setSearch("")}>
+                <button onClick={() => setSearch("")} aria-label="Clear search">
                   <X className="h-4 w-4 text-muted-foreground" />
                 </button>
               )}
             </div>
-            <Button
-              variant="outline"
-              className="gap-2 border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground lg:hidden"
-              onClick={() => setShowFilters(!showFilters)}
-            >
+            <Button variant="outline" className="gap-2 lg:hidden" onClick={() => setShowFilters(!showFilters)}>
               <SlidersHorizontal className="h-4 w-4" />
-              {activeFilterCount > 0 && (
-                <span className="text-xs">{activeFilterCount}</span>
-              )}
+              Filters
+              {activeFilterCount > 0 && <span className="text-xs">{activeFilterCount}</span>}
             </Button>
           </div>
         </div>
@@ -252,17 +292,21 @@ export default function MasterThesisPage() {
 
       <section className="px-4 py-8 lg:py-12">
         <div className="mx-auto max-w-7xl">
-          {/* Results summary */}
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground">
-              Showing{" "}
-              <span className="font-semibold text-foreground">
-                {filtered.length}
-              </span>{" "}
-              {filtered.length === 1 ? "position" : "positions"}
-            </p>
+          <div className="mb-6 rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Curated thesis results</h2>
+                <p className="text-sm text-muted-foreground">
+                  Showing <span className="font-semibold text-foreground">{filtered.length}</span> {filtered.length === 1 ? "position" : "positions"} from verified sources
+                </p>
+              </div>
+              <Badge variant="outline" className="gap-2">
+                <Heart className="h-3.5 w-3.5 text-[#ea4335]" />
+                Save with wishlist
+              </Badge>
+            </div>
             {activeFilterCount > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="mt-4 flex flex-wrap items-center gap-1.5">
                 {Object.entries(filters).flatMap(([sectionId, values]) =>
                   values.map((v) => (
                     <Badge
@@ -300,7 +344,7 @@ export default function MasterThesisPage() {
             {/* Results */}
             <div className="flex-1">
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-20">
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card py-20">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <p className="mt-4 text-muted-foreground">Loading thesis...</p>
                 </div>
@@ -311,7 +355,7 @@ export default function MasterThesisPage() {
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20 text-center">
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card py-20 text-center">
                   <Search className="mb-4 h-12 w-12 text-muted-foreground/40" />
                   <h3 className="mb-2 text-lg font-semibold text-foreground">
                     No positions found
@@ -335,5 +379,15 @@ export default function MasterThesisPage() {
         </div>
       </section>
     </PublicLayout>
+  )
+}
+
+function HeroMetric({ icon: Icon, label, value }: { icon: ElementType; label: string; value: number }) {
+  return (
+    <div className="rounded-xl bg-white/12 p-3 ring-1 ring-white/10">
+      <Icon className="mb-2 h-4 w-4 text-white/80" />
+      <p className="text-2xl font-bold text-white">{value}</p>
+      <p className="text-[11px] font-medium text-white/62">{label}</p>
+    </div>
   )
 }
