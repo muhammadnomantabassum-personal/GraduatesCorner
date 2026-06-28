@@ -92,20 +92,36 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-[linear-gradient(135deg,#f8fbff_0%,#f6f9ff_52%,#f0f8f3_100%)]">
       {/* Sidebar */}
-      <aside className="hidden w-72 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex">
-        <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-6">
-          <GraduationCap className="h-6 w-6 text-sidebar-primary" />
-          <span className="font-bold">Graduates Corner</span>
-          <span className="ml-auto rounded-full bg-sidebar-primary/10 px-2 py-0.5 text-[9px] font-semibold text-sidebar-primary">
-            ADMIN
-          </span>
+      <aside className="hidden w-80 shrink-0 flex-col border-r border-white/10 bg-[linear-gradient(180deg,#0f172a_0%,#102a5c_52%,#12372f_100%)] text-white shadow-[18px_0_70px_rgba(15,23,42,0.20)] lg:flex">
+        <div className="border-b border-white/10 px-6 py-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-primary shadow-[0_14px_34px_rgba(255,255,255,0.18)]">
+              <GraduationCap className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-bold leading-tight">Graduates Corner</p>
+              <p className="text-[11px] font-medium text-white/50">Enterprise Admin Suite</p>
+            </div>
+            <span className="ml-auto rounded-full bg-[#34a853]/20 px-2.5 py-1 text-[9px] font-bold uppercase text-[#7ff0a2]">
+              Live
+            </span>
+          </div>
+          <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.07] p-4">
+            <div className="flex items-center gap-2 text-xs font-semibold text-white/70">
+              <Shield className="h-3.5 w-3.5 text-[#fbbc05]" />
+              Secure management mode
+            </div>
+            <p className="mt-2 text-[11px] leading-relaxed text-white/48">
+              Monitor platform supply, approvals, users, content, and trust signals from one command center.
+            </p>
+          </div>
         </div>
-        <nav className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+        <nav className="flex flex-1 flex-col gap-5 overflow-y-auto p-4">
           {sidebarSections.map((section, idx) => (
             <div key={idx} className="flex flex-col gap-0.5">
-              <h3 className="mb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/40">
+              <h3 className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-white/35">
                 {section.title}
               </h3>
               {section.links.map((link) => {
@@ -114,9 +130,9 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${isActive
+                        ? "bg-white text-[#1a73e8] shadow-[0_12px_32px_rgba(255,255,255,0.14)]"
+                        : "text-white/68 hover:bg-white/10 hover:text-white"
                       }`}
                   >
                     <link.icon className="h-4 w-4" />
@@ -127,11 +143,11 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             </div>
           ))}
         </nav>
-        <div className="border-t border-sidebar-border p-4">
+        <div className="border-t border-white/10 p-4">
           <Link href="/">
             <Button
               variant="ghost"
-              className="mb-2 w-full justify-start gap-2 text-sidebar-foreground/70 hover:bg-accent hover:text-accent-foreground"
+              className="mb-2 w-full justify-start gap-2 rounded-xl text-white/68 hover:bg-white/10 hover:text-white"
             >
               <Home className="h-4 w-4" /> Back to Site
             </Button>
@@ -142,7 +158,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
               logout()
               router.push("/n_admin")
             }}
-            className="w-full justify-start gap-2 text-sidebar-foreground/70 hover:bg-accent hover:text-accent-foreground"
+            className="w-full justify-start gap-2 rounded-xl text-white/68 hover:bg-[#ea4335]/20 hover:text-white"
           >
             <LogOut className="h-4 w-4" /> Log Out
           </Button>
@@ -152,19 +168,22 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
       {/* Main Content */}
       <div className="flex flex-1 flex-col">
         {/* Top bar */}
-        <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4 sm:h-16 sm:px-6">
+        <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border/70 bg-card/88 px-4 shadow-[0_10px_36px_rgba(66,133,244,0.08)] backdrop-blur-xl sm:h-16 sm:px-6">
           <div className="flex items-center gap-2 lg:hidden">
             <GraduationCap className="h-5 w-5 text-primary" />
             <span className="text-sm font-bold text-foreground">Admin</span>
           </div>
           <div className="hidden items-center gap-2 lg:flex">
             <Shield className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-medium text-muted-foreground">Admin Dashboard</h2>
+            <h2 className="text-sm font-semibold text-foreground">Admin Management System</h2>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-muted-foreground sm:block">{user.name}</span>
+            <div className="hidden text-right sm:block">
+              <p className="text-sm font-semibold text-foreground">{user.name}</p>
+              <p className="text-[11px] text-muted-foreground">Administrator</p>
+            </div>
             {/* Desktop avatar */}
-            <div className="hidden h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground lg:flex">
+            <div className="hidden h-9 w-9 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground shadow-[0_10px_24px_rgba(66,133,244,0.22)] lg:flex">
               A
             </div>
             {/* Mobile avatar with dropdown */}
@@ -221,7 +240,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
           })}
         </nav>
 
-        <main className="flex-1 bg-background p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   )
