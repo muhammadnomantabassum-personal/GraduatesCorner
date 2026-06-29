@@ -20,6 +20,7 @@ import {
   Calendar,
   Building2,
   BookOpen,
+  DatabaseZap,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -71,7 +72,54 @@ export default function AdminPhDPositionsPage() {
   }
 
   useEffect(() => {
-    fetchTheses()
+    let active = true
+
+    const loadTheses = async () => {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('theses')
+        .select(`
+          *,
+          profiles:posted_by_user_id (
+            name,
+            type
+          )
+        `)
+        .eq('type', 'phd')
+        .order('created_at', { ascending: false })
+
+      if (!active) return
+
+      if (error) {
+        toast.error("Failed to fetch PhD positions")
+      } else {
+        setTheses(data.map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          type: t.type,
+          description: t.description,
+          subject: t.subject,
+          organization: t.organization,
+          organizationType: t.organization_type,
+          location: t.location,
+          compensation: t.compensation,
+          deadline: t.deadline,
+          postedBy: t.posted_by,
+          postedByUserId: t.posted_by_user_id,
+          externalUrl: t.external_url,
+          status: t.status,
+          createdAt: t.created_at,
+          creatorName: t.profiles?.name,
+          creatorType: t.profiles?.type
+        })))
+      }
+      setLoading(false)
+    }
+
+    loadTheses()
+    return () => {
+      active = false
+    }
   }, [supabase])
 
   const approved = theses.filter((t) => t.status === "approved")
@@ -128,12 +176,20 @@ export default function AdminPhDPositionsPage() {
             Approve, reject, or remove PhD position postings
           </p>
         </div>
-        <Link href="/n_admin/dashboard/phd-positions/new">
-          <Button className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            Post PHD Positions
-          </Button>
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/n_admin/dashboard/imports">
+            <Button variant="outline" className="gap-1.5">
+              <DatabaseZap className="h-4 w-4" />
+              Import External
+            </Button>
+          </Link>
+          <Link href="/n_admin/dashboard/phd-positions/new">
+            <Button className="gap-1.5">
+              <Plus className="h-4 w-4" />
+              Post PHD Positions
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Tab Switcher */}

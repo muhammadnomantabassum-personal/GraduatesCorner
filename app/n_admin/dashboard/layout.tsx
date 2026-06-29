@@ -26,6 +26,7 @@ import {
   Home,
   Shield,
   Loader2,
+  DatabaseZap,
 } from "lucide-react"
 
 const sidebarSections = [
@@ -48,6 +49,7 @@ const sidebarSections = [
     links: [
       { href: "/n_admin/dashboard/phd-positions", label: "PHD Positions", mobileLabel: "PHD", icon: GraduationCap, mobileHidden: false },
       { href: "/n_admin/dashboard/phd-positions/new", label: "Post PHD Positions", mobileLabel: "Post PHD", icon: Plus, mobileHidden: true },
+      { href: "/n_admin/dashboard/imports", label: "External Imports", mobileLabel: "Imports", icon: DatabaseZap, mobileHidden: false },
     ]
   },
   {
