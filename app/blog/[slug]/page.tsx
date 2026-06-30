@@ -6,18 +6,31 @@ import { PublicLayout } from "@/components/layout/public-layout"
 import { BlogCard } from "@/components/shared/blog-card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { createClient } from "@/lib/supabase/client"
-import type { BlogPost } from "@/lib/data/types"
+import { useAuth } from "@/lib/auth-context"
+import type { BlogComment, BlogPost } from "@/lib/data/types"
 import { sanitizeHtml } from "@/lib/sanitize-html"
-import { ArrowLeft, Calendar, Clock, User, Loader2, Copy, Check } from "lucide-react"
+import { ArrowLeft, Calendar, Clock, User, Loader2, Copy, Check, MessageSquare, ShieldCheck, Send } from "lucide-react"
 import Image from "next/image"
+import { toast } from "sonner"
 
 export default function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
+  const { user } = useAuth()
   const [post, setPost] = useState<BlogPost | null>(null)
   const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([])
+  const [comments, setComments] = useState<BlogComment[]>([])
   const [loading, setLoading] = useState(true)
   const [isCopied, setIsCopied] = useState(false)
+  const [commentName, setCommentName] = useState("")
+  const [commentEmail, setCommentEmail] = useState("")
+  const [commentBody, setCommentBody] = useState("")
+  const [isAnonymous, setIsAnonymous] = useState(true)
+  const [submittingComment, setSubmittingComment] = useState(false)
 
   const supabase = createClient()
 
@@ -54,6 +67,27 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
           authorAvatar: data.profiles?.avatar || undefined,
         }
         setPost(formattedPost)
+
+        const { data: commentData } = await supabase
+          .from("blog_comments")
+          .select("*")
+          .eq("blog_post_id", data.id)
+          .eq("status", "approved")
+          .order("created_at", { ascending: false })
+
+        if (commentData) {
+          setComments(commentData.map((comment: any) => ({
+            id: comment.id,
+            blogPostId: comment.blog_post_id,
+            userId: comment.user_id,
+            authorName: comment.author_name,
+            authorEmail: comment.author_email,
+            content: comment.content,
+            status: comment.status,
+            isAnonymous: comment.is_anonymous,
+            createdAt: comment.created_at,
+          })))
+        }
 
         // Fetch related posts
         const { data: relatedData } = await supabase
@@ -92,8 +126,52 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
   const isHtml = post?.content.trim().startsWith('<') ?? false
   const sanitizedContent = useMemo(
     () => (post ? (isHtml ? sanitizeHtml(post.content) : post.content) : ""),
-    [isHtml, post?.content]
+    [isHtml, post]
   )
+
+  const handleCommentSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!post) return
+
+    const cleanContent = commentBody.trim()
+    const cleanName = user && !isAnonymous
+      ? (user.name || user.organization || "Account user")
+      : commentName.trim()
+
+    if (!cleanName || cleanName.length < 2) {
+      toast.error("Please add your name")
+      return
+    }
+
+    if (!cleanContent || cleanContent.length < 10) {
+      toast.error("Please write a comment with at least 10 characters")
+      return
+    }
+
+    setSubmittingComment(true)
+
+    const { error } = await supabase.from("blog_comments").insert({
+      blog_post_id: post.id,
+      user_id: user && !isAnonymous ? user.id : null,
+      author_name: cleanName.slice(0, 80),
+      author_email: user && !isAnonymous ? user.email : commentEmail.trim() || null,
+      content: cleanContent.slice(0, 1200),
+      status: "pending",
+      is_anonymous: !user || isAnonymous,
+    })
+
+    setSubmittingComment(false)
+
+    if (error) {
+      toast.error("Comment could not be submitted. Please try again.")
+      return
+    }
+
+    toast.success("Comment submitted for admin approval")
+    setCommentName("")
+    setCommentEmail("")
+    setCommentBody("")
+  }
 
   if (loading) {
     return (
@@ -263,6 +341,131 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
               </Button>
             </div>
           </div>
+
+          <section className="mx-auto mt-14 max-w-3xl border-t border-border pt-10">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <Badge className="mb-3 gap-2 bg-primary/10 text-primary hover:bg-primary/10">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Reader discussion
+                </Badge>
+                <h2 className="text-2xl font-bold text-foreground">Comments</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Approved comments appear publicly after admin review.
+                </p>
+              </div>
+              <Badge variant="outline">{comments.length} approved</Badge>
+            </div>
+
+            <Card className="mb-6 border-border/70 bg-[linear-gradient(135deg,#ffffff_0%,#f5f9ff_100%)]">
+              <CardContent className="p-5">
+                <div className="mb-4 flex items-start gap-3 rounded-xl border border-[#1877F2]/15 bg-[#1877F2]/5 p-3 text-xs leading-relaxed text-[#174EA6]">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+                  Your comment will be visible only after an admin approves it.
+                </div>
+                <form onSubmit={handleCommentSubmit} className="space-y-4">
+                  {user && (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsAnonymous(false)}
+                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${!isAnonymous ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+                      >
+                        Comment as {user.name || user.email}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsAnonymous(true)}
+                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${isAnonymous ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+                      >
+                        Comment as guest
+                      </button>
+                    </div>
+                  )}
+
+                  {(!user || isAnonymous) && (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="comment-name">Name</Label>
+                        <Input
+                          id="comment-name"
+                          value={commentName}
+                          onChange={(event) => setCommentName(event.target.value)}
+                          placeholder="Your name"
+                          maxLength={80}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="comment-email">Email optional</Label>
+                        <Input
+                          id="comment-email"
+                          type="email"
+                          value={commentEmail}
+                          onChange={(event) => setCommentEmail(event.target.value)}
+                          placeholder="Only for admin context"
+                          maxLength={120}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="comment-body">Comment</Label>
+                    <Textarea
+                      id="comment-body"
+                      value={commentBody}
+                      onChange={(event) => setCommentBody(event.target.value)}
+                      placeholder="Share a question, insight, or helpful experience..."
+                      rows={5}
+                      maxLength={1200}
+                      required
+                    />
+                    <p className="text-right text-[11px] text-muted-foreground">{commentBody.length}/1200</p>
+                  </div>
+
+                  <Button type="submit" disabled={submittingComment} className="gap-2">
+                    {submittingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    Submit for approval
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {comments.length > 0 ? (
+              <div className="space-y-3">
+                {comments.map((comment) => (
+                  <Card key={comment.id}>
+                    <CardContent className="p-5">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                            {comment.authorName.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{comment.authorName}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(comment.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                            </p>
+                          </div>
+                        </div>
+                        {comment.isAnonymous && <Badge variant="secondary">Guest</Badge>}
+                      </div>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{comment.content}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+                  <MessageSquare className="mb-3 h-10 w-10 text-muted-foreground/30" />
+                  <p className="text-sm font-semibold text-foreground">No approved comments yet</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Be the first to start the discussion.</p>
+                </CardContent>
+              </Card>
+            )}
+          </section>
         </div>
       </article>
 

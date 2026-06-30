@@ -91,7 +91,23 @@ CREATE TABLE IF NOT EXISTS public.testimonials (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 6. Wishlist
+-- 6. Blog Comments
+CREATE TABLE IF NOT EXISTS public.blog_comments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  blog_post_id UUID REFERENCES public.blog_posts(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  author_name TEXT NOT NULL,
+  author_email TEXT,
+  content TEXT NOT NULL,
+  status TEXT CHECK (status IN ('approved', 'pending', 'rejected')) DEFAULT 'pending',
+  is_anonymous BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.blog_comments ADD COLUMN IF NOT EXISTS author_email TEXT;
+ALTER TABLE public.blog_comments ADD COLUMN IF NOT EXISTS is_anonymous BOOLEAN DEFAULT TRUE;
+
+-- 7. Wishlist
 CREATE TABLE IF NOT EXISTS public.wishlist (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
@@ -106,7 +122,7 @@ CREATE TABLE IF NOT EXISTS public.wishlist (
   UNIQUE (user_id, program_id)
 );
 
--- 7. Applications
+-- 8. Applications
 CREATE TABLE IF NOT EXISTS public.applications (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
@@ -147,6 +163,7 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.theses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.trainee_programs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blog_posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.blog_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.testimonials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wishlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
@@ -184,6 +201,13 @@ DROP POLICY IF EXISTS "Admins can insert blog posts" ON public.blog_posts;
 DROP POLICY IF EXISTS "Users can update their own blog posts" ON public.blog_posts;
 DROP POLICY IF EXISTS "Admins can update blog posts" ON public.blog_posts;
 DROP POLICY IF EXISTS "Admins can delete blog posts" ON public.blog_posts;
+
+DROP POLICY IF EXISTS "Approved blog comments viewable by everyone" ON public.blog_comments;
+DROP POLICY IF EXISTS "Users can view their own blog comments" ON public.blog_comments;
+DROP POLICY IF EXISTS "Admins can view all blog comments" ON public.blog_comments;
+DROP POLICY IF EXISTS "Anyone can insert pending blog comments" ON public.blog_comments;
+DROP POLICY IF EXISTS "Admins can update blog comments" ON public.blog_comments;
+DROP POLICY IF EXISTS "Admins can delete blog comments" ON public.blog_comments;
 
 DROP POLICY IF EXISTS "Approved testimonials viewable by everyone" ON public.testimonials;
 DROP POLICY IF EXISTS "Users can view their own testimonials" ON public.testimonials;
@@ -282,6 +306,21 @@ CREATE POLICY "Admins can update blog posts" ON public.blog_posts
   FOR UPDATE USING (public.is_admin())
   WITH CHECK (public.is_admin());
 CREATE POLICY "Admins can delete blog posts" ON public.blog_posts
+  FOR DELETE USING (public.is_admin());
+
+-- Blog comment policies
+CREATE POLICY "Approved blog comments viewable by everyone" ON public.blog_comments
+  FOR SELECT USING (status = 'approved');
+CREATE POLICY "Users can view their own blog comments" ON public.blog_comments
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Admins can view all blog comments" ON public.blog_comments
+  FOR SELECT USING (public.is_admin());
+CREATE POLICY "Anyone can insert pending blog comments" ON public.blog_comments
+  FOR INSERT WITH CHECK (status = 'pending');
+CREATE POLICY "Admins can update blog comments" ON public.blog_comments
+  FOR UPDATE USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+CREATE POLICY "Admins can delete blog comments" ON public.blog_comments
   FOR DELETE USING (public.is_admin());
 
 -- Testimonial policies

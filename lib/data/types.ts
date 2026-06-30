@@ -78,6 +78,20 @@ export interface BlogPost {
   authorAvatar?: string
 }
 
+export interface BlogComment {
+  id: string
+  blogPostId: string
+  userId?: string
+  authorName: string
+  authorEmail?: string
+  content: string
+  status: ApprovalStatus
+  isAnonymous: boolean
+  createdAt: string
+  postTitle?: string
+  postSlug?: string
+}
+
 export interface Testimonial {
   id: string
   author: string

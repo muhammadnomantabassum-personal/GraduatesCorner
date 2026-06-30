@@ -64,6 +64,7 @@ const sidebarSections = [
     links: [
       { href: "/n_admin/dashboard/blogs", label: "Blog Posts", mobileLabel: "Blogs", icon: FileText, mobileHidden: false },
       { href: "/n_admin/dashboard/blogs/new", label: "Write Blog", mobileLabel: "Write", icon: PenLine, mobileHidden: true },
+      { href: "/n_admin/dashboard/comments", label: "Blog Comments", mobileLabel: "Comments", icon: MessageSquare, mobileHidden: false },
       { href: "/n_admin/dashboard/testimonials", label: "Testimonials", mobileLabel: "Reviews", icon: MessageSquare, mobileHidden: false },
     ]
   },
