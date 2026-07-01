@@ -92,6 +92,20 @@ export interface BlogComment {
   postSlug?: string
 }
 
+export type SavedSearchType = "all" | "master" | "phd" | "trainee"
+
+export interface SavedSearch {
+  id: string
+  userId: string
+  title: string
+  query: string
+  opportunityType: SavedSearchType
+  field?: string
+  location?: string
+  compensation?: Compensation | "any"
+  createdAt: string
+}
+
 export interface Testimonial {
   id: string
   author: string
