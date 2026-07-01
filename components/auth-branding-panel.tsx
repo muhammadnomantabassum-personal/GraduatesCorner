@@ -1,11 +1,11 @@
 import Link from "next/link"
 import {
-  GraduationCap,
   FileText,
   Building2,
   Users,
 } from "lucide-react"
 import { TestimonialCarousel } from "./testimonial-carousel"
+import { BrandLogo } from "@/components/shared/brand-logo"
 
 const stats = [
   { value: "420+", label: "Opportunities", icon: FileText },
@@ -21,11 +21,8 @@ export function AuthBrandingPanel() {
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-primary/40" />
 
       {/* Logo */}
-      <Link href="/" className="relative z-10 flex items-center gap-2 transition-opacity hover:opacity-80">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-foreground/10 backdrop-blur-sm xl:h-9 xl:w-9 xl:rounded-xl">
-          <GraduationCap className="h-4 w-4 text-primary-foreground xl:h-[18px] xl:w-[18px]" />
-        </div>
-        <span className="text-[15px] font-semibold tracking-tight text-primary-foreground xl:text-base">Graduates Corner</span>
+      <Link href="/" aria-label="Graduates Corner home" className="relative z-10 flex items-center transition-opacity hover:opacity-95">
+        <BrandLogo size="md" variant="dark" textClassName="text-[15px] xl:text-base" />
       </Link>
 
       {/* Hero text */}

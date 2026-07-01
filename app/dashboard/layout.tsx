@@ -6,6 +6,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
+import { BrandLogo } from "@/components/shared/brand-logo"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -176,9 +177,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-screen">
       {/* Sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex">
-        <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-6">
-          <GraduationCap className="h-6 w-6 text-sidebar-primary" />
-          <span className="font-bold">Graduates Corner</span>
+        <div className="flex h-16 items-center border-b border-sidebar-border px-6">
+          <BrandLogo size="sm" textClassName="font-bold text-sidebar-foreground" />
         </div>
         <nav className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
           {sections.map((section, idx) => (
@@ -232,7 +232,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Top bar */}
         <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4 sm:h-16 sm:px-6">
           <div className="flex items-center gap-2 lg:hidden">
-            <GraduationCap className="h-5 w-5 text-primary" />
+            <BrandLogo size="xs" showText={false} />
             <span className="text-sm font-bold text-foreground">Dashboard</span>
           </div>
           <div className="hidden lg:block">

@@ -4,8 +4,8 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { Input } from "@/components/ui/input"
+import { BrandLogo } from "@/components/shared/brand-logo"
 import {
-  GraduationCap,
   Eye,
   EyeOff,
   ArrowRight,
@@ -46,10 +46,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-[400px]">
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center text-center">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary shadow-md">
-            <GraduationCap className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <h1 className="text-xl font-bold text-foreground">Graduates Corner</h1>
+          <BrandLogo size="lg" className="mb-4 flex-col gap-3" textClassName="font-bold" />
           <div className="mt-2 flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1">
             <Shield className="h-3 w-3 text-primary" />
             <span className="text-[11px] font-medium text-primary">Admin Panel</span>

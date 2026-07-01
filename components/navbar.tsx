@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { GlobalSearchCommand } from "@/components/global-search-command"
+import { BrandLogo } from "@/components/shared/brand-logo"
 import {
   GraduationCap,
   Menu,
@@ -76,17 +77,10 @@ export function Navbar() {
           {/* Logo */}
           <Link
             href="/"
-            className="group flex shrink-0 items-center gap-2.5 transition-opacity duration-200 hover:opacity-90"
+            aria-label="Graduates Corner home"
+            className="flex shrink-0 items-center transition-opacity duration-200 hover:opacity-95"
           >
-            <div className={`flex items-center justify-center rounded-lg bg-primary shadow-[0_10px_25px_rgba(66,133,244,0.24)] ring-1 ring-primary/15 transition-all duration-200 ${scrolled ? "h-7 w-7" : "h-8 w-8"
-              }`}>
-              <GraduationCap className={`text-primary-foreground transition-all duration-200 ${scrolled ? "h-4 w-4" : "h-4.5 w-4.5"
-                }`} />
-            </div>
-            <span className={`brand-wordmark font-semibold text-foreground transition-all duration-200 ${scrolled ? "text-[15px]" : "text-[17px]"
-              }`}>
-              Graduates Corner
-            </span>
+            <BrandLogo size={scrolled ? "sm" : "md"} />
           </Link>
 
           {/* Desktop Navigation — pill bar */}
@@ -194,15 +188,11 @@ export function Navbar() {
                   <div className="flex items-center justify-between border-b border-border px-5 py-4">
                     <Link
                       href="/"
-                      className="flex items-center gap-2.5"
+                      aria-label="Graduates Corner home"
+                      className="flex items-center"
                       onClick={() => setOpen(false)}
                     >
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
-                        <GraduationCap className="h-3.5 w-3.5 text-primary-foreground" />
-                      </div>
-                      <span className="brand-wordmark text-sm font-semibold text-foreground">
-                        Graduates Corner
-                      </span>
+                      <BrandLogo size="sm" />
                     </Link>
                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground" onClick={() => setOpen(false)}>
                       <X className="h-4 w-4" />

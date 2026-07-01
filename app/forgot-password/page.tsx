@@ -4,8 +4,8 @@ import { useState } from "react"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { AuthBrandingPanel } from "@/components/auth-branding-panel"
+import { BrandLogo } from "@/components/shared/brand-logo"
 import {
-  GraduationCap,
   Mail,
   ArrowLeft,
   ArrowRight,
@@ -37,11 +37,8 @@ export default function ForgotPasswordPage() {
         <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-8 sm:px-10 lg:px-14 xl:px-20">
           <div className="w-full max-w-[420px]">
             {/* Mobile logo */}
-            <Link href="/" className="mb-6 flex items-center gap-2.5 transition-opacity hover:opacity-80 lg:hidden">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <GraduationCap className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <span className="text-sm font-semibold text-foreground">Graduates Corner</span>
+            <Link href="/" aria-label="Graduates Corner home" className="mb-6 flex items-center transition-opacity hover:opacity-95 lg:hidden">
+              <BrandLogo size="sm" />
             </Link>
 
             {submitted ? (

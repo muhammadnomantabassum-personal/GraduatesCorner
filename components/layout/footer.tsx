@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { Github, GraduationCap, Linkedin, Mail, MapPin, ShieldCheck, Sparkles } from "lucide-react"
+import { Github, Linkedin, Mail, MapPin, ShieldCheck, Sparkles } from "lucide-react"
+import { BrandLogo } from "@/components/shared/brand-logo"
 
 const footerLinks = {
   platform: [
@@ -32,13 +33,8 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-6 pb-10 pt-14 lg:px-8">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-12">
           <div className="lg:col-span-5">
-            <Link href="/" className="inline-flex items-center gap-2.5 transition-opacity hover:opacity-90">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_14px_30px_rgba(66,133,244,0.20)]">
-                <GraduationCap className="h-[18px] w-[18px]" />
-              </div>
-              <span className="brand-wordmark text-[17px] font-bold text-foreground">
-                Graduates Corner
-              </span>
+            <Link href="/" aria-label="Graduates Corner home" className="inline-flex items-center transition-opacity hover:opacity-95">
+              <BrandLogo size="md" textClassName="font-bold" />
             </Link>
             <p className="mt-4 max-w-sm text-[14px] leading-[1.75] text-muted-foreground">
               Connecting ambitious graduates with world-class academic and professional

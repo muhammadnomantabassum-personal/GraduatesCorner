@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
+import { BrandLogo } from "@/components/shared/brand-logo"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -100,10 +101,8 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
       <aside className="hidden w-80 shrink-0 flex-col border-r border-white/10 bg-[linear-gradient(180deg,#0f172a_0%,#102a5c_52%,#12372f_100%)] text-white shadow-[18px_0_70px_rgba(15,23,42,0.20)] lg:flex">
         <div className="border-b border-white/10 px-6 py-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-primary shadow-[0_14px_34px_rgba(255,255,255,0.18)]">
-              <GraduationCap className="h-5 w-5" />
-            </div>
-            <div>
+            <BrandLogo size="lg" showText={false} />
+            <div className="min-w-0">
               <p className="font-bold leading-tight">Graduates Corner</p>
               <p className="text-[11px] font-medium text-white/50">Enterprise Admin Suite</p>
             </div>
@@ -173,7 +172,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
         {/* Top bar */}
         <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border/70 bg-card/88 px-4 shadow-[0_10px_36px_rgba(66,133,244,0.08)] backdrop-blur-xl sm:h-16 sm:px-6">
           <div className="flex items-center gap-2 lg:hidden">
-            <GraduationCap className="h-5 w-5 text-primary" />
+            <BrandLogo size="xs" showText={false} />
             <span className="text-sm font-bold text-foreground">Admin</span>
           </div>
           <div className="hidden items-center gap-2 lg:flex">

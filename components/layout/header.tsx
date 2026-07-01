@@ -5,8 +5,8 @@ import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
+import { BrandLogo } from "@/components/shared/brand-logo"
 import {
-  GraduationCap,
   Menu,
   X,
   BookOpen,
@@ -42,11 +42,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/70 bg-card/90 shadow-[0_10px_40px_rgba(66,133,244,0.08)] backdrop-blur-xl supports-[backdrop-filter]:bg-card/78">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 lg:px-8">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_12px_28px_rgba(66,133,244,0.22)]">
-            <GraduationCap className="h-5 w-5" />
-          </span>
-          <span className="brand-wordmark text-lg font-bold text-foreground">Graduates Corner</span>
+        <Link href="/" aria-label="Graduates Corner home" className="flex items-center">
+          <BrandLogo size="md" textClassName="font-bold" />
         </Link>
 
         <nav className="hidden items-center gap-1 rounded-full border border-border/80 bg-background/65 p-1 shadow-inner lg:flex">
@@ -108,11 +105,8 @@ export function Header() {
             <SheetTitle className="sr-only">Navigation menu</SheetTitle>
             <div className="flex h-full flex-col">
               <div className="flex items-center justify-between border-b border-border px-4 py-4">
-                <Link href="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <GraduationCap className="h-4 w-4" />
-                  </span>
-                  <span className="font-bold text-foreground">Graduates Corner</span>
+                <Link href="/" aria-label="Graduates Corner home" className="flex items-center" onClick={() => setOpen(false)}>
+                  <BrandLogo size="sm" textClassName="font-bold" />
                 </Link>
                 <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
                   <X className="h-5 w-5" />
