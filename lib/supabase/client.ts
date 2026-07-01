@@ -36,7 +36,6 @@ export function createClient() {
   if (!url || !key) {
     // During builds or preview environments without Supabase secrets,
     // return a safe stub client so prerendering does not fail.
-    // eslint-disable-next-line no-console
     console.warn('[supabase] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY; using stub client.')
     return createStubClient() as any
   }

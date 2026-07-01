@@ -107,22 +107,7 @@ CREATE TABLE IF NOT EXISTS public.blog_comments (
 ALTER TABLE public.blog_comments ADD COLUMN IF NOT EXISTS author_email TEXT;
 ALTER TABLE public.blog_comments ADD COLUMN IF NOT EXISTS is_anonymous BOOLEAN DEFAULT TRUE;
 
--- 7. Saved Searches
-CREATE TABLE IF NOT EXISTS public.saved_searches (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-  title TEXT NOT NULL,
-  query TEXT DEFAULT '',
-  opportunity_type TEXT CHECK (opportunity_type IN ('all', 'master', 'phd', 'trainee')) DEFAULT 'all',
-  field TEXT,
-  location TEXT,
-  compensation TEXT CHECK (compensation IN ('any', 'paid', 'unpaid', 'stipend')) DEFAULT 'any',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS saved_searches_user_id_idx ON public.saved_searches(user_id);
-
--- 8. Wishlist
+-- 7. Wishlist
 CREATE TABLE IF NOT EXISTS public.wishlist (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
@@ -137,7 +122,7 @@ CREATE TABLE IF NOT EXISTS public.wishlist (
   UNIQUE (user_id, program_id)
 );
 
--- 9. Applications
+-- 8. Applications
 CREATE TABLE IF NOT EXISTS public.applications (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
@@ -180,7 +165,6 @@ ALTER TABLE public.trainee_programs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blog_posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blog_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.testimonials ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.saved_searches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wishlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
 
@@ -232,11 +216,6 @@ DROP POLICY IF EXISTS "Users can insert pending own testimonials" ON public.test
 DROP POLICY IF EXISTS "Users can update their own testimonials" ON public.testimonials;
 DROP POLICY IF EXISTS "Admins can update testimonials" ON public.testimonials;
 DROP POLICY IF EXISTS "Admins can delete testimonials" ON public.testimonials;
-
-DROP POLICY IF EXISTS "Users can view their own saved searches" ON public.saved_searches;
-DROP POLICY IF EXISTS "Users can insert their own saved searches" ON public.saved_searches;
-DROP POLICY IF EXISTS "Users can update their own saved searches" ON public.saved_searches;
-DROP POLICY IF EXISTS "Users can delete their own saved searches" ON public.saved_searches;
 
 DROP POLICY IF EXISTS "Users can view their own wishlist" ON public.wishlist;
 DROP POLICY IF EXISTS "Users can insert into their own wishlist" ON public.wishlist;
@@ -361,17 +340,6 @@ CREATE POLICY "Admins can update testimonials" ON public.testimonials
   WITH CHECK (public.is_admin());
 CREATE POLICY "Admins can delete testimonials" ON public.testimonials
   FOR DELETE USING (public.is_admin());
-
--- Saved search policies
-CREATE POLICY "Users can view their own saved searches" ON public.saved_searches
-  FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert their own saved searches" ON public.saved_searches
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update their own saved searches" ON public.saved_searches
-  FOR UPDATE USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can delete their own saved searches" ON public.saved_searches
-  FOR DELETE USING (auth.uid() = user_id);
 
 -- Wishlist policies
 CREATE POLICY "Users can view their own wishlist" ON public.wishlist

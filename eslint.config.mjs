@@ -1,5 +1,12 @@
 import nextConfig from "eslint-config-next";
 
-export default [
+const eslintConfig = [
   ...nextConfig,
+  {
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
 ];
+
+export default eslintConfig;

@@ -281,7 +281,7 @@ export default function AdminTestimonialsPage() {
                         </div>
                       </div>
                       <p className="pl-5 text-sm leading-relaxed text-foreground italic">
-                        "{testimonial.content}"
+                        &quot;{testimonial.content}&quot;
                       </p>
                       <div className="flex items-center gap-2 border-t border-border/50 pt-3">
                         <Button

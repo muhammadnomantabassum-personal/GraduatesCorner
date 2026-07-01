@@ -23,6 +23,17 @@ interface MarkdownEditorProps {
   className?: string
 }
 
+const markdownTools = [
+  { icon: Heading1, label: "Heading 1", before: "# ", after: "" },
+  { icon: Heading2, label: "Heading 2", before: "## ", after: "" },
+  { icon: Bold, label: "Bold", before: "**", after: "**" },
+  { icon: Italic, label: "Italic", before: "_", after: "_" },
+  { icon: List, label: "Bullet List", before: "- ", after: "" },
+  { icon: ListOrdered, label: "Numbered List", before: "1. ", after: "" },
+  { icon: Quote, label: "Quote", before: "> ", after: "" },
+  { icon: LinkIcon, label: "Link", before: "[", after: "](url)" },
+]
+
 export function MarkdownEditor({ 
   value, 
   onChange, 
@@ -53,61 +64,18 @@ export function MarkdownEditor({
     }, 0)
   }
 
-  const tools = [
-    { 
-      icon: Heading1, 
-      label: "Heading 1", 
-      action: () => insertText("# ", "") 
-    },
-    { 
-      icon: Heading2, 
-      label: "Heading 2", 
-      action: () => insertText("## ", "") 
-    },
-    { 
-      icon: Bold, 
-      label: "Bold", 
-      action: () => insertText("**", "**") 
-    },
-    { 
-      icon: Italic, 
-      label: "Italic", 
-      action: () => insertText("_", "_") 
-    },
-    { 
-      icon: List, 
-      label: "Bullet List", 
-      action: () => insertText("- ", "") 
-    },
-    { 
-      icon: ListOrdered, 
-      label: "Numbered List", 
-      action: () => insertText("1. ", "") 
-    },
-    { 
-      icon: Quote, 
-      label: "Quote", 
-      action: () => insertText("> ", "") 
-    },
-    { 
-      icon: LinkIcon, 
-      label: "Link", 
-      action: () => insertText("[", "](url)") 
-    },
-  ]
-
   return (
     <div className={cn("flex flex-col rounded-md border border-input bg-background", className)}>
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-1 border-b border-input bg-muted/20 p-1">
-        {tools.map((tool, i) => (
+        {markdownTools.map((tool) => (
           <Button
-            key={i}
+            key={tool.label}
             type="button"
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={tool.action}
+            onClick={() => insertText(tool.before, tool.after)}
             title={tool.label}
           >
             <tool.icon className="h-4 w-4" />

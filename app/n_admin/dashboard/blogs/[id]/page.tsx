@@ -33,7 +33,7 @@ export default function AdminBlogDetailsPage({ params }: { params: Promise<{ id:
   const isHtml = post?.content.trim().startsWith('<') ?? false
   const sanitizedContent = useMemo(
     () => (post ? (isHtml ? sanitizeHtml(post.content) : post.content) : ""),
-    [isHtml, post?.content]
+    [isHtml, post]
   )
 
   useEffect(() => {

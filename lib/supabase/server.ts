@@ -42,7 +42,6 @@ export async function createClient() {
     // During static builds in environments without secrets (like forks or preview builds),
     // return a safe stub client so prerender can continue without failing the build.
     // Log a clear warning to help debugging in build logs.
-    // eslint-disable-next-line no-console
     console.warn('[supabase] Missing SUPABASE URL or KEY; using stub client for build.')
     return createStubClient() as any
   }

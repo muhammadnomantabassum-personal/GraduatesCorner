@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { ThesisCard } from "@/components/shared/thesis-card"
 import { ProgramCard } from "@/components/shared/program-card"
 import type { Thesis, TraineeProgram } from "@/lib/data/types"
-import { Send, Loader2, ArrowRight } from "lucide-react"
+import { BookOpen, Briefcase, GraduationCap, Send, Loader2, ArrowRight } from "lucide-react"
 import Link from "next/link"
 
 export default function StudentAppliedPage() {
@@ -131,7 +131,23 @@ export default function StudentAppliedPage() {
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href="/master-thesis">
                 <Button className="gap-2">
-                  Find a Thesis <ArrowRight className="h-4 w-4" />
+                  <BookOpen className="h-4 w-4" />
+                  Find a Thesis
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/phd-positions">
+                <Button variant="outline" className="gap-2">
+                  <GraduationCap className="h-4 w-4" />
+                  Find a PhD
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/trainee-programs">
+                <Button variant="outline" className="gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  Find a Trainee Program
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
             </div>

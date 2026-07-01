@@ -28,7 +28,6 @@ import {
   Loader2,
   Heart,
   Send,
-  Search,
   CalendarDays,
 } from "lucide-react"
 
@@ -39,7 +38,6 @@ const sidebarLinks = {
       links: [
         { href: "/dashboard/student", label: "Overview", mobileLabel: "Home", icon: LayoutDashboard, mobileHidden: false },
         { href: "/dashboard/student/wishlist", label: "Wishlist", mobileLabel: "Wishlist", icon: Heart, mobileHidden: false },
-        { href: "/dashboard/student/saved-searches", label: "Saved Searches", mobileLabel: "Searches", icon: Search, mobileHidden: false },
         { href: "/dashboard/student/calendar", label: "Deadline Calendar", mobileLabel: "Calendar", icon: CalendarDays, mobileHidden: false },
         { href: "/dashboard/student/applied", label: "Applied Posts", mobileLabel: "Applied", icon: Send, mobileHidden: false },
       ]
