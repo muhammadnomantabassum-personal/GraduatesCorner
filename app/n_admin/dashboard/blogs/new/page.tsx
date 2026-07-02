@@ -20,6 +20,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { CoverImageSelector, FALLBACK_COVER } from "@/components/shared/cover-image-selector"
 import { Textarea } from "@/components/ui/textarea"
+import { toNullableUuid } from "@/lib/uuid"
 
 const categories = [
   "Academic Life",
@@ -75,7 +76,7 @@ export default function AdminNewBlogPage() {
         category,
         cover_image: coverImage || FALLBACK_COVER,
         read_time: readTime,
-        posted_by_user_id: user.id,
+        posted_by_user_id: toNullableUuid(user.id),
         status: 'approved' // Admin posts are approved immediately
       })
 

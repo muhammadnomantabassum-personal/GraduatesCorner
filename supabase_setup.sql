@@ -298,7 +298,7 @@ CREATE POLICY "Admins can view all blog posts" ON public.blog_posts
 CREATE POLICY "Users can insert pending own blog posts" ON public.blog_posts
   FOR INSERT WITH CHECK (auth.uid() = posted_by_user_id AND status = 'pending');
 CREATE POLICY "Admins can insert blog posts" ON public.blog_posts
-  FOR INSERT WITH CHECK (public.is_admin() AND auth.uid() = posted_by_user_id AND status = 'approved');
+  FOR INSERT WITH CHECK (public.is_admin() AND status = 'approved');
 CREATE POLICY "Users can update their own blog posts" ON public.blog_posts
   FOR UPDATE USING (auth.uid() = posted_by_user_id)
   WITH CHECK (auth.uid() = posted_by_user_id AND status = 'pending');

@@ -19,6 +19,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth-context"
+import { toNullableUuid } from "@/lib/uuid"
 
 const fields = [
   "Engineering",
@@ -121,7 +122,7 @@ export default function AdminNewProgramPage() {
         deadline,
         external_url: externalUrl,
         posted_by: 'admin',
-        posted_by_user_id: user.id,
+        posted_by_user_id: toNullableUuid(user.id),
         status: 'approved'
       })
 

@@ -33,7 +33,7 @@ export interface Thesis {
   compensation: Compensation
   deadline: string
   postedBy: "university" | "company" | "admin"
-  postedByUserId: string
+  postedByUserId: string | null
   externalUrl: string
   status: ApprovalStatus
   createdAt: string
@@ -54,7 +54,7 @@ export interface TraineeProgram {
   compensation: Compensation
   deadline: string
   postedBy: "company" | "admin"
-  postedByUserId: string
+  postedByUserId: string | null
   externalUrl: string
   status: ApprovalStatus
   createdAt: string
@@ -74,7 +74,7 @@ export interface BlogPost {
   createdAt: string
   readTime: string
   status: ApprovalStatus
-  postedByUserId?: string
+  postedByUserId?: string | null
   authorAvatar?: string
 }
 

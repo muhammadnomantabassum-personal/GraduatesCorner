@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import type { ExternalPhdCandidate } from "@/lib/external-phd-importer"
+import { toNullableUuid } from "@/lib/uuid"
 import {
   ArrowRight,
   CheckCircle2,
@@ -37,8 +38,6 @@ const feedPresets = [
     description: "Works with university RSS/Atom job feeds and JSON Feed sources.",
   },
 ]
-
-const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 export default function AdminExternalImportsPage() {
   const { user, supabase } = useAuth()
@@ -123,7 +122,7 @@ export default function AdminExternalImportsPage() {
 
     setImporting(true)
 
-    const adminUserId = user?.id && uuidPattern.test(user.id) ? user.id : null
+    const adminUserId = toNullableUuid(user?.id)
     const rows = toImport.map((candidate) => ({
       title: candidate.title,
       type: "phd",
