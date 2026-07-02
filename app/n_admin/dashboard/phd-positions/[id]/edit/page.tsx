@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
+import { useParams, useRouter } from "next/navigation"
+import { ArrowLeft, Eye, Loader2, Save } from "lucide-react"
+import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { RichTextEditor } from "@/components/shared/rich-text-editor"
 import {
   Select,
   SelectContent,
@@ -14,12 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ArrowLeft, Send, Loader2 } from "lucide-react"
-import Link from "next/link"
-import { toast } from "sonner"
+import { RichTextEditor } from "@/components/shared/rich-text-editor"
 import { createClient } from "@/lib/supabase/client"
-import { useAuth } from "@/lib/auth-context"
-import { toNullableUuid } from "@/lib/uuid"
 import { htmlToPlainText } from "@/lib/text"
 
 const subjects = [
@@ -36,13 +34,17 @@ const subjects = [
   "Chemistry",
 ]
 
-export default function NewAdminPhDPositionPage() {
+type PhdStatus = "approved" | "pending" | "rejected"
+
+export default function EditAdminPhDPositionPage() {
+  const params = useParams<{ id: string }>()
+  const id = params.id
   const router = useRouter()
-  const { user } = useAuth()
+  const supabase = useMemo(() => createClient(), [])
+
+  const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  
   const [title, setTitle] = useState("")
-  const [thesisType] = useState<"master" | "phd">("phd")
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([])
   const [description, setDescription] = useState("")
   const [location, setLocation] = useState("")
@@ -52,28 +54,73 @@ export default function NewAdminPhDPositionPage() {
   const [customSubject, setCustomSubject] = useState("")
   const [organization, setOrganization] = useState("")
   const [organizationType, setOrganizationType] = useState<"university" | "company">("university")
+  const [status, setStatus] = useState<PhdStatus>("approved")
 
-  const supabase = createClient()
+  useEffect(() => {
+    let active = true
 
-  const toggleSubject = (s: string) => {
-    if (selectedSubjects.includes(s)) {
-      setSelectedSubjects(selectedSubjects.filter((item) => item !== s))
-    } else {
-      if (selectedSubjects.length < 5) {
-        setSelectedSubjects([...selectedSubjects, s])
+    const fetchPhdPosition = async () => {
+      setIsLoading(true)
+      const { data, error } = await supabase
+        .from("theses")
+        .select("*")
+        .eq("id", id)
+        .eq("type", "phd")
+        .maybeSingle()
+
+      if (!active) return
+
+      if (error) {
+        toast.error("Failed to load PhD position")
+      } else if (!data) {
+        toast.error("PhD position not found")
+        router.push("/n_admin/dashboard/phd-positions")
       } else {
-        toast.error("You can select up to 5 subject areas")
+        setTitle(data.title || "")
+        setSelectedSubjects(
+          data.subject
+            ? data.subject.split(",").map((subject: string) => subject.trim()).filter(Boolean)
+            : []
+        )
+        setDescription(data.description || "")
+        setLocation(data.location || "")
+        setDeadline(data.deadline ? String(data.deadline).slice(0, 10) : "")
+        setCompensation(data.compensation || "")
+        setExternalUrl(data.external_url || "")
+        setOrganization(data.organization || "")
+        setOrganizationType(data.organization_type === "company" ? "company" : "university")
+        setStatus((data.status || "pending") as PhdStatus)
       }
+
+      setIsLoading(false)
+    }
+
+    fetchPhdPosition()
+
+    return () => {
+      active = false
+    }
+  }, [id, router, supabase])
+
+  const toggleSubject = (subject: string) => {
+    if (selectedSubjects.includes(subject)) {
+      setSelectedSubjects(selectedSubjects.filter((item) => item !== subject))
+    } else if (selectedSubjects.length < 5) {
+      setSelectedSubjects([...selectedSubjects, subject])
+    } else {
+      toast.error("You can select up to 5 subject areas")
     }
   }
 
   const addCustomSubject = () => {
     const trimmed = customSubject.trim()
     if (!trimmed) return
+
     if (selectedSubjects.includes(trimmed)) {
       setCustomSubject("")
       return
     }
+
     if (selectedSubjects.length < 5) {
       setSelectedSubjects([...selectedSubjects, trimmed])
       setCustomSubject("")
@@ -82,12 +129,8 @@ export default function NewAdminPhDPositionPage() {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) {
-      toast.error("You must be logged in to post a PhD position")
-      return
-    }
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
 
     if (selectedSubjects.length === 0) {
       toast.error("Please select at least one subject area")
@@ -100,38 +143,45 @@ export default function NewAdminPhDPositionPage() {
     }
 
     setIsSubmitting(true)
-    
+
     const { error } = await supabase
-      .from('theses')
-      .insert({
+      .from("theses")
+      .update({
         title,
-        type: thesisType,
         subject: selectedSubjects.join(", "),
         description,
         location,
         deadline,
         compensation,
         external_url: externalUrl,
-        organization: organization || "Admin",
+        organization,
         organization_type: organizationType,
-        posted_by: 'admin',
-        posted_by_user_id: toNullableUuid(user.id),
-        status: 'approved'
+        status,
       })
+      .eq("id", id)
+      .eq("type", "phd")
 
     setIsSubmitting(false)
 
     if (error) {
-      toast.error("Failed to submit PhD position: " + error.message)
+      toast.error("Failed to update PhD position: " + error.message)
     } else {
-      toast.success("PhD position published successfully!")
+      toast.success("PhD position updated successfully")
       router.push("/n_admin/dashboard/phd-positions")
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="mx-auto flex min-h-[50vh] max-w-3xl flex-col items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="mt-4 text-sm text-muted-foreground">Loading PhD position...</p>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-3xl">
-      {/* Header */}
       <div className="mb-6">
         <Link
           href="/n_admin/dashboard/phd-positions"
@@ -140,17 +190,25 @@ export default function NewAdminPhDPositionPage() {
           <ArrowLeft className="h-3 w-3" />
           Back to PhD Positions
         </Link>
-        <h1 className="text-xl font-bold text-foreground font-sans">Post a PhD Position</h1>
-        <p className="text-sm text-muted-foreground">
-          Create and publish a new PhD position (Admin)
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-foreground font-sans">Edit PhD Position</h1>
+            <p className="text-sm text-muted-foreground">
+              Update details, formatting, and publication status for this listing.
+            </p>
+          </div>
+          <Link href={`/phd-positions/${id}`}>
+            <Button type="button" variant="outline" className="gap-1.5">
+              <Eye className="h-3.5 w-3.5" />
+              View Public Page
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      {/* Form */}
       <form onSubmit={handleSubmit}>
         <Card>
           <CardContent className="flex flex-col gap-5 p-6">
-            {/* Organization Info */}
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="org" className="text-sm font-medium">
@@ -161,7 +219,7 @@ export default function NewAdminPhDPositionPage() {
                   placeholder="e.g., ETH Zurich"
                   required
                   value={organization}
-                  onChange={(e) => setOrganization(e.target.value)}
+                  onChange={(event) => setOrganization(event.target.value)}
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -184,7 +242,39 @@ export default function NewAdminPhDPositionPage() {
               </div>
             </div>
 
-            {/* Title */}
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <Label className="text-sm font-medium">
+                  Publication Status <span className="text-destructive">*</span>
+                </Label>
+                <Select required onValueChange={(value) => setStatus(value as PhdStatus)} value={status}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="approved">Approved / Published</SelectItem>
+                    <SelectItem value="pending">Pending Review</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label className="text-sm font-medium">
+                  Compensation <span className="text-destructive">*</span>
+                </Label>
+                <Select required onValueChange={setCompensation} value={compensation}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select compensation type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="stipend">Stipend</SelectItem>
+                    <SelectItem value="unpaid">Unpaid</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="flex flex-col gap-2">
               <Label htmlFor="title" className="text-sm font-medium">
                 PhD Position Title <span className="text-destructive">*</span>
@@ -195,59 +285,58 @@ export default function NewAdminPhDPositionPage() {
                 required
                 maxLength={150}
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(event) => setTitle(event.target.value)}
               />
             </div>
 
-            {/* Subject */}
             <div className="flex flex-col gap-2">
               <Label className="text-sm font-medium">
                 Subject Area (Select 1-5) <span className="text-destructive">*</span>
               </Label>
               <div className="flex flex-wrap gap-2">
-                {subjects.map((s) => (
+                {subjects.map((subject) => (
                   <button
-                    key={s}
+                    key={subject}
                     type="button"
-                    onClick={() => toggleSubject(s)}
+                    onClick={() => toggleSubject(subject)}
                     className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                      selectedSubjects.includes(s)
+                      selectedSubjects.includes(subject)
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground hover:bg-muted/80"
                     }`}
                   >
-                    {s}
+                    {subject}
                   </button>
                 ))}
-                {selectedSubjects.filter(s => !subjects.includes(s)).map((s) => (
+                {selectedSubjects.filter((subject) => !subjects.includes(subject)).map((subject) => (
                   <button
-                    key={s}
+                    key={subject}
                     type="button"
-                    onClick={() => toggleSubject(s)}
+                    onClick={() => toggleSubject(subject)}
                     className="rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors"
                   >
-                    {s}
+                    {subject}
                   </button>
                 ))}
               </div>
-              
+
               <div className="mt-2 flex gap-2">
                 <Input
                   placeholder="Add custom subject..."
                   value={customSubject}
-                  onChange={(e) => setCustomSubject(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault()
+                  onChange={(event) => setCustomSubject(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault()
                       addCustomSubject()
                     }
                   }}
                   className="h-9 text-xs"
                 />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={addCustomSubject}
                   className="h-9 shrink-0"
                 >
@@ -260,65 +349,45 @@ export default function NewAdminPhDPositionPage() {
               </p>
             </div>
 
-            {/* Description */}
             <div className="flex flex-col gap-2">
               <Label className="text-sm font-medium">
                 Description <span className="text-destructive">*</span>
               </Label>
               <RichTextEditor
-                placeholder="Describe the research topic..."
+                placeholder="Describe the research topic, candidate profile, responsibilities, and benefits..."
                 value={description}
                 onChange={setDescription}
-                minHeight={300}
+                minHeight={320}
               />
             </div>
 
-            {/* Location + Deadline */}
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="location" className="text-sm font-medium">
                   Location <span className="text-destructive">*</span>
                 </Label>
-                <Input 
-                  id="location" 
-                  placeholder="e.g., Zurich, Switzerland" 
-                  required 
+                <Input
+                  id="location"
+                  placeholder="e.g., Zurich, Switzerland"
+                  required
                   value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  onChange={(event) => setLocation(event.target.value)}
                 />
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="deadline" className="text-sm font-medium">
                   Application Deadline <span className="text-destructive">*</span>
                 </Label>
-                <Input 
-                  id="deadline" 
-                  type="date" 
-                  required 
+                <Input
+                  id="deadline"
+                  type="date"
+                  required
                   value={deadline}
-                  onChange={(e) => setDeadline(e.target.value)}
+                  onChange={(event) => setDeadline(event.target.value)}
                 />
               </div>
             </div>
 
-            {/* Compensation */}
-            <div className="flex flex-col gap-2">
-              <Label className="text-sm font-medium">
-                Compensation <span className="text-destructive">*</span>
-              </Label>
-              <Select required onValueChange={setCompensation} value={compensation}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select compensation type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="stipend">Stipend</SelectItem>
-                  <SelectItem value="unpaid">Unpaid</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* External URL */}
             <div className="flex flex-col gap-2">
               <Label htmlFor="url" className="text-sm font-medium">
                 External Application URL <span className="text-destructive">*</span>
@@ -329,13 +398,12 @@ export default function NewAdminPhDPositionPage() {
                 placeholder="https://example.com/apply"
                 required
                 value={externalUrl}
-                onChange={(e) => setExternalUrl(e.target.value)}
+                onChange={(event) => setExternalUrl(event.target.value)}
               />
             </div>
           </CardContent>
         </Card>
 
-        {/* Actions */}
         <div className="mt-6 flex items-center justify-between">
           <Link href="/n_admin/dashboard/phd-positions">
             <Button type="button" variant="outline">
@@ -347,8 +415,8 @@ export default function NewAdminPhDPositionPage() {
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
               <>
-                <Send className="h-3.5 w-3.5" />
-                Publish Position
+                <Save className="h-3.5 w-3.5" />
+                Save Changes
               </>
             )}
           </Button>

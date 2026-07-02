@@ -24,9 +24,49 @@ const allowedTags = new Set([
   "ul",
 ])
 
-const allowedAttributes = new Set(["class", "href", "rel", "target", "title"])
+const allowedAttributes = new Set(["class", "href", "rel", "style", "target", "title"])
 const safeUrlProtocols = new Set(["http:", "https:", "mailto:"])
 const blockedTags = new Set(["iframe", "object", "script", "style", "template"])
+const allowedStyleProperties = new Set(["background-color", "color", "font-family", "font-size"])
+
+function isSafeColor(value: string) {
+  return (
+    /^#[0-9a-f]{3,8}$/i.test(value) ||
+    /^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(?:\s*,\s*(?:0|1|0?\.\d+))?\s*\)$/i.test(value)
+  )
+}
+
+function sanitizeStyle(value: string) {
+  return value
+    .split(";")
+    .map((declaration) => declaration.trim())
+    .filter(Boolean)
+    .map((declaration) => {
+      const separatorIndex = declaration.indexOf(":")
+      if (separatorIndex === -1) return ""
+
+      const property = declaration.slice(0, separatorIndex).trim().toLowerCase()
+      const rawValue = declaration.slice(separatorIndex + 1).trim()
+
+      if (!allowedStyleProperties.has(property)) return ""
+
+      if ((property === "color" || property === "background-color") && !isSafeColor(rawValue)) {
+        return ""
+      }
+
+      if (property === "font-size" && !/^\d{1,2}px$/.test(rawValue)) {
+        return ""
+      }
+
+      if (property === "font-family" && !/^[\w\s"',.-]+$/.test(rawValue)) {
+        return ""
+      }
+
+      return `${property}: ${rawValue}`
+    })
+    .filter(Boolean)
+    .join("; ")
+}
 
 function isSafeUrl(value: string) {
   try {
@@ -65,6 +105,16 @@ export function sanitizeHtml(dirtyHtml: string) {
 
       if (name.startsWith("on") || !allowedAttributes.has(name)) {
         element.removeAttribute(attribute.name)
+        continue
+      }
+
+      if (name === "style") {
+        const safeStyle = sanitizeStyle(value)
+        if (safeStyle) {
+          element.setAttribute("style", safeStyle)
+        } else {
+          element.removeAttribute(attribute.name)
+        }
         continue
       }
 

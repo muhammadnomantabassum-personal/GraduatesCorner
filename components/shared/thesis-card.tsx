@@ -8,6 +8,7 @@ import { MapPin, Calendar, Building2, GraduationCap, BookOpen, Heart, Tags, Arro
 import type { Thesis } from "@/lib/data/types"
 import { useWishlist } from "@/lib/wishlist-context"
 import { VerifiedBadge } from "@/components/shared/verified-badge"
+import { htmlToPlainText } from "@/lib/text"
 
 export function ThesisCard({ thesis }: { thesis: Thesis }) {
   const { isInWishlist, toggleWishlist } = useWishlist()
@@ -37,6 +38,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
   const visibleSubjects = showAllSubjects ? subjects : subjects.slice(0, MAX_VISIBLE_SUBJECTS)
   const hiddenSubjectCount = subjects.length - MAX_VISIBLE_SUBJECTS
   const detailHref = isPhD ? `/phd-positions/${thesis.id}` : `/theses/${thesis.id}`
+  const descriptionPreview = htmlToPlainText(thesis.description)
 
   return (
     <Card className={`premium-border group relative flex min-h-[360px] flex-col overflow-hidden border-border/70 bg-card/94 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_55px_rgba(66,133,244,0.14)] ${isPhD ? "ring-1 ring-accent/20" : ""
@@ -83,7 +85,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3.5 pb-2">
         <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-          {thesis.description}
+          {descriptionPreview}
         </p>
         <div className="flex flex-col gap-2.5">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

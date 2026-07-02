@@ -13,6 +13,8 @@ import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth-context"
 import type { Thesis } from "@/lib/data/types"
 import { VerifiedBadge } from "@/components/shared/verified-badge"
+import { sanitizeHtml } from "@/lib/sanitize-html"
+import { isHtmlContent } from "@/lib/text"
 import {
   ArrowLeft,
   MapPin,
@@ -182,6 +184,7 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
   const backLink = thesis.type === "phd" ? "/phd-positions" : "/master-thesis"
   const backText = thesis.type === "phd" ? "Back to PhD Positions" : "Back to Master's Theses"
   const opportunityLabel = thesis.type === "phd" ? "PhD Position" : "Master's Thesis"
+  const descriptionHasHtml = isHtmlContent(thesis.description)
 
   return (
     <PublicLayout>
@@ -211,7 +214,7 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
                 <VerifiedBadge badge={thesis.verificationBadge} className="bg-white text-[#1877F2]" />
               )}
               {thesis.postedBy === "admin" && (
-                <span className="text-primary-foreground/40">· by Graduates Corner</span>
+                <span className="text-primary-foreground/40">- by Graduates Corner</span>
               )}
             </span>
             <span className="flex items-center gap-1.5">
@@ -236,13 +239,20 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
               <Card>
                 <CardContent className="p-6 lg:p-8">
                   <h2 className="mb-4 text-xl font-semibold text-foreground">Description</h2>
-                  <div className="prose prose-sm max-w-none text-muted-foreground">
-                    {thesis.description.split("\n").map((paragraph, i) => (
-                      <p key={i} className="mb-4 leading-relaxed">
-                        {paragraph}
-                      </p>
-                    ))}
-                  </div>
+                  {descriptionHasHtml ? (
+                    <div
+                      className="prose prose-sm max-w-none text-muted-foreground [&_blockquote]:border-l-4 [&_blockquote]:border-primary/30 [&_blockquote]:pl-4 [&_h2]:text-foreground [&_h3]:text-foreground [&_ol]:list-decimal [&_ul]:list-disc [&_li]:ml-5"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(thesis.description) }}
+                    />
+                  ) : (
+                    <div className="prose prose-sm max-w-none text-muted-foreground">
+                      {thesis.description.split("\n").map((paragraph, i) => (
+                        <p key={i} className="mb-4 leading-relaxed">
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
+                  )}
 
                   <Separator className="my-6" />
 
