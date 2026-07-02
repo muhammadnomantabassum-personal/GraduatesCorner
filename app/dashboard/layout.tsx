@@ -68,8 +68,8 @@ const sidebarLinks = {
     {
       title: "PhD Positions",
       links: [
-        { href: "/dashboard/university/phd-positions", label: "My PhD Positions", mobileLabel: "PHD", icon: GraduationCap, mobileHidden: false },
-        { href: "/dashboard/university/phd-positions/new", label: "Post PhD Position", mobileLabel: "Post PHD", icon: Plus, mobileHidden: true },
+        { href: "/dashboard/university/phd-positions", label: "My PhD Positions", mobileLabel: "PhD", icon: GraduationCap, mobileHidden: false },
+        { href: "/dashboard/university/phd-positions/new", label: "Post PhD Position", mobileLabel: "Post PhD", icon: Plus, mobileHidden: true },
       ]
     },
     {
@@ -98,8 +98,8 @@ const sidebarLinks = {
     {
       title: "PhD Positions",
       links: [
-        { href: "/dashboard/company/phd-positions", label: "My PhD Positions", mobileLabel: "PHD", icon: GraduationCap, mobileHidden: false },
-        { href: "/dashboard/company/phd-positions/new", label: "Post PhD Position", mobileLabel: "Post PHD", icon: Plus, mobileHidden: true },
+        { href: "/dashboard/company/phd-positions", label: "My PhD Positions", mobileLabel: "PhD", icon: GraduationCap, mobileHidden: false },
+        { href: "/dashboard/company/phd-positions/new", label: "Post PhD Position", mobileLabel: "Post PhD", icon: Plus, mobileHidden: true },
       ]
     },
     {

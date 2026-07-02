@@ -278,7 +278,7 @@ export function GlobalSearchCommand() {
                       key={phd.id}
                       value={`${phd.title} ${phd.subject} ${phd.organization}`}
                       onSelect={() =>
-                        runCommand(() => router.push(`/theses/${phd.id}`))
+                        runCommand(() => router.push(`/phd-positions/${phd.id}`))
                       }
                       className="gap-3"
                     >

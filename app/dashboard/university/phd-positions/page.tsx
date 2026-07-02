@@ -96,7 +96,7 @@ export default function UniversityPhDPositionsPage() {
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground font-sans">PHD Positions</h1>
+          <h1 className="text-xl font-bold text-foreground font-sans">PhD Positions</h1>
           <p className="text-sm text-muted-foreground">
             Manage and track your PhD position postings
           </p>
@@ -104,7 +104,7 @@ export default function UniversityPhDPositionsPage() {
         <Link href="/dashboard/university/phd-positions/new">
           <Button className="gap-1.5">
             <Plus className="h-4 w-4" />
-            Post PHD Positions
+            Post PhD Position
           </Button>
         </Link>
       </div>
@@ -216,7 +216,7 @@ export default function UniversityPhDPositionsPage() {
                     </div>
                   </div>
                   {thesis.status === "approved" && (
-                    <Link href={`/theses/${thesis.id}`}>
+                    <Link href={`/phd-positions/${thesis.id}`}>
                       <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-primary">
                         <Eye className="h-3.5 w-3.5" />
                         View

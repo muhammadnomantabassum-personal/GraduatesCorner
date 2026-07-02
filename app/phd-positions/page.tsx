@@ -29,13 +29,29 @@ export default function PhDPositionsPage() {
       setLoading(true)
       const { data, error } = await supabase
         .from('theses')
-        .select('*, profiles:posted_by_user_id (is_verified, verification_badge)')
+        .select('*')
         .eq('status', 'approved')
         .eq('type', 'phd')
 
       if (error) {
         console.error('Error fetching theses:', error)
       } else {
+        const profileIds = Array.from(new Set(
+          data
+            .map((t: any) => t.posted_by_user_id)
+            .filter(Boolean)
+        ))
+        const profilesById = new Map<string, any>()
+
+        if (profileIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, is_verified, verification_badge")
+            .in("id", profileIds)
+
+          profiles?.forEach((profile: any) => profilesById.set(profile.id, profile))
+        }
+
         const formattedData = data.map((t: any) => ({
           id: t.id,
           title: t.title,
@@ -52,8 +68,8 @@ export default function PhDPositionsPage() {
           externalUrl: t.external_url,
           status: t.status,
           createdAt: t.created_at,
-          organizationVerified: t.posted_by === "admin" || Boolean(t.profiles?.is_verified),
-          verificationBadge: t.profiles?.verification_badge || "verified",
+          organizationVerified: t.posted_by === "admin" || Boolean(profilesById.get(t.posted_by_user_id)?.is_verified),
+          verificationBadge: profilesById.get(t.posted_by_user_id)?.verification_badge || "verified",
         }))
         setTheses(formattedData)
       }

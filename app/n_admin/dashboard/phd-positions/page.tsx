@@ -186,7 +186,7 @@ export default function AdminPhDPositionsPage() {
           <Link href="/n_admin/dashboard/phd-positions/new">
             <Button className="gap-1.5">
               <Plus className="h-4 w-4" />
-              Post PHD Positions
+              Post PhD Position
             </Button>
           </Link>
         </div>
@@ -283,7 +283,7 @@ export default function AdminPhDPositionsPage() {
                         </div>
                       </div>
                       <div className="flex shrink-0 items-center gap-1.5">
-                        <Link href={`/theses/${thesis.id}`}>
+                        <Link href={`/phd-positions/${thesis.id}`}>
                           <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-primary">
                             <Eye className="h-3.5 w-3.5" />
                             View

@@ -36,6 +36,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
   const MAX_VISIBLE_SUBJECTS = 2
   const visibleSubjects = showAllSubjects ? subjects : subjects.slice(0, MAX_VISIBLE_SUBJECTS)
   const hiddenSubjectCount = subjects.length - MAX_VISIBLE_SUBJECTS
+  const detailHref = isPhD ? `/phd-positions/${thesis.id}` : `/theses/${thesis.id}`
 
   return (
     <Card className={`premium-border group relative flex min-h-[360px] flex-col overflow-hidden border-border/70 bg-card/94 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_55px_rgba(66,133,244,0.14)] ${isPhD ? "ring-1 ring-accent/20" : ""
@@ -74,7 +75,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
           )}
         </div>
 
-        <Link href={`/theses/${thesis.id}`}>
+        <Link href={detailHref}>
           <h3 className="text-balance text-lg font-semibold leading-tight text-foreground transition-colors hover:text-primary">
             {thesis.title}
           </h3>
@@ -142,7 +143,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
             {thesis.compensation}
           </span>
           <Link
-            href={`/theses/${thesis.id}`}
+            href={detailHref}
             className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-md hover:shadow-accent/25 active:scale-[0.97]"
           >
             View Details

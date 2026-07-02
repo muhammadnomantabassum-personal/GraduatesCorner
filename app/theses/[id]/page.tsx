@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { PublicLayout } from "@/components/layout/public-layout"
 import { ThesisCard } from "@/components/shared/thesis-card"
 import { Button } from "@/components/ui/button"
@@ -26,25 +27,39 @@ import {
 
 export default function ThesisDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const pathname = usePathname()
   const { user } = useAuth()
   const [thesis, setThesis] = useState<Thesis | null>(null)
   const [relatedTheses, setRelatedTheses] = useState<Thesis[]>([])
   const [loading, setLoading] = useState(true)
 
   const supabase = createClient()
+  const expectedPhdRoute = pathname.startsWith("/phd-positions")
 
   useEffect(() => {
     const fetchThesis = async () => {
       setLoading(true)
       const { data, error } = await supabase
         .from('theses')
-        .select('*, profiles:posted_by_user_id (is_verified, verification_badge)')
+        .select('*')
         .eq('id', id)
-        .single()
+        .maybeSingle()
 
       if (error) {
-        console.error('Error fetching thesis:', error)
+        console.error('Error fetching opportunity:', error)
       } else if (data) {
+        let profile: { is_verified?: boolean; verification_badge?: Thesis["verificationBadge"] } | null = null
+
+        if (data.posted_by_user_id) {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("is_verified, verification_badge")
+            .eq("id", data.posted_by_user_id)
+            .maybeSingle()
+
+          profile = profileData
+        }
+
         const formattedThesis: Thesis = {
           id: data.id,
           title: data.title,
@@ -61,8 +76,8 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
           externalUrl: data.external_url,
           status: data.status,
           createdAt: data.created_at,
-          organizationVerified: data.posted_by === "admin" || Boolean(data.profiles?.is_verified),
-          verificationBadge: data.profiles?.verification_badge || "verified",
+          organizationVerified: data.posted_by === "admin" || Boolean(profile?.is_verified),
+          verificationBadge: profile?.verification_badge || "verified",
         }
         setThesis(formattedThesis)
 
@@ -73,8 +88,9 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
 
         const { data: relatedData } = await supabase
           .from('theses')
-          .select('*, profiles:posted_by_user_id (is_verified, verification_badge)')
+          .select('*')
           .eq('status', 'approved')
+          .eq('type', data.type)
           .neq('id', data.id)
           .limit(30) // fetch broader pool, filter client-side
 
@@ -106,8 +122,8 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
             externalUrl: t.external_url,
             status: t.status,
             createdAt: t.created_at,
-            organizationVerified: t.posted_by === "admin" || Boolean(t.profiles?.is_verified),
-            verificationBadge: t.profiles?.verification_badge || "verified",
+            organizationVerified: t.posted_by === "admin",
+            verificationBadge: "verified",
           })))
         }
       }
@@ -133,19 +149,27 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
       <PublicLayout>
         <div className="flex min-h-[50vh] flex-col items-center justify-center px-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="mt-4 text-muted-foreground">Loading thesis details...</p>
+          <p className="mt-4 text-muted-foreground">
+            Loading {expectedPhdRoute ? "PhD position" : "opportunity"} details...
+          </p>
         </div>
       </PublicLayout>
     )
   }
 
   if (!thesis) {
+    const notFoundTitle = expectedPhdRoute ? "PhD Position Not Found" : "Opportunity Not Found"
+    const notFoundCopy = expectedPhdRoute
+      ? "The PhD position you are looking for does not exist or is not published yet."
+      : "The opportunity you are looking for does not exist or is not published yet."
+    const notFoundBackLink = expectedPhdRoute ? "/phd-positions" : "/master-thesis"
+
     return (
       <PublicLayout>
         <div className="flex min-h-[50vh] flex-col items-center justify-center px-4">
-          <h1 className="mb-4 text-2xl font-bold text-foreground">Thesis Not Found</h1>
-          <p className="mb-6 text-muted-foreground">The thesis you are looking for does not exist.</p>
-          <Link href="/master-thesis">
+          <h1 className="mb-4 text-2xl font-bold text-foreground">{notFoundTitle}</h1>
+          <p className="mb-6 text-center text-muted-foreground">{notFoundCopy}</p>
+          <Link href={notFoundBackLink}>
             <Button variant="outline" className="gap-2">
               <ArrowLeft className="h-4 w-4" /> Back to Browse
             </Button>
@@ -157,6 +181,7 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
 
   const backLink = thesis.type === "phd" ? "/phd-positions" : "/master-thesis"
   const backText = thesis.type === "phd" ? "Back to PhD Positions" : "Back to Master's Theses"
+  const opportunityLabel = thesis.type === "phd" ? "PhD Position" : "Master's Thesis"
 
   return (
     <PublicLayout>
@@ -171,7 +196,7 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
           <h1 className="mb-4 flex flex-wrap items-center gap-3 text-balance text-3xl font-bold lg:text-4xl">
             {thesis.title}
             <Badge className="bg-primary-foreground/20 text-primary-foreground px-2.5 py-1 text-sm font-semibold ring-1 ring-primary-foreground/40">
-              {thesis.type === "phd" ? "PhD Position" : "Master's Thesis"}
+              {opportunityLabel}
             </Badge>
           </h1>
           <div className="flex flex-wrap items-center gap-4 text-sm text-primary-foreground/80">
@@ -233,9 +258,11 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
                     <div className="flex items-start gap-3">
                       <GraduationCap className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                       <div>
-                        <p className="text-sm font-medium text-foreground">Thesis Type</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {thesis.type === "phd" ? "Position Type" : "Thesis Type"}
+                        </p>
                         <p className="text-sm text-muted-foreground">
-                          {thesis.type === "phd" ? "PhD / Doctoral" : "Master"}
+                          {thesis.type === "phd" ? "PhD / Doctoral Position" : "Master's Thesis"}
                         </p>
                       </div>
                     </div>
