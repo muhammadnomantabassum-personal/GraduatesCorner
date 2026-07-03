@@ -33,7 +33,8 @@ export const metadata: Metadata = {
     locale: 'en_US',
     images: [
       {
-        url: 'https://graduatescorner.com/og-image.png?v=3', // VERY IMPORTANT
+        url: 'https://graduatescorner.com/og-image.png?v=4',
+        alt: 'Graduates Corner GC logo',
         width: 1200,
         height: 630,
       },
@@ -45,7 +46,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Graduates Corner',
     description: 'Find academic and career opportunities across Sweden and the world.',
-    images: ['https://graduatescorner.com/og-image.png?v=3'],
+    images: ['https://graduatescorner.com/og-image.png?v=4'],
   },
 }
 export default function RootLayout({
