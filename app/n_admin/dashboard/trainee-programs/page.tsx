@@ -21,6 +21,7 @@ import {
   BookOpen
 } from "lucide-react"
 import { toast } from "sonner"
+import { htmlToPlainText } from "@/lib/text"
 
 export default function AdminTraineeProgramsPage() {
   const [programs, setPrograms] = useState<TraineeProgram[]>([])
@@ -262,7 +263,7 @@ export default function AdminTraineeProgramsPage() {
                           {program.title}
                         </h3>
                         <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                          {program.description}
+                          {htmlToPlainText(program.description)}
                         </p>
                         <div className="mt-3 flex flex-col gap-1.5 text-xs text-muted-foreground">
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">

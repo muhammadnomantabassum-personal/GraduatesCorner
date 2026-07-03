@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { RichTextEditor } from "@/components/shared/rich-text-editor"
 import {
   Select,
   SelectContent,
@@ -19,6 +19,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth-context"
+import { htmlToPlainText } from "@/lib/text"
 
 const fields = [
   "Engineering",
@@ -102,6 +103,11 @@ export default function NewTraineeProgramPage() {
     const finalDuration = showCustomDuration ? `${customDuration} months` : duration
     if (!finalDuration) {
       toast.error("Please provide a duration")
+      return
+    }
+
+    if (!htmlToPlainText(description)) {
+      toast.error("Please add a description")
       return
     }
 
@@ -248,16 +254,14 @@ export default function NewTraineeProgramPage() {
 
             {/* Description */}
             <div className="flex flex-col gap-2">
-              <Label htmlFor="description" className="text-sm font-medium">
+              <Label className="text-sm font-medium">
                 Description <span className="text-destructive">*</span>
               </Label>
-              <Textarea
-                id="description"
+              <RichTextEditor
                 placeholder="Describe the trainee program, rotations, learning opportunities, and candidate requirements..."
-                rows={6}
-                required
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={setDescription}
+                minHeight={300}
               />
             </div>
 

@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import type { ApprovalStatus, TraineeProgram } from "@/lib/data/types"
 import { toast } from "sonner"
+import { htmlToPlainText } from "@/lib/text"
 
 type FilterTab = "all" | ApprovalStatus
 
@@ -177,7 +178,7 @@ export default function CompanyTraineeProgramsPage() {
                       {program.title}
                     </h3>
                     <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                      {program.description}
+                      {htmlToPlainText(program.description)}
                     </p>
                     <div className="mt-3 flex flex-col gap-1.5 text-xs text-muted-foreground">
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">

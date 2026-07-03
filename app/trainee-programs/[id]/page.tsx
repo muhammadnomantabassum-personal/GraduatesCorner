@@ -12,6 +12,8 @@ import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth-context"
 import type { TraineeProgram } from "@/lib/data/types"
 import { VerifiedBadge } from "@/components/shared/verified-badge"
+import { sanitizeHtml } from "@/lib/sanitize-html"
+import { isHtmlContent } from "@/lib/text"
 import {
   ArrowLeft,
   MapPin,
@@ -154,6 +156,8 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
     )
   }
 
+  const descriptionHasHtml = isHtmlContent(program.description)
+
   return (
     <PublicLayout>
       <section className="border-b border-border bg-primary px-4 py-10 text-primary-foreground lg:py-14">
@@ -199,13 +203,20 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
                   <h2 className="mb-4 text-xl font-semibold text-foreground">
                     Program Description
                   </h2>
-                  <div className="prose prose-sm max-w-none text-muted-foreground">
-                    {program.description.split("\n").map((paragraph, i) => (
-                      <p key={i} className="mb-4 leading-relaxed text-muted-foreground">
-                        {paragraph}
-                      </p>
-                    ))}
-                  </div>
+                  {descriptionHasHtml ? (
+                    <div
+                      className="prose prose-sm max-w-none text-muted-foreground [&_blockquote]:border-l-4 [&_blockquote]:border-primary/30 [&_blockquote]:pl-4 [&_h2]:text-foreground [&_h3]:text-foreground [&_ol]:list-decimal [&_ul]:list-disc [&_li]:ml-5"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(program.description) }}
+                    />
+                  ) : (
+                    <div className="prose prose-sm max-w-none text-muted-foreground">
+                      {program.description.split("\n").map((paragraph, i) => (
+                        <p key={i} className="mb-4 leading-relaxed text-muted-foreground">
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
+                  )}
 
                   <Separator className="my-6" />
 
