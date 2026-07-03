@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,6 +16,7 @@ import {
   Clock,
   Trash2,
   Eye,
+  PenLine,
   Loader2,
   Calendar,
   User,
@@ -23,6 +25,7 @@ import {
 import { toast } from "sonner"
 
 export default function AdminBlogsPage() {
+  const router = useRouter()
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<"approved" | "pending">("pending")
@@ -149,6 +152,7 @@ export default function AdminBlogsPage() {
                         src={post.coverImage}
                         alt={post.title}
                         fill
+                        unoptimized
                         className="object-cover transition-transform group-hover:scale-105"
                       />
                     ) : (
@@ -181,6 +185,19 @@ export default function AdminBlogsPage() {
                       {post.title}
                     </h3>
                     <div className="flex items-center gap-2 mt-auto">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 flex-1 gap-1.5 text-xs"
+                        onClick={(event) => {
+                          event.preventDefault()
+                          event.stopPropagation()
+                          router.push(`/n_admin/dashboard/blogs/${post.id}/edit`)
+                        }}
+                      >
+                        <PenLine className="h-3.5 w-3.5" />
+                        Edit
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"

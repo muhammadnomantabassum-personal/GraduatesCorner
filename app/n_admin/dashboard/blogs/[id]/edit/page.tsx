@@ -1,16 +1,21 @@
 "use client"
 
+import { use } from "react"
+
 import { BlogPostForm, adminBlogCategories } from "@/components/shared/blog-post-form"
 
-export default function AdminNewBlogPage() {
+export default function AdminEditBlogPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
+
   return (
     <BlogPostForm
-      mode="create"
+      mode="edit"
       ownerType="admin"
+      blogId={id}
       backHref="/n_admin/dashboard/blogs"
       successHref="/n_admin/dashboard/blogs"
-      pageTitle="Write a Blog Post"
-      pageDescription="Publish content directly to the public blog"
+      pageTitle="Edit Blog Post"
+      pageDescription="Update any community or official blog post"
       categories={adminBlogCategories}
     />
   )

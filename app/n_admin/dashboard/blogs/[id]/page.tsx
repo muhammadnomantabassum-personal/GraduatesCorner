@@ -17,6 +17,7 @@ import {
   XCircle,
   Loader2,
   Calendar,
+  PenLine,
   User,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -141,6 +142,12 @@ export default function AdminBlogDetailsPage({ params }: { params: Promise<{ id:
         </div>
         
         <div className="flex items-center gap-3">
+          <Link href={`/n_admin/dashboard/blogs/${post.id}/edit`}>
+            <Button variant="outline">
+              <PenLine className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          </Link>
           {post.status !== 'approved' && (
             <Button
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -174,6 +181,7 @@ export default function AdminBlogDetailsPage({ params }: { params: Promise<{ id:
                   src={post.coverImage}
                   alt={post.title}
                   fill
+                  unoptimized
                   className="object-cover"
                 />
               </div>

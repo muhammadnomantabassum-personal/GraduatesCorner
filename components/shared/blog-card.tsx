@@ -22,6 +22,7 @@ export function BlogCard({ post, featured = false }: { post: BlogPost; featured?
                 src={post.coverImage}
                 alt={post.title}
                 fill
+                unoptimized
                 priority={true} // Featured image is always above the fold
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
@@ -81,6 +82,7 @@ export function BlogCard({ post, featured = false }: { post: BlogPost; featured?
             src={post.coverImage}
             alt={post.title}
             fill
+            unoptimized
             loading="lazy"
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

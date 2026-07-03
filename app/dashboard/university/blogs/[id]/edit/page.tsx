@@ -1,16 +1,21 @@
 "use client"
 
+import { use } from "react"
+
 import { BlogPostForm, universityBlogCategories } from "@/components/shared/blog-post-form"
 
-export default function NewUniversityBlogPage() {
+export default function EditUniversityBlogPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
+
   return (
     <BlogPostForm
-      mode="create"
+      mode="edit"
       ownerType="university"
+      blogId={id}
       backHref="/dashboard/university/blogs"
       successHref="/dashboard/university/blogs"
-      pageTitle="Write a Blog Post"
-      pageDescription="Share news, research highlights, or insights from your university"
+      pageTitle="Edit Blog Post"
+      pageDescription="Update your university article, cover image, and formatting"
       categories={universityBlogCategories}
     />
   )

@@ -196,14 +196,22 @@ export default function UniversityBlogsPage() {
                       </div>
                     </div>
                   </div>
-                  {post.status === "approved" && (
-                    <Link href={`/blog/${post.slug}`}>
-                      <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-primary">
-                        <Eye className="h-3 w-3" />
-                        View
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Link href={`/dashboard/university/blogs/${post.id}/edit`}>
+                      <Button variant="outline" size="sm" className="h-7 gap-1 text-xs">
+                        <PenLine className="h-3 w-3" />
+                        Edit
                       </Button>
                     </Link>
-                  )}
+                    {post.status === "approved" && (
+                      <Link href={`/blog/${post.slug}`}>
+                        <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-primary">
+                          <Eye className="h-3 w-3" />
+                          View
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>

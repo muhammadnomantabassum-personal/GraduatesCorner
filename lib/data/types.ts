@@ -70,7 +70,7 @@ export interface BlogPost {
   content: string
   author: string
   category: string
-  coverImage: string
+  coverImage?: string | null
   createdAt: string
   readTime: string
   status: ApprovalStatus

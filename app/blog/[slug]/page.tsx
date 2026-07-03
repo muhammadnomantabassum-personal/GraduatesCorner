@@ -179,6 +179,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
                 src={post.coverImage}
                 alt={post.title}
                 fill
+                unoptimized
                 className="object-cover"
                 priority
               />

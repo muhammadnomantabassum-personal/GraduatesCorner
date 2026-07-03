@@ -18,6 +18,7 @@ const allowedTags = new Set([
   "ol",
   "p",
   "pre",
+  "s",
   "span",
   "strong",
   "u",
