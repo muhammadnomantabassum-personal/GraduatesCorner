@@ -50,7 +50,8 @@ async function getOrganizationLogo(
   supabase: any,
   postedByUserId: string | null,
   organization: string,
-  organizationType: "university" | "company"
+  organizationType: "university" | "company",
+  externalUrl?: string | null
 ) {
   if (postedByUserId) {
     const { data: posterData } = await supabase
@@ -77,7 +78,21 @@ async function getOrganizationLogo(
     .limit(3)
 
   const matchingProfiles = matchingProfileData as ShareProfile[] | null
-  return matchingProfiles?.find((profile) => isUsableImageUrl(profile.avatar))?.avatar
+  const matchingLogo = matchingProfiles?.find((profile) => isUsableImageUrl(profile.avatar))?.avatar
+  if (matchingLogo) return matchingLogo
+
+  return getDomainLogoUrl(externalUrl)
+}
+
+function getDomainLogoUrl(value?: string | null) {
+  if (!value) return undefined
+
+  try {
+    const url = new URL(value)
+    return `https://www.google.com/s2/favicons?domain=${url.hostname}&sz=256`
+  } catch {
+    return undefined
+  }
 }
 
 export async function getPhdShareData(id: string): Promise<OpportunityShareData | null> {
@@ -86,7 +101,7 @@ export async function getPhdShareData(id: string): Promise<OpportunityShareData 
 
   const { data } = await supabase
     .from("theses")
-    .select("id, title, description, subject, organization, organization_type, location, deadline, posted_by_user_id")
+    .select("id, title, description, subject, organization, organization_type, location, deadline, posted_by_user_id, external_url")
     .eq("id", id)
     .eq("type", "phd")
     .eq("status", "approved")
@@ -99,7 +114,8 @@ export async function getPhdShareData(id: string): Promise<OpportunityShareData 
     supabase,
     data.posted_by_user_id,
     data.organization,
-    organizationType
+    organizationType,
+    data.external_url
   )
 
   return {
