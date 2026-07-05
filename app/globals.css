@@ -116,6 +116,10 @@
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   * {
     @apply border-border outline-ring/50;
   }
@@ -128,6 +132,26 @@
       radial-gradient(circle at 50% 0%, rgba(251, 188, 5, 0.08), transparent 24rem),
       linear-gradient(135deg, #ffffff 0%, #f8fbff 48%, #f1f6ff 100%);
     letter-spacing: 0;
+  }
+
+  ::selection {
+    background: color-mix(in oklch, var(--primary), white 74%);
+    color: var(--foreground);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 

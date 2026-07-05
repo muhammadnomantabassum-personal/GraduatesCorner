@@ -7,6 +7,8 @@ import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { BrandLogo } from "@/components/shared/brand-logo"
+import { OpportunityAssistant } from "@/components/shared/opportunity-assistant"
+import { SiteProgress } from "@/components/shared/site-progress"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -173,6 +175,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen">
+      <SiteProgress />
       {/* Sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex">
         <div className="flex h-16 items-center border-b border-sidebar-border px-6">
@@ -309,6 +312,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         <main className="flex-1 overflow-x-hidden bg-background p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
+      <OpportunityAssistant surface="dashboard" />
     </div>
   )
 }

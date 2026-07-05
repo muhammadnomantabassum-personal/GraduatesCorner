@@ -113,26 +113,30 @@ export function CoverImageSelector({ value, onChange }: CoverImageSelectorProps)
     try {
       setUploading(true)
       const optimizedCover = await optimizeCoverImage(file)
-      const uniqueId = typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(36).slice(2)}`
-      const fileName = `${user.id}/blog-cover-${uniqueId}.webp`
-
-      const { error: uploadError } = await supabase.storage
-        .from("blog-covers")
-        .upload(fileName, optimizedCover, {
-          cacheControl: "31536000",
-          contentType: "image/webp",
-          upsert: true,
-        })
-
-      if (uploadError) throw uploadError
-
+      const optimizedFile = new File([optimizedCover], "blog-cover.webp", { type: "image/webp" })
+      const formData = new FormData()
+      formData.append("file", optimizedFile)
       const {
-        data: { publicUrl },
-      } = supabase.storage.from("blog-covers").getPublicUrl(fileName)
+        data: { session },
+      } = await supabase.auth.getSession()
+      const headers: HeadersInit = {}
 
-      onChange(publicUrl)
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`
+      }
+
+      const response = await fetch("/api/blog-covers/upload", {
+        method: "POST",
+        body: formData,
+        headers,
+      })
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to upload image")
+      }
+
+      onChange(result.publicUrl)
       toast.success("Blog cover image optimized and uploaded")
     } catch (error: any) {
       console.error("Error uploading blog cover:", error)

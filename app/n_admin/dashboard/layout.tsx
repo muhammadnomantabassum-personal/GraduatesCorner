@@ -6,6 +6,8 @@ import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { BrandLogo } from "@/components/shared/brand-logo"
+import { OpportunityAssistant } from "@/components/shared/opportunity-assistant"
+import { SiteProgress } from "@/components/shared/site-progress"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -96,6 +98,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
 
   return (
     <div className="flex min-h-screen bg-[linear-gradient(135deg,#f8fbff_0%,#f6f9ff_52%,#f0f8f3_100%)]">
+      <SiteProgress />
       {/* Sidebar */}
       <aside className="hidden w-80 shrink-0 flex-col border-r border-white/10 bg-[linear-gradient(180deg,#0f172a_0%,#102a5c_52%,#12372f_100%)] text-white shadow-[18px_0_70px_rgba(15,23,42,0.20)] lg:flex">
         <div className="border-b border-white/10 px-6 py-5">
@@ -243,6 +246,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
+      <OpportunityAssistant surface="admin" />
     </div>
   )
 }
