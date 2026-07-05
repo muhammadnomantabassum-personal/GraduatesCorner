@@ -5,9 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, User, ArrowRight, Image as ImageIcon } from "lucide-react"
 import type { BlogPost } from "@/lib/data/types"
-
-// A transparent 1x1 pixel base64 for better placeholder performance
-const blurDataURL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+import { BlogCoverImage } from "@/components/shared/blog-cover-image"
 
 export function BlogCard({ post, featured = false }: { post: BlogPost; featured?: boolean }) {
   const blogLink = `/blog/${post.slug || post.id}`
@@ -18,16 +16,12 @@ export function BlogCard({ post, featured = false }: { post: BlogPost; featured?
         <div className="grid md:grid-cols-2">
           <div className="relative aspect-video bg-secondary md:aspect-auto md:min-h-[280px]">
             {post.coverImage ? (
-              <Image
+              <BlogCoverImage
                 src={post.coverImage}
                 alt={post.title}
-                fill
-                unoptimized
                 priority={true} // Featured image is always above the fold
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
-                placeholder="blur"
-                blurDataURL={blurDataURL}
               />
             ) : (
               <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground">
@@ -78,16 +72,12 @@ export function BlogCard({ post, featured = false }: { post: BlogPost; featured?
     <Card className="flex flex-col overflow-hidden border-border/70 bg-card/92 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_22px_55px_rgba(66,133,244,0.14)]">
       <div className="relative aspect-video bg-secondary">
         {post.coverImage ? (
-          <Image
+          <BlogCoverImage
             src={post.coverImage}
             alt={post.title}
-            fill
-            unoptimized
             loading="lazy"
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            placeholder="blur"
-            blurDataURL={blurDataURL}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">

@@ -1,19 +1,19 @@
 "use client"
 
 import { useRef, useState } from "react"
-import Image from "next/image"
 import { ImagePlus, Loader2, UploadCloud, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { useAuth } from "@/lib/auth-context"
 import { cn } from "@/lib/utils"
+import { BlogCoverImage } from "@/components/shared/blog-cover-image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 
 const MAX_SOURCE_SIZE_MB = 12
 const MAX_SOURCE_SIZE_BYTES = MAX_SOURCE_SIZE_MB * 1024 * 1024
-const TARGET_UPLOAD_SIZE_BYTES = 900 * 1024
+const TARGET_UPLOAD_SIZE_BYTES = 420 * 1024
 const IMAGE_EXTENSION_PATTERN =
   /\.(avif|bmp|gif|heic|heif|jpe?g|png|svg|tiff?|webp)$/i
 
@@ -52,10 +52,19 @@ function loadImage(file: File) {
   })
 }
 
+function blobToDataUrl(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(new Error("Could not prepare image preview"))
+    reader.readAsDataURL(blob)
+  })
+}
+
 async function optimizeCoverImage(file: File) {
   const image = await loadImage(file)
-  let maxWidth = 1800
-  let maxHeight = 1000
+  let maxWidth = 1500
+  let maxHeight = 850
   const qualitySteps = [0.88, 0.8, 0.72, 0.64, 0.56, 0.48]
 
   for (let attempt = 0; attempt < 4; attempt += 1) {
@@ -133,6 +142,13 @@ export function CoverImageSelector({ value, onChange }: CoverImageSelectorProps)
       const result = await response.json()
 
       if (!response.ok) {
+        if (response.status >= 500) {
+          const inlineCover = await blobToDataUrl(optimizedCover)
+          onChange(inlineCover)
+          toast.success("Blog cover image optimized and added")
+          return
+        }
+
         throw new Error(result.error || "Failed to upload image")
       }
 
@@ -167,11 +183,9 @@ export function CoverImageSelector({ value, onChange }: CoverImageSelectorProps)
 
       <div className="relative aspect-[21/9] w-full overflow-hidden rounded-lg border bg-muted shadow-inner">
         {value ? (
-          <Image
+          <BlogCoverImage
             src={value}
             alt="Blog cover preview"
-            fill
-            unoptimized
             className="object-cover"
           />
         ) : (

@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { BlogCoverImage } from "@/components/shared/blog-cover-image"
 import type { BlogPost } from "@/lib/data/types"
 import { createClient } from "@/lib/supabase/client"
 import {
@@ -148,11 +148,9 @@ export default function AdminBlogsPage() {
                 <Card className="group h-full flex flex-col overflow-hidden transition-all hover:shadow-md cursor-pointer">
                   <div className="relative aspect-video w-full overflow-hidden bg-muted">
                     {post.coverImage ? (
-                      <Image
+                      <BlogCoverImage
                         src={post.coverImage}
                         alt={post.title}
-                        fill
-                        unoptimized
                         className="object-cover transition-transform group-hover:scale-105"
                       />
                     ) : (

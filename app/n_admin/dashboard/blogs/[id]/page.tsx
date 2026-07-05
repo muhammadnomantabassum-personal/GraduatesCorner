@@ -2,11 +2,11 @@
 
 import { use, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { BlogCoverImage } from "@/components/shared/blog-cover-image"
 import { createClient } from "@/lib/supabase/client"
 import type { BlogPost } from "@/lib/data/types"
 import { sanitizeHtml } from "@/lib/sanitize-html"
@@ -177,11 +177,9 @@ export default function AdminBlogDetailsPage({ params }: { params: Promise<{ id:
           <Card className="overflow-hidden">
             {post.coverImage && (
               <div className="relative aspect-video w-full border-b bg-muted">
-                <Image
+                <BlogCoverImage
                   src={post.coverImage}
                   alt={post.title}
-                  fill
-                  unoptimized
                   className="object-cover"
                 />
               </div>

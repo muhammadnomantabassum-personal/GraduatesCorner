@@ -4,6 +4,7 @@ import { use, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { PublicLayout } from "@/components/layout/public-layout"
 import { BlogCard } from "@/components/shared/blog-card"
+import { BlogCoverImage } from "@/components/shared/blog-cover-image"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { createClient } from "@/lib/supabase/client"
@@ -175,11 +176,9 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
           {/* Cover Image */}
           {post.coverImage && (
             <div className="relative mb-10 md:mb-14 aspect-[16/9] md:aspect-[21/9] w-full overflow-hidden rounded-2xl md:rounded-3xl shadow-lg ring-1 ring-border/50">
-              <Image
+              <BlogCoverImage
                 src={post.coverImage}
                 alt={post.title}
-                fill
-                unoptimized
                 className="object-cover"
                 priority
               />
