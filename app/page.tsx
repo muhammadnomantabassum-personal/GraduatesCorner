@@ -8,6 +8,7 @@ import { ThesisCard } from "@/components/shared/thesis-card"
 import { ProgramCard } from "@/components/shared/program-card"
 import { BlogCard } from "@/components/shared/blog-card"
 import { TestimonialCard } from "@/components/shared/testimonial-card"
+import { OpportunityIntelligencePanel } from "@/components/shared/opportunity-intelligence-panel"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { RoleSelectionModal } from "@/components/shared/role-selection-modal"
@@ -300,6 +301,17 @@ function HomePageContent() {
 
   const featuredMasterTheses = theses.filter((t) => t.type === "master").slice(0, 3)
   const featuredPhDPositions = theses.filter((t) => t.type === "phd").slice(0, 3)
+  const homeIntelligenceTotals = {
+    total: theses.length + programs.length,
+    funded:
+      theses.filter((t) => t.compensation === "paid" || t.compensation === "stipend").length +
+      programs.filter((p) => p.compensation === "paid" || p.compensation === "stipend").length,
+    verified:
+      theses.filter((t) => t.organizationVerified || t.postedBy === "admin").length +
+      programs.filter((p) => p.organizationVerified || p.postedBy === "admin").length,
+    locations: new Set([...theses.map((t) => t.location), ...programs.map((p) => p.location)]).size,
+    organizations: new Set([...theses.map((t) => t.organization), ...programs.map((p) => p.company)]).size,
+  }
 
   const getResultIcon = (category: string) => {
     switch (category) {
@@ -513,6 +525,12 @@ function HomePageContent() {
           ))}
         </div>
       </section>
+
+      <OpportunityIntelligencePanel
+        defaultTrack="phd"
+        totals={homeIntelligenceTotals}
+        className="-mt-4 pb-12 pt-0"
+      />
 
       <section className="px-4 py-14">
         <div className="mx-auto max-w-7xl">

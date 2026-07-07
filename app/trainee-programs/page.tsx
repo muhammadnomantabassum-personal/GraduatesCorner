@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, type ElementType } from "react"
 import { PublicLayout } from "@/components/layout/public-layout"
 import { ProgramCard } from "@/components/shared/program-card"
 import { FilterPanel, type FilterSection } from "@/components/shared/filter-panel"
+import { OpportunityIntelligencePanel } from "@/components/shared/opportunity-intelligence-panel"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
@@ -261,6 +262,10 @@ export default function TraineeProgramsPage() {
   const paidCount = programs.filter((p) => p.compensation === "paid" || p.compensation === "stipend").length
   const companyCount = new Set(programs.map((p) => p.company)).size
   const locationCount = new Set(programs.map((p) => p.location)).size
+  const filteredPaidCount = filtered.filter((p) => p.compensation === "paid" || p.compensation === "stipend").length
+  const filteredCompanyCount = new Set(filtered.map((p) => p.company)).size
+  const filteredLocationCount = new Set(filtered.map((p) => p.location)).size
+  const filteredVerifiedCount = filtered.filter((p) => p.organizationVerified || p.postedBy === "admin").length
   const popularFields = Object.entries(
     programs.reduce<Record<string, number>>((acc, program) => {
       program.field.split(",").map((f) => f.trim()).filter(Boolean).forEach((field) => {
@@ -339,6 +344,19 @@ export default function TraineeProgramsPage() {
           </div>
         </div>
       </section>
+
+      <OpportunityIntelligencePanel
+        compact
+        defaultTrack="trainee"
+        totals={{
+          total: filtered.length,
+          funded: filteredPaidCount,
+          verified: filteredVerifiedCount,
+          locations: filteredLocationCount,
+          organizations: filteredCompanyCount,
+        }}
+        className="-mt-2 pb-4 pt-0"
+      />
 
       <section className="px-4 py-8 lg:py-12">
         <div className="mx-auto max-w-7xl">

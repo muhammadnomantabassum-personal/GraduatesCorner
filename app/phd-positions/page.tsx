@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, type ElementType } from "react"
 import { PublicLayout } from "@/components/layout/public-layout"
 import { ThesisCard } from "@/components/shared/thesis-card"
 import { FilterPanel, type FilterSection } from "@/components/shared/filter-panel"
+import { OpportunityIntelligencePanel } from "@/components/shared/opportunity-intelligence-panel"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
@@ -244,6 +245,10 @@ export default function PhDPositionsPage() {
   const paidCount = theses.filter((t) => t.compensation === "paid" || t.compensation === "stipend").length
   const organizationCount = new Set(theses.map((t) => t.organization)).size
   const locationCount = new Set(theses.map((t) => t.location)).size
+  const filteredPaidCount = filtered.filter((t) => t.compensation === "paid" || t.compensation === "stipend").length
+  const filteredOrganizationCount = new Set(filtered.map((t) => t.organization)).size
+  const filteredLocationCount = new Set(filtered.map((t) => t.location)).size
+  const filteredVerifiedCount = filtered.filter((t) => t.organizationVerified || t.postedBy === "admin").length
   const popularSubjects = Object.entries(
     theses.reduce<Record<string, number>>((acc, thesis) => {
       thesis.subject.split(",").map((s) => s.trim()).filter(Boolean).forEach((subject) => {
@@ -322,6 +327,19 @@ export default function PhDPositionsPage() {
           </div>
         </div>
       </section>
+
+      <OpportunityIntelligencePanel
+        compact
+        defaultTrack="phd"
+        totals={{
+          total: filtered.length,
+          funded: filteredPaidCount,
+          verified: filteredVerifiedCount,
+          locations: filteredLocationCount,
+          organizations: filteredOrganizationCount,
+        }}
+        className="-mt-2 pb-4 pt-0"
+      />
 
       <section className="px-4 py-8 lg:py-12">
         <div className="mx-auto max-w-7xl">
