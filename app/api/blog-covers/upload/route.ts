@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { isAdminRequest } from "@/lib/admin-server"
 
 const MAX_UPLOAD_SIZE = 2 * 1024 * 1024
 const BUCKET = "blog-covers"
@@ -16,10 +17,10 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const isLegacyAdmin = request.cookies.get("gc_admin_session")?.value === "true"
+  const isAdmin = await isAdminRequest(request)
   const authHeader = request.headers.get("authorization")
   const token = authHeader?.startsWith("Bearer ") ? authHeader.replace("Bearer ", "") : null
-  let actorId = isLegacyAdmin ? "admin" : ""
+  let actorId = isAdmin ? "admin" : ""
 
   if (token && anonKey) {
     const authClient = createClient(supabaseUrl, anonKey, {

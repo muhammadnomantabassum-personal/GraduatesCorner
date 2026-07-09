@@ -126,11 +126,6 @@ function getAuthorName(ownerType: BlogOwnerType, user: { name: string; organizat
 function getAdminRequestHeaders(includeJson = false) {
   const headers: Record<string, string> = {}
   if (includeJson) headers["Content-Type"] = "application/json"
-
-  if (typeof window !== "undefined" && localStorage.getItem("gc_admin_session") === "true") {
-    headers["x-gc-admin-session"] = "true"
-  }
-
   return headers
 }
 

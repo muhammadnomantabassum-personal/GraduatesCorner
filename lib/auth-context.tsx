@@ -265,31 +265,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return true
     }
 
-    const { data: legacyAdmin } = await supabase
-      .from("admin_users")
-      .select("*")
-      .eq("username", loginId)
-      .eq("password", password)
-      .maybeSingle()
-
-    if (legacyAdmin) {
-      if (typeof window !== "undefined") {
-        localStorage.setItem("gc_admin_session", "true")
-      }
-      document.cookie =
-        "gc_admin_session=true; path=/; max-age=86400; SameSite=Lax"
-
-      setUser({
-        id: "admin-id",
-        name: "Administrator",
-        email: "admin@graduatescorner.com",
-        type: "admin",
-        createdAt: new Date().toISOString(),
-      })
-      setHasSession(true)
-      return true
-    }
-
     if (!loginId.includes("@")) return false
 
     const { data, error } = await supabase.auth.signInWithPassword({
