@@ -1,8 +1,13 @@
-import { NextResponse } from "next/server"
+import { NextResponse, type NextRequest } from "next/server"
 import { fetchExternalPhdCandidates } from "@/lib/external-phd-importer"
+import { isAdminRequest } from "@/lib/admin-server"
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    if (!(await isAdminRequest(request))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const body = await request.json()
     const feeds = Array.isArray(body.feeds) ? body.feeds.map(String) : []
 
