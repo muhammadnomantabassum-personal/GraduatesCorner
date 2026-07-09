@@ -4,12 +4,13 @@ import { useState } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Calendar, Building2, Clock, Heart, Tags, ArrowUpRight, ShieldCheck, Gauge, Sparkles } from "lucide-react"
+import { MapPin, Calendar, Building2, Clock, Heart, Tags, ArrowUpRight, ShieldCheck, Gauge, Sparkles, Laptop, WalletCards } from "lucide-react"
 import type { TraineeProgram } from "@/lib/data/types"
 import { useWishlist } from "@/lib/wishlist-context"
 import { VerifiedBadge } from "@/components/shared/verified-badge"
 import { htmlToPlainText } from "@/lib/text"
 import { getProgramIntelligence, getSignalToneClass } from "@/lib/opportunity-intelligence"
+import { getWorkMode } from "@/lib/opportunity-filters"
 
 export function ProgramCard({ program }: { program: TraineeProgram }) {
   const { isInWishlist, toggleWishlist } = useWishlist()
@@ -20,6 +21,7 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
   const intelligence = getProgramIntelligence(program)
   const deadlineTone = intelligence.deadlineTone
   const deadlineLabel = intelligence.deadlineLabel
+  const workMode = getWorkMode(program.location)
 
   const fields = program.field.split(",").map((f) => f.trim())
   const MAX_VISIBLE_FIELDS = 2
@@ -28,7 +30,7 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
   const descriptionPreview = htmlToPlainText(program.description)
 
   return (
-    <Card className="premium-border group relative flex min-h-[430px] flex-col overflow-hidden border-border/70 bg-card/94 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_55px_rgba(66,133,244,0.14)]">
+    <Card className="premium-border group relative flex min-h-[410px] flex-col overflow-hidden border-border/70 bg-card/94 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_55px_rgba(66,133,244,0.14)]">
       <div className="h-1.5 w-full bg-[#fbbc05]" />
       <button
         onClick={(e) => {
@@ -65,6 +67,16 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
         <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
           {descriptionPreview}
         </p>
+        <div className="grid grid-cols-2 gap-2">
+          <QuickSignal icon={Calendar} label={deadlineLabel} tone={deadlineTone} />
+          <QuickSignal icon={WalletCards} label={program.compensation} tone="bg-[#34A853]/10 text-[#137333] ring-1 ring-[#34A853]/15" />
+          <QuickSignal icon={Laptop} label={workMode} tone="bg-[#4285F4]/10 text-[#1A73E8] ring-1 ring-[#4285F4]/15" />
+          <QuickSignal
+            icon={ShieldCheck}
+            label={isVerified ? program.verificationBadge || "verified" : "unverified"}
+            tone={isVerified ? "bg-[#1877F2]/10 text-[#1877F2] ring-1 ring-[#1877F2]/15" : "bg-secondary text-secondary-foreground ring-1 ring-border/60"}
+          />
+        </div>
         <div className="rounded-xl border border-border/70 bg-[linear-gradient(135deg,#ffffff_0%,#fffaf0_48%,#f6f9ff_100%)] p-3 shadow-sm">
           <div className="mb-2 flex items-center justify-between gap-3">
             <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase text-primary">
@@ -110,9 +122,6 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4 shrink-0 text-primary" />
             <span>Deadline: {new Date(program.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
-            <span className={`ml-auto shrink-0 rounded-md px-2 py-0.5 text-[10px] font-semibold ${deadlineTone}`}>
-              {deadlineLabel}
-            </span>
           </div>
           <div className="flex items-start gap-2 text-sm">
             <Tags className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -157,5 +166,22 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
         </div>
       </CardFooter>
     </Card>
+  )
+}
+
+function QuickSignal({
+  icon: Icon,
+  label,
+  tone,
+}: {
+  icon: typeof Calendar
+  label: string
+  tone: string
+}) {
+  return (
+    <div className={`flex min-h-9 items-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] font-bold capitalize ${tone}`}>
+      <Icon className="h-3.5 w-3.5 shrink-0" />
+      <span className="truncate">{label}</span>
+    </div>
   )
 }

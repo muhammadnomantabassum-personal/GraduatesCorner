@@ -31,6 +31,7 @@ import {
   Heart,
   Send,
   CalendarDays,
+  Search,
 } from "lucide-react"
 
 const sidebarLinks = {
@@ -171,6 +172,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // while fetchProfile is still completing in the background.
   const sidebarRole = (pathRole in sidebarLinks ? pathRole : (user?.type ?? 'student')) as 'student' | 'university' | 'company'
   const sections = sidebarLinks[sidebarRole] || sidebarLinks.student
+  const mobileLinks = sidebarRole === "student"
+    ? [
+        { href: "/dashboard/student", mobileLabel: "Home", icon: LayoutDashboard },
+        { href: "/phd-positions", mobileLabel: "Search", icon: Search },
+        { href: "/dashboard/student/wishlist", mobileLabel: "Saved", icon: Heart },
+        { href: "/dashboard/student/calendar", mobileLabel: "Calendar", icon: CalendarDays },
+        { href: "/dashboard/student/applied", mobileLabel: "Applied", icon: Send },
+      ]
+    : sections
+        .flatMap((section) => section.links)
+        .filter((link) => !link.mobileHidden)
+        .slice(0, 5)
 
 
   return (
@@ -290,7 +303,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Mobile navigation */}
-        <nav className="flex items-center justify-around border-b border-border bg-card sm:justify-start sm:overflow-x-auto sm:px-2 sm:scrollbar-none lg:hidden">
+        <nav className="hidden items-center justify-around border-b border-border bg-card sm:flex sm:justify-start sm:overflow-x-auto sm:px-2 sm:scrollbar-none lg:hidden">
           {sections.flatMap(s => s.links).filter((link) => !link.mobileHidden).map((link) => {
             const isActive = pathname === link.href
             return (
@@ -310,8 +323,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        <main className="flex-1 overflow-x-hidden bg-background p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="flex-1 overflow-x-hidden bg-background p-4 pb-24 sm:p-6 lg:p-8">{children}</main>
       </div>
+      <nav className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-5 rounded-2xl border border-border/80 bg-card/95 p-1 shadow-[0_18px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:hidden">
+        {mobileLinks.map((link) => {
+            const isActive = pathname === link.href
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[10px] font-semibold transition-all ${
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+              >
+                <link.icon className="h-4 w-4" />
+                <span className="max-w-full truncate">{link.mobileLabel}</span>
+              </Link>
+            )
+          })}
+      </nav>
       <OpportunityAssistant surface="dashboard" />
     </div>
   )

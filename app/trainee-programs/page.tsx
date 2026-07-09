@@ -7,6 +7,7 @@ import { FilterPanel, type FilterSection } from "@/components/shared/filter-pane
 import { OpportunityIntelligencePanel } from "@/components/shared/opportunity-intelligence-panel"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { useAuth } from "@/lib/auth-context"
 import type { TraineeProgram } from "@/lib/data/types"
 import { Search, SlidersHorizontal, X, Loader2, Briefcase, Building2, MapPin, Heart, Sparkles } from "lucide-react"
@@ -354,7 +355,7 @@ export default function TraineeProgramsPage() {
         </div>
       </section>
 
-      <section className="relative -mt-8 px-4 pb-6">
+      <section className="sticky top-0 z-30 -mt-8 px-4 pb-6 lg:top-16">
         <div className="mx-auto max-w-7xl rounded-2xl border border-border bg-card/95 p-3 shadow-[0_24px_80px_rgba(251,188,5,0.16)] backdrop-blur">
           <div className="flex items-center gap-2">
             <div className="flex min-h-12 flex-1 items-center gap-3 rounded-xl bg-background px-4">
@@ -372,11 +373,29 @@ export default function TraineeProgramsPage() {
                 </button>
               )}
             </div>
-            <Button variant="outline" className="gap-2 lg:hidden" onClick={() => setShowFilters(!showFilters)}>
-              <SlidersHorizontal className="h-4 w-4" />
-              Filters
-              {activeFilterCount > 0 && <span className="text-xs">{activeFilterCount}</span>}
-            </Button>
+            <Sheet open={showFilters} onOpenChange={setShowFilters}>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="gap-2 lg:hidden">
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Filters
+                  {activeFilterCount > 0 && <span className="text-xs">{activeFilterCount}</span>}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="max-h-[86vh] overflow-y-auto rounded-t-2xl p-0">
+                <SheetHeader className="border-b border-border p-4 text-left">
+                  <SheetTitle>Refine trainee programs</SheetTitle>
+                </SheetHeader>
+                <div className="p-4">
+                  <FilterPanel
+                    sections={filterSections}
+                    selected={filters}
+                    onToggle={handleToggle}
+                    onClearAll={handleClearAll}
+                    activeCount={activeFilterCount}
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </section>
@@ -435,8 +454,7 @@ export default function TraineeProgramsPage() {
           <div className="flex flex-col gap-8 lg:flex-row">
             {/* Filter sidebar */}
             <aside
-              className={`w-full shrink-0 lg:block lg:w-[280px] ${showFilters ? "block" : "hidden"
-                }`}
+              className="hidden w-full shrink-0 lg:block lg:w-[280px]"
             >
               <div className="lg:sticky lg:top-24">
                 <FilterPanel

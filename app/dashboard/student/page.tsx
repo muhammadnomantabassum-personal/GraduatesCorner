@@ -305,6 +305,34 @@ export default function StudentDashboard() {
         </div>
       </section>
 
+      <section className="grid gap-3 md:grid-cols-4">
+        <ActionCard
+          href="/phd-positions"
+          title="Find PhD roles"
+          description="Search doctoral posts with funding, deadline, and trust filters."
+          icon={Target}
+          primary
+        />
+        <ActionCard
+          href="/master-thesis"
+          title="Find thesis"
+          description="Discover university and company research projects."
+          icon={BookOpen}
+        />
+        <ActionCard
+          href="/trainee-programs"
+          title="Find trainee programs"
+          description="Explore career programs by country, field, and work mode."
+          icon={Briefcase}
+        />
+        <ActionCard
+          href="/dashboard/student/calendar"
+          title="Check deadlines"
+          description="See saved opportunities that need action soon."
+          icon={CalendarDays}
+        />
+      </section>
+
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
         <StatCard label="Wishlist" value={wishlistCount} helper="Saved thesis, PhD, and trainee opportunities." icon={Heart} tone="bg-[#EA4335]/10 text-[#D93025]" href="/dashboard/student/wishlist" />
         <StatCard label="Applications" value={appliedCount} helper="External applications tracked in your account." icon={Send} tone="bg-[#4285F4]/10 text-[#1967D2]" href="/dashboard/student/applied" />
