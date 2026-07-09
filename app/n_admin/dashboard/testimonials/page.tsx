@@ -5,7 +5,6 @@ import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { createClient } from "@/lib/supabase/client"
 import type { Testimonial } from "@/lib/data/types"
 import {
   MessageSquare,
@@ -24,19 +23,15 @@ export default function AdminTestimonialsPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<"approved" | "pending">("approved")
 
-  const supabase = createClient()
-
   const fetchTestimonials = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('testimonials')
-      .select('*, profiles(avatar)')
-      .order('created_at', { ascending: false })
+    const response = await fetch("/api/admin/testimonials")
+    const result = await response.json().catch(() => ({}))
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to fetch testimonials")
     } else {
-      setTestimonials(data.map((t: any) => ({
+      setTestimonials((result.testimonials || []).map((t: any) => ({
         id: t.id,
         author: t.author,
         role: t.role,
@@ -54,18 +49,19 @@ export default function AdminTestimonialsPage() {
 
   useEffect(() => {
     fetchTestimonials()
-  }, [supabase])
+  }, [])
 
   const approved = testimonials.filter((t) => t.status === "approved")
   const pending = testimonials.filter((t) => t.status === "pending")
 
   const handleApprove = async (id: string) => {
-    const { error } = await supabase
-      .from('testimonials')
-      .update({ status: 'approved' })
-      .eq('id', id)
+    const response = await fetch(`/api/admin/testimonials/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ status: "approved" }),
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to approve testimonial")
     } else {
       toast.success("Testimonial approved!")
@@ -74,12 +70,13 @@ export default function AdminTestimonialsPage() {
   }
 
   const handleReject = async (id: string) => {
-    const { error } = await supabase
-      .from('testimonials')
-      .update({ status: 'rejected' })
-      .eq('id', id)
+    const response = await fetch(`/api/admin/testimonials/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ status: "rejected" }),
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to reject testimonial")
     } else {
       toast.success("Testimonial rejected")
@@ -88,12 +85,11 @@ export default function AdminTestimonialsPage() {
   }
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase
-      .from('testimonials')
-      .delete()
-      .eq('id', id)
+    const response = await fetch(`/api/admin/testimonials/${id}`, {
+      method: "DELETE",
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to delete testimonial")
     } else {
       toast.success("Testimonial deleted")

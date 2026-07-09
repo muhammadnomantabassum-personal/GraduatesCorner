@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { Thesis } from "@/lib/data/types"
-import { createClient } from "@/lib/supabase/client"
 import {
   Plus,
   BookOpen,
@@ -29,26 +28,15 @@ export default function AdminThesesPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<"approved" | "pending">("approved")
 
-  const supabase = createClient()
-
   const fetchTheses = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('theses')
-      .select(`
-        *,
-        profiles:posted_by_user_id (
-          name,
-          type
-        )
-      `)
-      .eq('type', 'master')
-      .order('created_at', { ascending: false })
+    const response = await fetch("/api/admin/theses?type=master")
+    const result = await response.json().catch(() => ({}))
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to fetch theses")
     } else {
-      setTheses(data.map((t: any) => ({
+      setTheses((result.theses || []).map((t: any) => ({
         id: t.id,
         title: t.title,
         type: t.type,
@@ -73,18 +61,19 @@ export default function AdminThesesPage() {
 
   useEffect(() => {
     fetchTheses()
-  }, [supabase])
+  }, [])
 
   const approved = theses.filter((t) => t.status === "approved")
   const pending = theses.filter((t) => t.status === "pending")
 
   const handleApprove = async (id: string) => {
-    const { error } = await supabase
-      .from('theses')
-      .update({ status: 'approved' })
-      .eq('id', id)
+    const response = await fetch(`/api/admin/theses/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ status: "approved" }),
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to approve thesis")
     } else {
       toast.success("Thesis approved and published!")
@@ -93,12 +82,13 @@ export default function AdminThesesPage() {
   }
 
   const handleReject = async (id: string) => {
-    const { error } = await supabase
-      .from('theses')
-      .update({ status: 'rejected' })
-      .eq('id', id)
+    const response = await fetch(`/api/admin/theses/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ status: "rejected" }),
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to reject thesis")
     } else {
       toast.success("Thesis rejected")
@@ -107,12 +97,11 @@ export default function AdminThesesPage() {
   }
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase
-      .from('theses')
-      .delete()
-      .eq('id', id)
+    const response = await fetch(`/api/admin/theses/${id}`, {
+      method: "DELETE",
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to delete thesis")
     } else {
       toast.success("Thesis deleted")

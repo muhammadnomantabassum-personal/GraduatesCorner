@@ -17,7 +17,6 @@ import {
 import { ArrowLeft, Send, Info, Loader2, Plus, X } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth-context"
 import { toNullableUuid } from "@/lib/uuid"
 import { htmlToPlainText } from "@/lib/text"
@@ -60,9 +59,6 @@ export default function AdminNewProgramPage() {
   const [customField, setCustomField] = useState("")
   const [customDuration, setCustomDuration] = useState("")
   const [showCustomDuration, setShowCustomDuration] = useState(false)
-
-  const supabase = createClient()
-
   const toggleField = (f: string) => {
     if (selectedFields.includes(f)) {
       setSelectedFields(selectedFields.filter((item) => item !== f))
@@ -92,10 +88,6 @@ export default function AdminNewProgramPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user) {
-      toast.error("You must be logged in to post a program")
-      return
-    }
 
     if (selectedFields.length === 0) {
       toast.error("Please select at least one field")
@@ -115,9 +107,10 @@ export default function AdminNewProgramPage() {
 
     setIsSubmitting(true)
     
-    const { error } = await supabase
-      .from('trainee_programs')
-      .insert({
+    const response = await fetch("/api/admin/trainee-programs", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
         title,
         company: company || "Admin",
         description,
@@ -128,14 +121,16 @@ export default function AdminNewProgramPage() {
         deadline,
         external_url: externalUrl,
         posted_by: 'admin',
-        posted_by_user_id: toNullableUuid(user.id),
+        posted_by_user_id: toNullableUuid(user?.id),
         status: 'approved'
-      })
+      }),
+    })
+    const result = await response.json().catch(() => ({}))
 
     setIsSubmitting(false)
 
-    if (error) {
-      toast.error("Failed to submit program: " + error.message)
+    if (!response.ok) {
+      toast.error("Failed to submit program: " + (result.error || "Unknown error"))
     } else {
       toast.success("Program published successfully!")
       router.push("/n_admin/dashboard/trainee-programs")

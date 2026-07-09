@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { TraineeProgram } from "@/lib/data/types"
-import { createClient } from "@/lib/supabase/client"
 import {
   Plus,
   Briefcase,
@@ -30,19 +29,15 @@ export default function AdminTraineeProgramsPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<"approved" | "pending">("approved")
 
-  const supabase = createClient()
-
   const fetchPrograms = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('trainee_programs')
-      .select('*')
-      .order('created_at', { ascending: false })
+    const response = await fetch("/api/admin/trainee-programs")
+    const result = await response.json().catch(() => ({}))
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to fetch trainee programs")
     } else {
-      setPrograms(data.map((p: any) => ({
+      setPrograms((result.programs || []).map((p: any) => ({
         id: p.id,
         title: p.title,
         company: p.company,
@@ -65,18 +60,19 @@ export default function AdminTraineeProgramsPage() {
 
   useEffect(() => {
     fetchPrograms()
-  }, [supabase])
+  }, [])
 
   const approved = programs.filter((p) => p.status === "approved")
   const pending = programs.filter((p) => p.status === "pending")
 
   const handleApprove = async (id: string) => {
-    const { error } = await supabase
-      .from('trainee_programs')
-      .update({ status: 'approved' })
-      .eq('id', id)
+    const response = await fetch(`/api/admin/trainee-programs/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ status: "approved" }),
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to approve program")
     } else {
       toast.success("Program approved and published!")
@@ -85,12 +81,13 @@ export default function AdminTraineeProgramsPage() {
   }
 
   const handleReject = async (id: string) => {
-    const { error } = await supabase
-      .from('trainee_programs')
-      .update({ status: 'rejected' })
-      .eq('id', id)
+    const response = await fetch(`/api/admin/trainee-programs/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ status: "rejected" }),
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to reject program")
     } else {
       toast.success("Program rejected")
@@ -99,12 +96,11 @@ export default function AdminTraineeProgramsPage() {
   }
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase
-      .from('trainee_programs')
-      .delete()
-      .eq('id', id)
+    const response = await fetch(`/api/admin/trainee-programs/${id}`, {
+      method: "DELETE",
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to delete program")
     } else {
       toast.success("Program deleted")
@@ -113,12 +109,13 @@ export default function AdminTraineeProgramsPage() {
   }
 
   const handleFeature = async (program: TraineeProgram) => {
-    const { error } = await supabase
-      .from('trainee_programs')
-      .update({ is_featured: !program.isFeatured })
-      .eq('id', program.id)
+    const response = await fetch(`/api/admin/trainee-programs/${program.id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ is_featured: !program.isFeatured }),
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to update featured status. Run the latest Supabase SQL if this is the first deploy.")
     } else {
       toast.success(program.isFeatured ? "Removed from featured programs" : "Marked as featured")
@@ -127,23 +124,26 @@ export default function AdminTraineeProgramsPage() {
   }
 
   const handleDuplicate = async (program: TraineeProgram) => {
-    const { error } = await supabase.from('trainee_programs').insert({
-      title: `${program.title} Copy`,
-      company: program.company,
-      description: program.description,
-      field: program.field,
-      location: program.location,
-      duration: program.duration,
-      compensation: program.compensation,
-      deadline: program.deadline,
-      posted_by: "admin",
-      posted_by_user_id: program.postedByUserId,
-      external_url: program.externalUrl,
-      status: "pending",
-      is_featured: false,
+    const response = await fetch("/api/admin/trainee-programs", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: `${program.title} Copy`,
+        company: program.company,
+        description: program.description,
+        field: program.field,
+        location: program.location,
+        duration: program.duration,
+        compensation: program.compensation,
+        deadline: program.deadline,
+        posted_by_user_id: program.postedByUserId,
+        external_url: program.externalUrl,
+        status: "pending",
+        is_featured: false,
+      }),
     })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to duplicate trainee program")
     } else {
       toast.success("Draft copy created in pending review")

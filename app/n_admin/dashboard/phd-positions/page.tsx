@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { Thesis } from "@/lib/data/types"
-import { createClient } from "@/lib/supabase/client"
 import {
   Plus,
   GraduationCap,
@@ -33,26 +32,15 @@ export default function AdminPhDPositionsPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<"approved" | "pending" | "rejected">("approved")
 
-  const supabase = createClient()
-
   const fetchTheses = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('theses')
-      .select(`
-        *,
-        profiles:posted_by_user_id (
-          name,
-          type
-        )
-      `)
-      .eq('type', 'phd')
-      .order('created_at', { ascending: false })
+    const response = await fetch("/api/admin/theses?type=phd")
+    const result = await response.json().catch(() => ({}))
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to fetch PhD positions")
     } else {
-      setTheses(data.map((t: any) => ({
+      setTheses((result.theses || []).map((t: any) => ({
         id: t.id,
         title: t.title,
         type: t.type,
@@ -77,68 +65,21 @@ export default function AdminPhDPositionsPage() {
   }
 
   useEffect(() => {
-    let active = true
-
-    const loadTheses = async () => {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('theses')
-        .select(`
-          *,
-          profiles:posted_by_user_id (
-            name,
-            type
-          )
-        `)
-        .eq('type', 'phd')
-        .order('created_at', { ascending: false })
-
-      if (!active) return
-
-      if (error) {
-        toast.error("Failed to fetch PhD positions")
-      } else {
-        setTheses(data.map((t: any) => ({
-          id: t.id,
-          title: t.title,
-          type: t.type,
-          description: t.description,
-          subject: t.subject,
-          organization: t.organization,
-          organizationType: t.organization_type,
-          location: t.location,
-          compensation: t.compensation,
-          deadline: t.deadline,
-          postedBy: t.posted_by,
-          postedByUserId: t.posted_by_user_id,
-          externalUrl: t.external_url,
-          status: t.status,
-          createdAt: t.created_at,
-          isFeatured: t.is_featured ?? false,
-          creatorName: t.profiles?.name,
-          creatorType: t.profiles?.type
-        })))
-      }
-      setLoading(false)
-    }
-
-    loadTheses()
-    return () => {
-      active = false
-    }
-  }, [supabase])
+    fetchTheses()
+  }, [])
 
   const approved = theses.filter((t) => t.status === "approved")
   const pending = theses.filter((t) => t.status === "pending")
   const rejected = theses.filter((t) => t.status === "rejected")
 
   const handleApprove = async (id: string) => {
-    const { error } = await supabase
-      .from('theses')
-      .update({ status: 'approved' })
-      .eq('id', id)
+    const response = await fetch(`/api/admin/theses/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ status: "approved" }),
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to approve PhD position")
     } else {
       toast.success("PhD position approved and published!")
@@ -147,12 +88,13 @@ export default function AdminPhDPositionsPage() {
   }
 
   const handleReject = async (id: string) => {
-    const { error } = await supabase
-      .from('theses')
-      .update({ status: 'rejected' })
-      .eq('id', id)
+    const response = await fetch(`/api/admin/theses/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ status: "rejected" }),
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to reject PhD position")
     } else {
       toast.success("PhD position rejected")
@@ -161,12 +103,11 @@ export default function AdminPhDPositionsPage() {
   }
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase
-      .from('theses')
-      .delete()
-      .eq('id', id)
+    const response = await fetch(`/api/admin/theses/${id}`, {
+      method: "DELETE",
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to delete PhD position")
     } else {
       toast.success("PhD position deleted")
@@ -175,12 +116,13 @@ export default function AdminPhDPositionsPage() {
   }
 
   const handleFeature = async (thesis: Thesis) => {
-    const { error } = await supabase
-      .from('theses')
-      .update({ is_featured: !thesis.isFeatured })
-      .eq('id', thesis.id)
+    const response = await fetch(`/api/admin/theses/${thesis.id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ is_featured: !thesis.isFeatured }),
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to update featured status. Run the latest Supabase SQL if this is the first deploy.")
     } else {
       toast.success(thesis.isFeatured ? "Removed from featured posts" : "Marked as featured")
@@ -189,24 +131,28 @@ export default function AdminPhDPositionsPage() {
   }
 
   const handleDuplicate = async (thesis: Thesis) => {
-    const { error } = await supabase.from('theses').insert({
-      title: `${thesis.title} Copy`,
-      type: thesis.type,
-      description: thesis.description,
-      subject: thesis.subject,
-      organization: thesis.organization,
-      organization_type: thesis.organizationType,
-      location: thesis.location,
-      compensation: thesis.compensation,
-      deadline: thesis.deadline,
-      posted_by: "admin",
-      posted_by_user_id: thesis.postedByUserId,
-      external_url: thesis.externalUrl,
-      status: "pending",
-      is_featured: false,
+    const response = await fetch("/api/admin/theses", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: `${thesis.title} Copy`,
+        type: thesis.type,
+        description: thesis.description,
+        subject: thesis.subject,
+        organization: thesis.organization,
+        organization_type: thesis.organizationType,
+        location: thesis.location,
+        compensation: thesis.compensation,
+        deadline: thesis.deadline,
+        posted_by: "admin",
+        posted_by_user_id: thesis.postedByUserId,
+        external_url: thesis.externalUrl,
+        status: "pending",
+        is_featured: false,
+      }),
     })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to duplicate PhD position")
     } else {
       toast.success("Draft copy created in pending review")

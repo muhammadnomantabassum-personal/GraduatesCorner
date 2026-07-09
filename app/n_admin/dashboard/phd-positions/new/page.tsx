@@ -17,7 +17,6 @@ import {
 import { ArrowLeft, Send, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth-context"
 import { toNullableUuid } from "@/lib/uuid"
 import { htmlToPlainText } from "@/lib/text"
@@ -52,9 +51,6 @@ export default function NewAdminPhDPositionPage() {
   const [customSubject, setCustomSubject] = useState("")
   const [organization, setOrganization] = useState("")
   const [organizationType, setOrganizationType] = useState<"university" | "company">("university")
-
-  const supabase = createClient()
-
   const toggleSubject = (s: string) => {
     if (selectedSubjects.includes(s)) {
       setSelectedSubjects(selectedSubjects.filter((item) => item !== s))
@@ -84,10 +80,6 @@ export default function NewAdminPhDPositionPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user) {
-      toast.error("You must be logged in to post a PhD position")
-      return
-    }
 
     if (selectedSubjects.length === 0) {
       toast.error("Please select at least one subject area")
@@ -101,9 +93,10 @@ export default function NewAdminPhDPositionPage() {
 
     setIsSubmitting(true)
     
-    const { error } = await supabase
-      .from('theses')
-      .insert({
+    const response = await fetch("/api/admin/theses", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
         title,
         type: thesisType,
         subject: selectedSubjects.join(", "),
@@ -115,14 +108,16 @@ export default function NewAdminPhDPositionPage() {
         organization: organization || "Admin",
         organization_type: organizationType,
         posted_by: 'admin',
-        posted_by_user_id: toNullableUuid(user.id),
+        posted_by_user_id: toNullableUuid(user?.id),
         status: 'approved'
-      })
+      }),
+    })
+    const result = await response.json().catch(() => ({}))
 
     setIsSubmitting(false)
 
-    if (error) {
-      toast.error("Failed to submit PhD position: " + error.message)
+    if (!response.ok) {
+      toast.error("Failed to submit PhD position: " + (result.error || "Unknown error"))
     } else {
       toast.success("PhD position published successfully!")
       router.push("/n_admin/dashboard/phd-positions")

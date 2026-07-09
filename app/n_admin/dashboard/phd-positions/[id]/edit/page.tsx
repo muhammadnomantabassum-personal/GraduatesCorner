@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, Eye, Loader2, Save } from "lucide-react"
@@ -17,7 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { RichTextEditor } from "@/components/shared/rich-text-editor"
-import { createClient } from "@/lib/supabase/client"
 import { htmlToPlainText } from "@/lib/text"
 
 const subjects = [
@@ -40,7 +39,6 @@ export default function EditAdminPhDPositionPage() {
   const params = useParams<{ id: string }>()
   const id = params.id
   const router = useRouter()
-  const supabase = useMemo(() => createClient(), [])
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -61,21 +59,18 @@ export default function EditAdminPhDPositionPage() {
 
     const fetchPhdPosition = async () => {
       setIsLoading(true)
-      const { data, error } = await supabase
-        .from("theses")
-        .select("*")
-        .eq("id", id)
-        .eq("type", "phd")
-        .maybeSingle()
+      const response = await fetch(`/api/admin/theses/${id}`)
+      const result = await response.json().catch(() => ({}))
 
       if (!active) return
 
-      if (error) {
+      if (!response.ok) {
         toast.error("Failed to load PhD position")
-      } else if (!data) {
+      } else if (!result.thesis || result.thesis.type !== "phd") {
         toast.error("PhD position not found")
         router.push("/n_admin/dashboard/phd-positions")
       } else {
+        const data = result.thesis
         setTitle(data.title || "")
         setSelectedSubjects(
           data.subject
@@ -100,7 +95,7 @@ export default function EditAdminPhDPositionPage() {
     return () => {
       active = false
     }
-  }, [id, router, supabase])
+  }, [id, router])
 
   const toggleSubject = (subject: string) => {
     if (selectedSubjects.includes(subject)) {
@@ -144,10 +139,12 @@ export default function EditAdminPhDPositionPage() {
 
     setIsSubmitting(true)
 
-    const { error } = await supabase
-      .from("theses")
-      .update({
+    const response = await fetch(`/api/admin/theses/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
         title,
+        type: "phd",
         subject: selectedSubjects.join(", "),
         description,
         location,
@@ -157,14 +154,14 @@ export default function EditAdminPhDPositionPage() {
         organization,
         organization_type: organizationType,
         status,
-      })
-      .eq("id", id)
-      .eq("type", "phd")
+      }),
+    })
+    const result = await response.json().catch(() => ({}))
 
     setIsSubmitting(false)
 
-    if (error) {
-      toast.error("Failed to update PhD position: " + error.message)
+    if (!response.ok) {
+      toast.error("Failed to update PhD position: " + (result.error || "Unknown error"))
     } else {
       toast.success("PhD position updated successfully")
       router.push("/n_admin/dashboard/phd-positions")

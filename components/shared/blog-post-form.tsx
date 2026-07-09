@@ -157,7 +157,7 @@ export function BlogPostForm({
   useEffect(() => {
     if (mode !== "edit" || !blogId || authLoading) return
 
-    if (!user) {
+    if (!isAdmin && !user) {
       setLoadingPost(false)
       return
     }
@@ -199,7 +199,7 @@ export function BlogPostForm({
         return
       }
 
-      if (!isAdmin && post.posted_by_user_id !== user.id) {
+      if (!isAdmin && user && post.posted_by_user_id !== user.id) {
         toast.error("You can only edit your own blog posts")
         router.push(backHref)
         return
@@ -242,7 +242,7 @@ export function BlogPostForm({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
 
-    if (!user) {
+    if (!isAdmin && !user) {
       toast.error("You must be logged in to save a blog post")
       return
     }
@@ -272,7 +272,7 @@ export function BlogPostForm({
         category,
         cover_image: coverImage || null,
         read_time: readTime,
-        posted_by_user_id: isAdmin ? toNullableUuid(user.id) : user.id,
+        posted_by_user_id: isAdmin ? toNullableUuid(user?.id) : user!.id,
         status: isAdmin ? "approved" : "pending",
       }
 
@@ -336,7 +336,7 @@ export function BlogPostForm({
           .from("blog_posts")
           .update(updatePayload)
           .eq("id", blogId)
-          .eq("posted_by_user_id", user.id)).error
+          .eq("posted_by_user_id", user!.id)).error
 
     setIsSubmitting(false)
 
@@ -420,7 +420,7 @@ export function BlogPostForm({
               </Select>
             </div>
 
-            <CoverImageSelector value={coverImage} onChange={setCoverImage} />
+            <CoverImageSelector value={coverImage} onChange={setCoverImage} allowAdminUpload={isAdmin} />
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="excerpt" className="text-sm font-medium">

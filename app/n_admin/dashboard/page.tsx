@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState, type ElementType } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { createClient } from "@/lib/supabase/client"
 import {
   Area,
   AreaChart,
@@ -65,35 +64,28 @@ const emptyData = {
 }
 
 export default function AdminOverviewPage() {
-  const supabase = useMemo(() => createClient(), [])
   const [data, setData] = useState(emptyData)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true)
-
-      const [profiles, theses, programs, blogs, testimonials] = await Promise.all([
-        supabase.from("profiles").select("type, created_at").limit(1000),
-        supabase.from("theses").select("type, status, compensation, created_at").limit(1000),
-        supabase.from("trainee_programs").select("status, compensation, created_at").limit(1000),
-        supabase.from("blog_posts").select("status, category, created_at").limit(1000),
-        supabase.from("testimonials").select("status, rating, created_at").limit(1000),
-      ])
+      const response = await fetch("/api/admin/analytics")
+      const result = await response.json().catch(() => ({}))
 
       setData({
-        profiles: (profiles.data || []) as ProfileRow[],
-        theses: (theses.data || []) as ThesisRow[],
-        programs: (programs.data || []) as ProgramRow[],
-        blogs: (blogs.data || []) as BlogRow[],
-        testimonials: (testimonials.data || []) as TestimonialRow[],
+        profiles: (result.profiles || []) as ProfileRow[],
+        theses: (result.theses || []) as ThesisRow[],
+        programs: (result.programs || []) as ProgramRow[],
+        blogs: (result.blogs || []) as BlogRow[],
+        testimonials: (result.testimonials || []) as TestimonialRow[],
       })
 
       setLoading(false)
     }
 
     fetchDashboardData()
-  }, [supabase])
+  }, [])
 
   const analytics = useMemo(() => buildAnalytics(data), [data])
 

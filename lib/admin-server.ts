@@ -1,8 +1,9 @@
 import "server-only"
 
 import crypto from "node:crypto"
-import { createClient } from "@supabase/supabase-js"
+import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import type { NextRequest } from "next/server"
+import { createClient as createSessionClient } from "@/lib/supabase/server"
 
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24
 
@@ -46,9 +47,21 @@ export function createAdminClient() {
 
   if (!url || !key) return null
 
-  return createClient(url, key, {
+  return createSupabaseClient(url, key, {
     auth: { persistSession: false },
   })
+}
+
+async function isAdminUser(userId: string, adminClient: ReturnType<typeof createAdminClient>) {
+  if (!adminClient) return false
+
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("type")
+    .eq("id", userId)
+    .maybeSingle()
+
+  return profile?.type === "admin"
 }
 
 export function createLegacyAdminSessionToken() {
@@ -93,25 +106,31 @@ export async function isAdminRequest(request: NextRequest) {
   const anonKey = getAnonKey()
   const adminClient = createAdminClient()
 
-  if (!token || !supabaseUrl || !anonKey || !adminClient) return false
+  if (!adminClient) return false
 
-  const authClient = createClient(supabaseUrl, anonKey, {
-    auth: { persistSession: false },
-  })
+  if (token && supabaseUrl && anonKey) {
+    const authClient = createSupabaseClient(supabaseUrl, anonKey, {
+      auth: { persistSession: false },
+    })
+    const {
+      data: { user },
+      error,
+    } = await authClient.auth.getUser(token)
+
+    if (!error && user && (await isAdminUser(user.id, adminClient))) {
+      return true
+    }
+  }
+
+  const sessionClient = await createSessionClient()
   const {
     data: { user },
     error,
-  } = await authClient.auth.getUser(token)
+  } = await sessionClient.auth.getUser()
 
   if (error || !user) return false
 
-  const { data: profile } = await adminClient
-    .from("profiles")
-    .select("type")
-    .eq("id", user.id)
-    .maybeSingle()
-
-  return profile?.type === "admin"
+  return isAdminUser(user.id, adminClient)
 }
 
 export const adminSessionCookieOptions = {

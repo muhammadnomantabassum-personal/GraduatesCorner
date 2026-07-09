@@ -1,5 +1,7 @@
 import { createBrowserClient } from '@supabase/ssr'
 
+let cachedClient: any = null
+
 function createStubClient() {
   const empty = async () => ({ data: null, error: null })
   return {
@@ -30,6 +32,8 @@ function createStubClient() {
 }
 
 export function createClient() {
+  if (cachedClient) return cachedClient
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -37,8 +41,10 @@ export function createClient() {
     // During builds or preview environments without Supabase secrets,
     // return a safe stub client so prerendering does not fail.
     console.warn('[supabase] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY; using stub client.')
-    return createStubClient() as any
+    cachedClient = createStubClient()
+    return cachedClient
   }
 
-  return createBrowserClient(url, key)
+  cachedClient = createBrowserClient(url, key)
+  return cachedClient
 }

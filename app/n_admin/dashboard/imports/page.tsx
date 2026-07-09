@@ -122,33 +122,24 @@ export default function AdminExternalImportsPage() {
 
     setImporting(true)
 
-    const adminUserId = toNullableUuid(user?.id)
-    const rows = toImport.map((candidate) => ({
-      title: candidate.title,
-      type: "phd",
-      subject: candidate.subject,
-      description: candidate.description,
-      location: candidate.location,
-      deadline: candidate.deadline,
-      compensation: candidate.compensation,
-      external_url: candidate.externalUrl,
-      organization: candidate.organization,
-      organization_type: candidate.organizationType,
-      posted_by: "admin",
-      posted_by_user_id: adminUserId,
-      status: "approved",
-    }))
-
-    const { error } = await supabase.from("theses").insert(rows)
+    const response = await fetch("/api/admin/import-phd", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        candidates: toImport,
+        adminUserId: toNullableUuid(user?.id),
+      }),
+    })
+    const payload = await response.json().catch(() => ({}))
 
     setImporting(false)
 
-    if (error) {
-      toast.error(`Import failed: ${error.message}`)
+    if (!response.ok) {
+      toast.error(`Import failed: ${payload.error || "Unable to publish selected positions"}`)
       return
     }
 
-    toast.success(`${rows.length} PhD positions imported and published`)
+    toast.success(`${payload.count || toImport.length} PhD positions imported and published`)
     setExistingUrls((current) => [...current, ...toImport.map((candidate) => candidate.externalUrl)])
     setSelectedIds([])
   }

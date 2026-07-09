@@ -20,6 +20,7 @@ const IMAGE_EXTENSION_PATTERN =
 interface CoverImageSelectorProps {
   value: string
   onChange: (url: string) => void
+  allowAdminUpload?: boolean
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement, quality: number) {
@@ -94,7 +95,7 @@ async function optimizeCoverImage(file: File) {
   throw new Error("Could not optimize image")
 }
 
-export function CoverImageSelector({ value, onChange }: CoverImageSelectorProps) {
+export function CoverImageSelector({ value, onChange, allowAdminUpload = false }: CoverImageSelectorProps) {
   const { user, supabase } = useAuth()
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -103,7 +104,7 @@ export function CoverImageSelector({ value, onChange }: CoverImageSelectorProps)
     const file = event.target.files?.[0]
     if (!file) return
 
-    if (!user) {
+    if (!user && !allowAdminUpload) {
       toast.error("Please log in before uploading a blog image")
       return
     }

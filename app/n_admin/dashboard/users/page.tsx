@@ -13,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useAuth } from "@/lib/auth-context"
 import {
   Users,
   GraduationCap,
@@ -32,7 +31,6 @@ type FilterTab = "all" | UserType
 type TrustBadge = "verified" | "trusted" | "featured"
 
 export default function AdminUsersPage() {
-  const { supabase } = useAuth()
   const [activeTab, setActiveTab] = useState<FilterTab>("all")
   const [allUsers, setAllUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
@@ -41,15 +39,13 @@ export default function AdminUsersPage() {
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
+      const response = await fetch("/api/admin/users")
+      const result = await response.json().catch(() => ({}))
 
-      if (error) {
+      if (!response.ok) {
         toast.error("Failed to fetch users")
       } else {
-        setAllUsers(data.map((u: any) => ({
+        setAllUsers((result.users || []).map((u: any) => ({
           id: u.id,
           name: u.name || 'User',
           email: u.email,
@@ -69,22 +65,20 @@ export default function AdminUsersPage() {
     }
 
     fetchUsers()
-  }, [supabase])
+  }, [])
 
   const handleVerification = async (targetUser: User, shouldVerify: boolean, badge: TrustBadge = "verified") => {
     setUpdatingId(targetUser.id)
-    const { error } = await supabase
-      .from("profiles")
-      .update({
+    const response = await fetch(`/api/admin/users/${targetUser.id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
         is_verified: shouldVerify,
-        verified_at: shouldVerify ? new Date().toISOString() : null,
-        verified_by: shouldVerify ? "admin" : null,
-        verification_note: shouldVerify ? `Manually assigned ${badge} trust badge by GraduatesCorner admin` : null,
         verification_badge: shouldVerify ? badge : "verified",
-      })
-      .eq("id", targetUser.id)
+      }),
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error(shouldVerify ? "Failed to verify profile" : "Failed to remove verification")
     } else {
       setAllUsers((current) =>

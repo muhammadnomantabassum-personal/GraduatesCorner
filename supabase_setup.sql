@@ -24,8 +24,6 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verified_by TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verification_note TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verification_badge TEXT DEFAULT 'verified';
-ALTER TABLE public.theses ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT FALSE;
-ALTER TABLE public.trainee_programs ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT FALSE;
 
 -- 2. Theses
 CREATE TABLE IF NOT EXISTS public.theses (
@@ -43,8 +41,11 @@ CREATE TABLE IF NOT EXISTS public.theses (
   posted_by_user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   external_url TEXT,
   status TEXT CHECK (status IN ('approved', 'pending', 'rejected')) DEFAULT 'pending',
+  is_featured BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE public.theses ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT FALSE;
 
 -- 3. Trainee Programs
 CREATE TABLE IF NOT EXISTS public.trainee_programs (
@@ -61,8 +62,11 @@ CREATE TABLE IF NOT EXISTS public.trainee_programs (
   posted_by_user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   external_url TEXT,
   status TEXT CHECK (status IN ('approved', 'pending', 'rejected')) DEFAULT 'pending',
+  is_featured BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE public.trainee_programs ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT FALSE;
 
 -- 4. Blog Posts
 CREATE TABLE IF NOT EXISTS public.blog_posts (
@@ -139,9 +143,15 @@ CREATE TABLE IF NOT EXISTS public.applications (
   UNIQUE (user_id, program_id)
 );
 
--- Remove the legacy plaintext custom-admin table. Admins must be Supabase Auth
--- users whose profile row has type='admin'.
-DROP TABLE IF EXISTS public.admin_users;
+-- Legacy admin login table used by /api/admin/auth/login. Keep it server-only:
+-- the app reads it through the Supabase service role and no client RLS policies
+-- are created for it.
+CREATE TABLE IF NOT EXISTS public.admin_users (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
 -- Helper for RLS policies. SECURITY DEFINER avoids recursive policy checks when
 -- policies need to know whether the current authenticated user is an admin.
@@ -169,6 +179,7 @@ ALTER TABLE public.blog_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.testimonials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wishlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
 
 -- Reset policies so this script is repeatable.
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
