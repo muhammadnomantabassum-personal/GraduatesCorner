@@ -87,6 +87,13 @@ export async function isAdminRequest(request: NextRequest) {
     return true
   }
 
+  // Backward compatibility for admins who were already signed in before signed
+  // server sessions were introduced. The middleware still recognizes this
+  // legacy cookie for admin routes, so admin API routes accept it too.
+  if (request.cookies.get("gc_admin_session")?.value === "true") {
+    return true
+  }
+
   const authHeader = request.headers.get("authorization")
   const token = authHeader?.startsWith("Bearer ") ? authHeader.replace("Bearer ", "") : null
   const supabaseUrl = getSupabaseUrl()
