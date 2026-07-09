@@ -49,13 +49,18 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       fetchWishlist()
     }
 
-    if ("requestIdleCallback" in window) {
-      const idleId = window.requestIdleCallback(load, { timeout: 2000 })
-      return () => window.cancelIdleCallback(idleId)
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number
+      cancelIdleCallback?: (handle: number) => void
     }
 
-    const timeoutId = window.setTimeout(load, 250)
-    return () => window.clearTimeout(timeoutId)
+    if (idleWindow.requestIdleCallback && idleWindow.cancelIdleCallback) {
+      const idleId = idleWindow.requestIdleCallback(load, { timeout: 2000 })
+      return () => idleWindow.cancelIdleCallback?.(idleId)
+    }
+
+    const timeoutId = globalThis.setTimeout(load, 250)
+    return () => globalThis.clearTimeout(timeoutId)
   }, [fetchWishlist])
 
   const isInWishlist = useCallback((itemId: string, type: "thesis" | "program") => {
