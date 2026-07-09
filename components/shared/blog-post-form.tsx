@@ -123,6 +123,17 @@ function getAuthorName(ownerType: BlogOwnerType, user: { name: string; organizat
   return ownerType === "student" ? user.name : user.organization || user.name
 }
 
+function getAdminRequestHeaders(includeJson = false) {
+  const headers: Record<string, string> = {}
+  if (includeJson) headers["Content-Type"] = "application/json"
+
+  if (typeof window !== "undefined" && localStorage.getItem("gc_admin_session") === "true") {
+    headers["x-gc-admin-session"] = "true"
+  }
+
+  return headers
+}
+
 export function BlogPostForm({
   mode,
   ownerType,
@@ -164,7 +175,9 @@ export function BlogPostForm({
       let loadError = ""
 
       if (isAdmin) {
-        const response = await fetch(`/api/admin/blog-posts/${blogId}`)
+        const response = await fetch(`/api/admin/blog-posts/${blogId}`, {
+          headers: getAdminRequestHeaders(),
+        })
         const result = await response.json().catch(() => ({}))
 
         if (!response.ok) {
@@ -271,7 +284,7 @@ export function BlogPostForm({
       const error = isAdmin
         ? await fetch("/api/admin/blog-posts", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getAdminRequestHeaders(true),
             body: JSON.stringify(createPayload),
           })
             .then(async (response) => {
@@ -315,7 +328,7 @@ export function BlogPostForm({
     const error = isAdmin
       ? await fetch(`/api/admin/blog-posts/${blogId}`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: getAdminRequestHeaders(true),
           body: JSON.stringify(updatePayload),
         })
           .then(async (response) => {
