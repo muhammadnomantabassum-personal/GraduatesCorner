@@ -17,6 +17,7 @@ import {
   Share2,
   ShieldCheck,
   Sparkles,
+  WandSparkles,
   UsersRound,
 } from "lucide-react"
 
@@ -69,6 +70,24 @@ const checklist = [
   "Compare funding and location",
   "Prepare application link",
 ]
+
+const promptsBySurface: Record<AssistantSurface, string[]> = {
+  public: [
+    "Find paid AI PhD positions in Sweden",
+    "Show verified remote trainee programs",
+    "Summarize this opportunity before I apply",
+  ],
+  dashboard: [
+    "Which saved deadline is closest?",
+    "How can I improve my profile?",
+    "What should I apply to next?",
+  ],
+  admin: [
+    "Show posts waiting for approval",
+    "Verify trusted organizations",
+    "Review imported PhD candidates",
+  ],
+}
 
 function getContextCopy(pathname: string, surface: AssistantSurface) {
   if (surface === "admin") return "Platform management, moderation, and publishing controls."
@@ -203,6 +222,40 @@ export function OpportunityAssistant({ surface = "public" }: { surface?: Assista
                 Open Pathway
               </Link>
             </Button>
+          </section>
+
+          <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-foreground">AI guidance</p>
+                <p className="text-xs text-muted-foreground">Smart prompts for the current workspace.</p>
+              </div>
+              <WandSparkles className="h-5 w-5 text-[#A142F4]" />
+            </div>
+            <div className="space-y-2">
+              {promptsBySurface[surface].map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => {
+                    if (prompt.toLowerCase().includes("profile")) setGoal("blog")
+                    if (prompt.toLowerCase().includes("phd")) setGoal("phd")
+                    if (prompt.toLowerCase().includes("trainee")) setGoal("trainee")
+                  }}
+                  className="flex w-full items-start gap-2 rounded-md border border-border bg-background px-3 py-2 text-left text-xs font-medium leading-relaxed text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground"
+                >
+                  <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FBBC05]" />
+                  {prompt}
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 rounded-md bg-secondary/60 p-3 text-xs leading-relaxed text-muted-foreground">
+              {surface === "admin"
+                ? "Use quick actions to moderate queues, verify profiles, and open import tools without leaving your management flow."
+                : surface === "dashboard"
+                  ? "Keep your profile complete, save opportunities, and watch deadline reminders before applying."
+                  : "Use search filters for country, deadline, funding, work mode, organization type, and verified sources."}
+            </div>
           </section>
 
           <section className="rounded-lg border border-border bg-card p-4 shadow-sm">

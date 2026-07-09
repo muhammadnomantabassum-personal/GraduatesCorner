@@ -37,6 +37,7 @@ export interface Thesis {
   externalUrl: string
   status: ApprovalStatus
   createdAt: string
+  isFeatured?: boolean
   creatorName?: string
   creatorType?: string
   organizationVerified?: boolean
@@ -58,6 +59,7 @@ export interface TraineeProgram {
   externalUrl: string
   status: ApprovalStatus
   createdAt: string
+  isFeatured?: boolean
   organizationVerified?: boolean
   verificationBadge?: "verified" | "trusted" | "featured"
 }

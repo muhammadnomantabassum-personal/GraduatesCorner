@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 import type { Thesis } from "@/lib/data/types"
 import { Search, SlidersHorizontal, X, Loader2, BookOpen, Building2, MapPin, Sparkles, Heart } from "lucide-react"
+import { getDeadlineBucket, getWorkMode, matchesDeadline, matchesWorkMode } from "@/lib/opportunity-filters"
 
 
 export default function MasterThesisPage() {
@@ -22,6 +23,9 @@ export default function MasterThesisPage() {
     field: [],
     location: [],
     compensation: [],
+    deadline: [],
+    workMode: [],
+    organizationType: [],
     trust: [],
   })
 
@@ -76,7 +80,7 @@ export default function MasterThesisPage() {
   }
 
   const handleClearAll = () => {
-    setFilters({ field: [], location: [], compensation: [], trust: [] })
+    setFilters({ field: [], location: [], compensation: [], deadline: [], workMode: [], organizationType: [], trust: [] })
   }
 
   const activeFilterCount = Object.values(filters).reduce(
@@ -135,6 +139,20 @@ export default function MasterThesisPage() {
     theses.forEach((t) => {
       compCounts[t.compensation] = (compCounts[t.compensation] || 0) + 1
     })
+    const deadlineCounts = theses.reduce<Record<string, number>>((acc, t) => {
+      const bucket = getDeadlineBucket(t.deadline)
+      acc[bucket] = (acc[bucket] || 0) + 1
+      return acc
+    }, {})
+    const workModeCounts = theses.reduce<Record<string, number>>((acc, t) => {
+      const mode = getWorkMode(t.location)
+      acc[mode] = (acc[mode] || 0) + 1
+      return acc
+    }, {})
+    const orgCounts = theses.reduce<Record<string, number>>((acc, t) => {
+      acc[t.organizationType] = (acc[t.organizationType] || 0) + 1
+      return acc
+    }, {})
 
     return [
       {
@@ -170,6 +188,36 @@ export default function MasterThesisPage() {
             label: "Stipend",
             count: compCounts["stipend"] || 0,
           },
+        ],
+      },
+      {
+        id: "deadline",
+        label: "Deadline",
+        type: "checkbox" as const,
+        options: [
+          { value: "3days", label: "Due in 3 days", count: deadlineCounts["3days"] || 0 },
+          { value: "7days", label: "Due in 7 days", count: deadlineCounts["7days"] || 0 },
+          { value: "30days", label: "Due in 30 days", count: deadlineCounts["30days"] || 0 },
+          { value: "later", label: "Later", count: deadlineCounts["later"] || 0 },
+        ],
+      },
+      {
+        id: "workMode",
+        label: "Work mode",
+        type: "checkbox" as const,
+        options: [
+          { value: "remote", label: "Remote", count: workModeCounts.remote || 0 },
+          { value: "hybrid", label: "Hybrid", count: workModeCounts.hybrid || 0 },
+          { value: "on-site", label: "On-site", count: workModeCounts["on-site"] || 0 },
+        ],
+      },
+      {
+        id: "organizationType",
+        label: "Organization",
+        type: "checkbox" as const,
+        options: [
+          { value: "university", label: "University", count: orgCounts.university || 0 },
+          { value: "company", label: "Company", count: orgCounts.company || 0 },
         ],
       },
       {
@@ -222,6 +270,9 @@ export default function MasterThesisPage() {
         if (filters.compensation.length === 0) return true
         return filters.compensation.includes(t.compensation)
       })
+      .filter((t) => matchesDeadline(t.deadline, filters.deadline))
+      .filter((t) => matchesWorkMode(t.location, filters.workMode))
+      .filter((t) => filters.organizationType.length === 0 || filters.organizationType.includes(t.organizationType))
       .filter((t) => {
         if (filters.trust.length === 0) return true
         return t.organizationVerified || t.postedBy === "admin"

@@ -22,6 +22,8 @@ import {
   Building2,
   BookOpen,
   DatabaseZap,
+  Copy,
+  Star,
 } from "lucide-react"
 import { toast } from "sonner"
 import { htmlToPlainText } from "@/lib/text"
@@ -66,6 +68,7 @@ export default function AdminPhDPositionsPage() {
         externalUrl: t.external_url,
         status: t.status,
         createdAt: t.created_at,
+        isFeatured: t.is_featured ?? false,
         creatorName: t.profiles?.name,
         creatorType: t.profiles?.type
       })))
@@ -111,6 +114,7 @@ export default function AdminPhDPositionsPage() {
           externalUrl: t.external_url,
           status: t.status,
           createdAt: t.created_at,
+          isFeatured: t.is_featured ?? false,
           creatorName: t.profiles?.name,
           creatorType: t.profiles?.type
         })))
@@ -166,6 +170,47 @@ export default function AdminPhDPositionsPage() {
       toast.error("Failed to delete PhD position")
     } else {
       toast.success("PhD position deleted")
+      fetchTheses()
+    }
+  }
+
+  const handleFeature = async (thesis: Thesis) => {
+    const { error } = await supabase
+      .from('theses')
+      .update({ is_featured: !thesis.isFeatured })
+      .eq('id', thesis.id)
+
+    if (error) {
+      toast.error("Failed to update featured status. Run the latest Supabase SQL if this is the first deploy.")
+    } else {
+      toast.success(thesis.isFeatured ? "Removed from featured posts" : "Marked as featured")
+      fetchTheses()
+    }
+  }
+
+  const handleDuplicate = async (thesis: Thesis) => {
+    const { error } = await supabase.from('theses').insert({
+      title: `${thesis.title} Copy`,
+      type: thesis.type,
+      description: thesis.description,
+      subject: thesis.subject,
+      organization: thesis.organization,
+      organization_type: thesis.organizationType,
+      location: thesis.location,
+      compensation: thesis.compensation,
+      deadline: thesis.deadline,
+      posted_by: "admin",
+      posted_by_user_id: thesis.postedByUserId,
+      external_url: thesis.externalUrl,
+      status: "pending",
+      is_featured: false,
+    })
+
+    if (error) {
+      toast.error("Failed to duplicate PhD position")
+    } else {
+      toast.success("Draft copy created in pending review")
+      setActiveTab("pending")
       fetchTheses()
     }
   }
@@ -310,6 +355,24 @@ export default function AdminPhDPositionsPage() {
                             View
                           </Button>
                         </Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`h-7 gap-1 text-xs ${thesis.isFeatured ? "text-[#B06000]" : "text-muted-foreground"}`}
+                          onClick={() => handleFeature(thesis)}
+                        >
+                          <Star className={`h-3.5 w-3.5 ${thesis.isFeatured ? "fill-current" : ""}`} />
+                          {thesis.isFeatured ? "Featured" : "Feature"}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 gap-1 text-xs text-muted-foreground"
+                          onClick={() => handleDuplicate(thesis)}
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                          Duplicate
+                        </Button>
                         <Link href={`/n_admin/dashboard/phd-positions/${thesis.id}/edit`}>
                           <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-foreground">
                             <Pencil className="h-3.5 w-3.5" />

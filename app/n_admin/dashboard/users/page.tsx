@@ -29,6 +29,7 @@ import type { User, UserType } from "@/lib/data/types"
 import { toast } from "sonner"
 
 type FilterTab = "all" | UserType
+type TrustBadge = "verified" | "trusted" | "featured"
 
 export default function AdminUsersPage() {
   const { supabase } = useAuth()
@@ -70,12 +71,7 @@ export default function AdminUsersPage() {
     fetchUsers()
   }, [supabase])
 
-  const handleVerification = async (targetUser: User, shouldVerify: boolean) => {
-    if (!["company", "university"].includes(targetUser.type)) {
-      toast.error("Only company and university profiles can be verified")
-      return
-    }
-
+  const handleVerification = async (targetUser: User, shouldVerify: boolean, badge: TrustBadge = "verified") => {
     setUpdatingId(targetUser.id)
     const { error } = await supabase
       .from("profiles")
@@ -83,8 +79,8 @@ export default function AdminUsersPage() {
         is_verified: shouldVerify,
         verified_at: shouldVerify ? new Date().toISOString() : null,
         verified_by: shouldVerify ? "admin" : null,
-        verification_note: shouldVerify ? "Manually verified by GraduatesCorner admin" : null,
-        verification_badge: "verified",
+        verification_note: shouldVerify ? `Manually assigned ${badge} trust badge by GraduatesCorner admin` : null,
+        verification_badge: shouldVerify ? badge : "verified",
       })
       .eq("id", targetUser.id)
 
@@ -100,12 +96,12 @@ export default function AdminUsersPage() {
               verifiedAt: shouldVerify ? new Date().toISOString() : undefined,
               verifiedBy: shouldVerify ? "admin" : undefined,
               verificationNote: shouldVerify ? "Manually verified by GraduatesCorner admin" : undefined,
-              verificationBadge: "verified",
+              verificationBadge: shouldVerify ? badge : "verified",
             }
             : u
         )
       )
-      toast.success(shouldVerify ? "Profile verified with blue tick" : "Verification removed")
+      toast.success(shouldVerify ? `${badge} trust badge assigned` : "Trust badge removed")
     }
     setUpdatingId(null)
   }
@@ -149,7 +145,7 @@ export default function AdminUsersPage() {
         <div>
         <h1 className="text-lg font-bold text-foreground sm:text-xl">Registered Users</h1>
         <p className="text-sm text-muted-foreground">
-          Manage users and manually verify trusted universities and companies
+          Manage users and manually assign or remove trust badges
         </p>
         </div>
         <Badge className="w-fit gap-1.5 bg-[#1877F2] text-white hover:bg-[#1877F2]">
@@ -268,24 +264,48 @@ export default function AdminUsersPage() {
                       >
                         {config?.label || u.type}
                       </Badge>
-                      {["company", "university"].includes(u.type) && (
+                      {!u.isVerified && (
                         <Button
                           size="sm"
-                          variant={u.isVerified ? "outline" : "default"}
+                          variant="default"
                           disabled={updatingId === u.id}
-                          onClick={() => handleVerification(u, !u.isVerified)}
-                          className={`h-8 gap-1.5 text-xs ${u.isVerified ? "text-muted-foreground" : "bg-[#1877F2] text-white hover:bg-[#0f66d8]"}`}
+                          onClick={() => handleVerification(u, true, "verified")}
+                          className="h-8 gap-1.5 bg-[#1877F2] text-xs text-white hover:bg-[#0f66d8]"
                         >
                           {updatingId === u.id ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : u.isVerified ? (
-                            <ShieldX className="h-3.5 w-3.5" />
                           ) : (
                             <ShieldCheck className="h-3.5 w-3.5" />
                           )}
-                          {u.isVerified ? "Remove tick" : "Verify"}
+                          Verify
                         </Button>
                       )}
+                      {u.isVerified && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={updatingId === u.id}
+                          onClick={() => handleVerification(u, false)}
+                          className="h-8 gap-1.5 text-xs text-muted-foreground"
+                        >
+                          {updatingId === u.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldX className="h-3.5 w-3.5" />}
+                          Remove
+                        </Button>
+                      )}
+                      <Select
+                        value={u.verificationBadge || "verified"}
+                        onValueChange={(badge) => handleVerification(u, true, badge as TrustBadge)}
+                        disabled={updatingId === u.id}
+                      >
+                        <SelectTrigger className="h-8 w-[126px] text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="verified">Verified</SelectItem>
+                          <SelectItem value="trusted">Trusted</SelectItem>
+                          <SelectItem value="featured">Featured</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 </CardContent>

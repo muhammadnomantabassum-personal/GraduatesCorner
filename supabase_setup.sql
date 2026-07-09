@@ -24,6 +24,8 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verified_by TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verification_note TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verification_badge TEXT DEFAULT 'verified';
+ALTER TABLE public.theses ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.trainee_programs ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT FALSE;
 
 -- 2. Theses
 CREATE TABLE IF NOT EXISTS public.theses (

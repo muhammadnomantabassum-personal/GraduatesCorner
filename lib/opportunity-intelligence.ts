@@ -61,6 +61,16 @@ function deadlineSignal(deadline: string) {
     }
   }
 
+  if (days <= 3) {
+    return {
+      days,
+      label: `Deadline in ${days} ${days === 1 ? "day" : "days"}`,
+      tone: "bg-[#ea4335]/10 text-[#b3261e] ring-1 ring-[#ea4335]/20",
+      score: 11,
+      signal: { label: "Urgent deadline", tone: "red" as const },
+    }
+  }
+
   if (days <= 14) {
     return {
       days,

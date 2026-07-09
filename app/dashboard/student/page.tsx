@@ -30,6 +30,16 @@ import {
   TrendingUp,
   UserRoundCheck,
 } from "lucide-react"
+import { getDaysUntil } from "@/lib/opportunity-filters"
+
+type DeadlineAlert = {
+  id: string
+  title: string
+  href: string
+  type: "PhD" | "Thesis" | "Trainee"
+  deadline: string
+  days: number
+}
 
 type StatCardProps = {
   label: string
@@ -94,6 +104,7 @@ export default function StudentDashboard() {
   const [myTestimonials, setMyTestimonials] = useState<Testimonial[]>([])
   const [wishlistCount, setWishlistCount] = useState(0)
   const [appliedCount, setAppliedCount] = useState(0)
+  const [deadlineAlerts, setDeadlineAlerts] = useState<DeadlineAlert[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -102,7 +113,7 @@ export default function StudentDashboard() {
 
       setLoading(true)
 
-      const [blogRes, testRes, wishlistRes, appliedRes] = await Promise.all([
+      const [blogRes, testRes, wishlistRes, appliedRes, wishlistDeadlineRes] = await Promise.all([
         supabase
           .from("blog_posts")
           .select("*")
@@ -119,6 +130,10 @@ export default function StudentDashboard() {
         supabase
           .from("applications")
           .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id),
+        supabase
+          .from("wishlist")
+          .select("theses (id, title, type, deadline), trainee_programs (id, title, deadline)")
           .eq("user_id", user.id),
       ])
 
@@ -155,6 +170,42 @@ export default function StudentDashboard() {
 
       setWishlistCount(wishlistRes.count ?? 0)
       setAppliedCount(appliedRes.count ?? 0)
+      if (wishlistDeadlineRes.data) {
+        const alerts = wishlistDeadlineRes.data
+          .reduce<DeadlineAlert[]>((items, item: any) => {
+            const thesis = Array.isArray(item.theses) ? item.theses[0] : item.theses
+            const program = Array.isArray(item.trainee_programs) ? item.trainee_programs[0] : item.trainee_programs
+
+            if (thesis) {
+              const days = getDaysUntil(thesis.deadline)
+              items.push({
+                id: thesis.id,
+                title: thesis.title,
+                href: thesis.type === "phd" ? `/phd-positions/${thesis.id}` : `/theses/${thesis.id}`,
+                type: thesis.type === "phd" ? "PhD" : "Thesis",
+                deadline: thesis.deadline,
+                days,
+              })
+            }
+
+            if (program) {
+              const days = getDaysUntil(program.deadline)
+              items.push({
+                id: program.id,
+                title: program.title,
+                href: `/trainee-programs/${program.id}`,
+                type: "Trainee",
+                deadline: program.deadline,
+                days,
+              })
+            }
+            return items
+          }, [])
+          .filter((item) => item.days >= 0 && item.days <= 14)
+          .sort((a, b) => a.days - b.days)
+          .slice(0, 4)
+        setDeadlineAlerts(alerts)
+      }
       setLoading(false)
     }
 
@@ -262,6 +313,41 @@ export default function StudentDashboard() {
         <StatCard label="Readiness" value={`${readinessScore}%`} helper="Profile strength for better discovery." icon={ShieldCheck} tone="bg-[#A142F4]/10 text-[#8430CE]" />
         <StatCard label="Momentum" value={applicationMomentum} helper="Saved, applied, and published activity." icon={TrendingUp} tone="bg-[#00ACC1]/10 text-[#00838F]" />
       </section>
+
+      {deadlineAlerts.length > 0 && (
+        <section className="rounded-2xl border border-[#FBBC04]/30 bg-[#FFF8E1] p-5 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-[#8A5A00]">
+                <Clock className="h-4 w-4" />
+                Deadline reminders
+              </h2>
+              <p className="mt-1 text-xs text-[#8A5A00]/80">Saved opportunities that need attention soon.</p>
+            </div>
+            <Link href="/dashboard/student/calendar">
+              <Button size="sm" variant="outline" className="border-[#FBBC04]/40 bg-white/70 text-[#8A5A00] hover:bg-white">
+                Open calendar
+              </Button>
+            </Link>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {deadlineAlerts.map((item) => (
+              <Link key={`${item.type}-${item.id}`} href={item.href} className="rounded-xl border border-[#FBBC04]/30 bg-white p-3 transition-all hover:-translate-y-0.5 hover:shadow-sm">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <Badge variant="outline" className="text-[10px]">{item.type}</Badge>
+                  <span className="rounded-md bg-[#EA4335]/10 px-2 py-0.5 text-[10px] font-bold text-[#B3261E]">
+                    {item.days === 0 ? "Due today" : `Deadline in ${item.days} days`}
+                  </span>
+                </div>
+                <p className="line-clamp-2 text-xs font-semibold leading-relaxed text-foreground">{item.title}</p>
+                <p className="mt-2 text-[10px] text-muted-foreground">
+                  {new Date(item.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.2fr_0.9fr]">
         <div className="space-y-3">

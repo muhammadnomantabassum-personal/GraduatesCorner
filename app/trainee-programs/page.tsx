@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 import type { TraineeProgram } from "@/lib/data/types"
 import { Search, SlidersHorizontal, X, Loader2, Briefcase, Building2, MapPin, Heart, Sparkles } from "lucide-react"
+import { getDeadlineBucket, getWorkMode, matchesDeadline, matchesWorkMode } from "@/lib/opportunity-filters"
 
 
 /* Duration options */
@@ -33,6 +34,8 @@ export default function TraineeProgramsPage() {
     field: [],
     location: [],
     compensation: [],
+    deadline: [],
+    workMode: [],
     duration: [],
     trust: [],
   })
@@ -85,7 +88,7 @@ export default function TraineeProgramsPage() {
   }
 
   const handleClearAll = () => {
-    setFilters({ field: [], location: [], compensation: [], duration: [], trust: [] })
+    setFilters({ field: [], location: [], compensation: [], deadline: [], workMode: [], duration: [], trust: [] })
   }
 
   const activeFilterCount = Object.values(filters).reduce(
@@ -144,6 +147,16 @@ export default function TraineeProgramsPage() {
     programs.forEach((p) => {
       compCounts[p.compensation] = (compCounts[p.compensation] || 0) + 1
     })
+    const deadlineCounts = programs.reduce<Record<string, number>>((acc, p) => {
+      const bucket = getDeadlineBucket(p.deadline)
+      acc[bucket] = (acc[bucket] || 0) + 1
+      return acc
+    }, {})
+    const workModeCounts = programs.reduce<Record<string, number>>((acc, p) => {
+      const mode = getWorkMode(p.location)
+      acc[mode] = (acc[mode] || 0) + 1
+      return acc
+    }, {})
 
     /* Duration counts */
     const durCounts: Record<string, number> = {}
@@ -186,6 +199,27 @@ export default function TraineeProgramsPage() {
             label: "Stipend",
             count: compCounts["stipend"] || 0,
           },
+        ],
+      },
+      {
+        id: "deadline",
+        label: "Deadline",
+        type: "checkbox" as const,
+        options: [
+          { value: "3days", label: "Due in 3 days", count: deadlineCounts["3days"] || 0 },
+          { value: "7days", label: "Due in 7 days", count: deadlineCounts["7days"] || 0 },
+          { value: "30days", label: "Due in 30 days", count: deadlineCounts["30days"] || 0 },
+          { value: "later", label: "Later", count: deadlineCounts["later"] || 0 },
+        ],
+      },
+      {
+        id: "workMode",
+        label: "Work mode",
+        type: "checkbox" as const,
+        options: [
+          { value: "remote", label: "Remote", count: workModeCounts.remote || 0 },
+          { value: "hybrid", label: "Hybrid", count: workModeCounts.hybrid || 0 },
+          { value: "on-site", label: "On-site", count: workModeCounts["on-site"] || 0 },
         ],
       },
       {
@@ -248,6 +282,8 @@ export default function TraineeProgramsPage() {
         if (filters.compensation.length === 0) return true
         return filters.compensation.includes(p.compensation)
       })
+      .filter((p) => matchesDeadline(p.deadline, filters.deadline))
+      .filter((p) => matchesWorkMode(p.location, filters.workMode))
       .filter((p) => {
         if (filters.duration.length === 0) return true
         const months = p.duration.replace(/[^0-9]/g, "")

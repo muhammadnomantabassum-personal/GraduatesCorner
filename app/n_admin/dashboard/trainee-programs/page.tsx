@@ -18,7 +18,9 @@ import {
   Loader2,
   MapPin,
   Calendar,
-  BookOpen
+  BookOpen,
+  Copy,
+  Star,
 } from "lucide-react"
 import { toast } from "sonner"
 import { htmlToPlainText } from "@/lib/text"
@@ -55,6 +57,7 @@ export default function AdminTraineeProgramsPage() {
         externalUrl: p.external_url,
         status: p.status,
         createdAt: p.created_at,
+        isFeatured: p.is_featured ?? false,
       })))
     }
     setLoading(false)
@@ -105,6 +108,46 @@ export default function AdminTraineeProgramsPage() {
       toast.error("Failed to delete program")
     } else {
       toast.success("Program deleted")
+      fetchPrograms()
+    }
+  }
+
+  const handleFeature = async (program: TraineeProgram) => {
+    const { error } = await supabase
+      .from('trainee_programs')
+      .update({ is_featured: !program.isFeatured })
+      .eq('id', program.id)
+
+    if (error) {
+      toast.error("Failed to update featured status. Run the latest Supabase SQL if this is the first deploy.")
+    } else {
+      toast.success(program.isFeatured ? "Removed from featured programs" : "Marked as featured")
+      fetchPrograms()
+    }
+  }
+
+  const handleDuplicate = async (program: TraineeProgram) => {
+    const { error } = await supabase.from('trainee_programs').insert({
+      title: `${program.title} Copy`,
+      company: program.company,
+      description: program.description,
+      field: program.field,
+      location: program.location,
+      duration: program.duration,
+      compensation: program.compensation,
+      deadline: program.deadline,
+      posted_by: "admin",
+      posted_by_user_id: program.postedByUserId,
+      external_url: program.externalUrl,
+      status: "pending",
+      is_featured: false,
+    })
+
+    if (error) {
+      toast.error("Failed to duplicate trainee program")
+    } else {
+      toast.success("Draft copy created in pending review")
+      setActiveTab("pending")
       fetchPrograms()
     }
   }
@@ -220,6 +263,24 @@ export default function AdminTraineeProgramsPage() {
                             View
                           </Button>
                         </Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`h-7 gap-1 text-xs ${program.isFeatured ? "text-[#B06000]" : "text-muted-foreground"}`}
+                          onClick={() => handleFeature(program)}
+                        >
+                          <Star className={`h-3.5 w-3.5 ${program.isFeatured ? "fill-current" : ""}`} />
+                          {program.isFeatured ? "Featured" : "Feature"}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 gap-1 text-xs text-muted-foreground"
+                          onClick={() => handleDuplicate(program)}
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                          Duplicate
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
