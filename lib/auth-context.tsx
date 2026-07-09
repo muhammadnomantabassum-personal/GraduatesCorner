@@ -243,6 +243,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ): Promise<boolean> => {
     const loginId = identifier.trim()
 
+    const legacyResponse = await fetch("/api/admin/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifier: loginId, password }),
+    }).catch(() => null)
+
+    if (legacyResponse?.ok) {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("gc_admin_session", "true")
+      }
+
+      setUser({
+        id: "admin-id",
+        name: "Administrator",
+        email: "admin@graduatescorner.com",
+        type: "admin",
+        createdAt: new Date().toISOString(),
+      })
+      setHasSession(true)
+      return true
+    }
+
     const { data: legacyAdmin } = await supabase
       .from("admin_users")
       .select("*")
@@ -300,8 +322,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (typeof window !== "undefined") {
         localStorage.removeItem("gc_admin_session")
       }
+      await fetch("/api/admin/auth/logout", { method: "POST" }).catch(() => null)
       document.cookie =
         "gc_admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+      document.cookie =
+        "gc_admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
 
       await supabase.auth.signOut()
       

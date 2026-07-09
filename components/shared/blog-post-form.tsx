@@ -160,21 +160,37 @@ export function BlogPostForm({
 
     const fetchPost = async () => {
       setLoadingPost(true)
-      const { data, error } = await supabase
-        .from("blog_posts")
-        .select("*")
-        .eq("id", blogId)
-        .single()
+      let post: BlogRow | null = null
+      let loadError = ""
+
+      if (isAdmin) {
+        const response = await fetch(`/api/admin/blog-posts/${blogId}`)
+        const result = await response.json().catch(() => ({}))
+
+        if (!response.ok) {
+          loadError = result.error || "Failed to load blog post"
+        } else {
+          post = result.post as BlogRow
+        }
+      } else {
+        const { data, error } = await supabase
+          .from("blog_posts")
+          .select("*")
+          .eq("id", blogId)
+          .single()
+
+        if (error) loadError = error.message
+        else post = data as BlogRow
+      }
 
       if (!isMounted) return
 
-      if (error || !data) {
+      if (loadError || !post) {
         toast.error("Failed to load blog post")
         router.push(backHref)
         return
       }
 
-      const post = data as BlogRow
       if (!isAdmin && post.posted_by_user_id !== user.id) {
         toast.error("You can only edit your own blog posts")
         router.push(backHref)
@@ -239,7 +255,7 @@ export function BlogPostForm({
           : getCreateSlug(title)
 
     if (mode === "create") {
-      const { error } = await supabase.from("blog_posts").insert({
+      const createPayload = {
         title: title.trim(),
         slug: nextSlug,
         excerpt: excerpt.trim(),
@@ -250,7 +266,21 @@ export function BlogPostForm({
         read_time: readTime,
         posted_by_user_id: isAdmin ? toNullableUuid(user.id) : user.id,
         status: isAdmin ? "approved" : "pending",
-      })
+      }
+
+      const error = isAdmin
+        ? await fetch("/api/admin/blog-posts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(createPayload),
+          })
+            .then(async (response) => {
+              if (response.ok) return null
+              const result = await response.json().catch(() => ({}))
+              return { message: result.error || "Failed to publish blog post" }
+            })
+            .catch((requestError) => ({ message: requestError.message || "Failed to publish blog post" }))
+        : (await supabase.from("blog_posts").insert(createPayload)).error
 
       setIsSubmitting(false)
 
@@ -282,10 +312,23 @@ export function BlogPostForm({
       status: isAdmin ? currentStatus : "pending",
     }
 
-    let query = supabase.from("blog_posts").update(updatePayload).eq("id", blogId)
-    if (!isAdmin) query = query.eq("posted_by_user_id", user.id)
-
-    const { error } = await query
+    const error = isAdmin
+      ? await fetch(`/api/admin/blog-posts/${blogId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatePayload),
+        })
+          .then(async (response) => {
+            if (response.ok) return null
+            const result = await response.json().catch(() => ({}))
+            return { message: result.error || "Failed to update blog post" }
+          })
+          .catch((requestError) => ({ message: requestError.message || "Failed to update blog post" }))
+      : (await supabase
+          .from("blog_posts")
+          .update(updatePayload)
+          .eq("id", blogId)
+          .eq("posted_by_user_id", user.id)).error
 
     setIsSubmitting(false)
 

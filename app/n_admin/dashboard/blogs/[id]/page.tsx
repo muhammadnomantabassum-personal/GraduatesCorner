@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BlogCoverImage } from "@/components/shared/blog-cover-image"
-import { createClient } from "@/lib/supabase/client"
 import type { BlogPost } from "@/lib/data/types"
 import { sanitizeHtml } from "@/lib/sanitize-html"
 import {
@@ -29,8 +28,6 @@ export default function AdminBlogDetailsPage({ params }: { params: Promise<{ id:
   const [loading, setLoading] = useState(true)
   const [isActioning, setIsActioning] = useState(false)
 
-  const supabase = createClient()
-
   const isHtml = post?.content.trim().startsWith('<') ?? false
   const sanitizedContent = useMemo(
     () => (post ? (isHtml ? sanitizeHtml(post.content) : post.content) : ""),
@@ -40,16 +37,14 @@ export default function AdminBlogDetailsPage({ params }: { params: Promise<{ id:
   useEffect(() => {
     const fetchPost = async () => {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('id', id)
-        .single()
+      const response = await fetch(`/api/admin/blog-posts/${id}`)
+      const result = await response.json().catch(() => ({}))
 
-      if (error) {
+      if (!response.ok) {
         toast.error("Failed to fetch blog post")
         router.push("/n_admin/dashboard/blogs")
-      } else if (data) {
+      } else if (result.post) {
+        const data = result.post
         setPost({
           id: data.id,
           title: data.title,
@@ -69,17 +64,18 @@ export default function AdminBlogDetailsPage({ params }: { params: Promise<{ id:
     }
 
     fetchPost()
-  }, [id, supabase, router])
+  }, [id, router])
 
   const handleApprove = async () => {
     if (!post) return
     setIsActioning(true)
-    const { error } = await supabase
-      .from('blog_posts')
-      .update({ status: 'approved' })
-      .eq('id', post.id)
+    const response = await fetch(`/api/admin/blog-posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "approved" }),
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to approve blog post")
     } else {
       toast.success("Blog post approved and published!")
@@ -91,12 +87,13 @@ export default function AdminBlogDetailsPage({ params }: { params: Promise<{ id:
   const handleReject = async () => {
     if (!post) return
     setIsActioning(true)
-    const { error } = await supabase
-      .from('blog_posts')
-      .update({ status: 'rejected' })
-      .eq('id', post.id)
+    const response = await fetch(`/api/admin/blog-posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "rejected" }),
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to reject blog post")
     } else {
       toast.success("Blog post rejected")

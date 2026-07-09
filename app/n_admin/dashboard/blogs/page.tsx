@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BlogCoverImage } from "@/components/shared/blog-cover-image"
 import type { BlogPost } from "@/lib/data/types"
-import { createClient } from "@/lib/supabase/client"
 import {
   Plus,
   FileText,
@@ -30,19 +29,15 @@ export default function AdminBlogsPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<"approved" | "pending">("pending")
 
-  const supabase = createClient()
-
   const fetchPosts = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('blog_posts')
-      .select('*')
-      .order('created_at', { ascending: false })
+    const response = await fetch("/api/admin/blog-posts")
+    const result = await response.json().catch(() => ({}))
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to fetch blog posts")
     } else {
-      setPosts(data.map((p: any) => ({
+      setPosts((result.posts || []).map((p: any) => ({
         id: p.id,
         title: p.title,
         slug: p.slug,
@@ -62,7 +57,7 @@ export default function AdminBlogsPage() {
 
   useEffect(() => {
     fetchPosts()
-  }, [supabase])
+  }, [])
 
   const approved = posts.filter((p) => p.status === "approved")
   const pending = posts.filter((p) => p.status === "pending")
@@ -73,12 +68,11 @@ export default function AdminBlogsPage() {
     
     if (!confirm("Are you sure you want to delete this post?")) return
     
-    const { error } = await supabase
-      .from('blog_posts')
-      .delete()
-      .eq('id', id)
+    const response = await fetch(`/api/admin/blog-posts/${id}`, {
+      method: "DELETE",
+    })
 
-    if (error) {
+    if (!response.ok) {
       toast.error("Failed to delete blog post")
     } else {
       toast.success("Blog post deleted")
