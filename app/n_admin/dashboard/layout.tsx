@@ -6,7 +6,7 @@ import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { BrandLogo } from "@/components/shared/brand-logo"
-import { OpportunityAssistant } from "@/components/shared/opportunity-assistant"
+import { LazyOpportunityAssistant } from "@/components/shared/lazy-opportunity-assistant"
 import { SiteProgress } from "@/components/shared/site-progress"
 import {
   DropdownMenu,
@@ -246,7 +246,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
-      <OpportunityAssistant surface="admin" />
+      <LazyOpportunityAssistant surface="admin" />
     </div>
   )
 }

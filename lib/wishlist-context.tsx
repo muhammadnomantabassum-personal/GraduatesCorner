@@ -43,7 +43,19 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   }, [user, supabase])
 
   useEffect(() => {
-    fetchWishlist()
+    if (typeof window === "undefined") return
+
+    const load = () => {
+      fetchWishlist()
+    }
+
+    if ("requestIdleCallback" in window) {
+      const idleId = window.requestIdleCallback(load, { timeout: 2000 })
+      return () => window.cancelIdleCallback(idleId)
+    }
+
+    const timeoutId = window.setTimeout(load, 250)
+    return () => window.clearTimeout(timeoutId)
   }, [fetchWishlist])
 
   const isInWishlist = useCallback((itemId: string, type: "thesis" | "program") => {

@@ -7,7 +7,7 @@ import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { BrandLogo } from "@/components/shared/brand-logo"
-import { OpportunityAssistant } from "@/components/shared/opportunity-assistant"
+import { LazyOpportunityAssistant } from "@/components/shared/lazy-opportunity-assistant"
 import { SiteProgress } from "@/components/shared/site-progress"
 import {
   DropdownMenu,
@@ -344,7 +344,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             )
           })}
       </nav>
-      <OpportunityAssistant surface="dashboard" />
+      <LazyOpportunityAssistant surface="dashboard" />
     </div>
   )
 }

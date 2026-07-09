@@ -56,6 +56,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <link rel="preconnect" href="https://vfxvfjchtxjhazpnlgpv.supabase.co" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        <link rel="dns-prefetch" href="https://vfxvfjchtxjhazpnlgpv.supabase.co" />
+      </head>
       <body className="bg-background font-sans antialiased" suppressHydrationWarning>
         <AuthProvider>
           <WishlistProvider>

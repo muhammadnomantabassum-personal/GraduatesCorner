@@ -36,7 +36,6 @@ export function BlogCoverImage({
       src={src}
       alt={alt}
       fill
-      unoptimized
       priority={priority}
       loading={priority ? undefined : loading}
       sizes={sizes}
