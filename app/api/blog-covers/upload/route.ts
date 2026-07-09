@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  if (!supabaseUrl || !serviceRoleKey) {
+  if (!supabaseUrl) {
     return NextResponse.json(
       { error: "Blog cover upload is not configured on the server." },
       { status: 500 }
@@ -54,9 +54,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Image is too large after optimization." }, { status: 400 })
   }
 
-  const storageClient = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
-  })
+  const storageClient = serviceRoleKey
+    ? createClient(supabaseUrl, serviceRoleKey, {
+        auth: { persistSession: false },
+      })
+    : token && anonKey
+      ? createClient(supabaseUrl, anonKey, {
+          auth: { persistSession: false },
+          global: {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        })
+      : null
+
+  if (!storageClient) {
+    return NextResponse.json(
+      { error: "Blog cover upload needs a signed-in Supabase session or a server service role key." },
+      { status: 401 }
+    )
+  }
   const fileExt = file.type === "image/png" ? "png" : "webp"
   const filePath = `${actorId}/blog-cover-${crypto.randomUUID()}.${fileExt}`
   const fileBuffer = Buffer.from(await file.arrayBuffer())

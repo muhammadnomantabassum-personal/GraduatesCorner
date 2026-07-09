@@ -142,7 +142,7 @@ export function CoverImageSelector({ value, onChange }: CoverImageSelectorProps)
       const result = await response.json()
 
       if (!response.ok) {
-        if (response.status >= 500) {
+        if (response.status >= 500 || response.status === 401 || response.status === 403) {
           const inlineCover = await blobToDataUrl(optimizedCover)
           onChange(inlineCover)
           toast.success("Blog cover image optimized and added")
