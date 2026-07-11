@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { BrandLogo } from "@/components/shared/brand-logo"
 import { LazyOpportunityAssistant } from "@/components/shared/lazy-opportunity-assistant"
 import { SiteProgress } from "@/components/shared/site-progress"
+import { PageTransition } from "@/components/shared/page-transition"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -188,6 +189,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen">
+      <a
+        href="#dashboard-content"
+        className="fixed left-4 top-3 z-[100] -translate-y-20 rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-background shadow-lg transition-transform focus:translate-y-0"
+      >
+        Skip to dashboard content
+      </a>
       <SiteProgress />
       {/* Sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex">
@@ -323,7 +330,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        <main className="flex-1 overflow-x-hidden bg-background p-4 pb-24 sm:p-6 lg:p-8">{children}</main>
+        <main id="dashboard-content" className="flex-1 overflow-x-hidden bg-background p-4 pb-24 sm:p-6 lg:p-8" tabIndex={-1}>
+          <PageTransition>{children}</PageTransition>
+        </main>
       </div>
       <nav className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-5 rounded-2xl border border-border/80 bg-card/95 p-1 shadow-[0_18px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:hidden">
         {mobileLinks.map((link) => {

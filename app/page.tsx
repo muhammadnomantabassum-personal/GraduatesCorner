@@ -20,7 +20,6 @@ import {
   Briefcase,
   Building2,
   CalendarClock,
-  CheckCircle2,
   Cpu,
   FileText,
   Globe2,
@@ -29,23 +28,14 @@ import {
   Layers3,
   Loader2,
   MapPin,
-  Network,
   Search,
   ShieldCheck,
   Sparkles,
   Target,
-  TrendingUp,
   Users,
   Wand2,
   X,
 } from "lucide-react"
-
-const stats = [
-  { label: "Verified opportunities", value: "1,170+", icon: ShieldCheck },
-  { label: "Partner institutions", value: "120+", icon: Building2 },
-  { label: "Active candidates", value: "15k+", icon: Users },
-  { label: "Global search coverage", value: "40+", icon: Globe2 },
-]
 
 const quickFilters = [
   { href: "/master-thesis", label: "Master's thesis", icon: BookOpen },
@@ -78,15 +68,6 @@ const audiences = [
     cta: "Post an opportunity",
     href: "/register",
   },
-]
-
-const signalOptions = [
-  "AI and data science",
-  "Sustainable engineering",
-  "Biomedicine",
-  "Business strategy",
-  "Remote friendly",
-  "Paid positions",
 ]
 
 const platformPillars = [
@@ -150,7 +131,7 @@ function HomePageContent() {
   const [isSearching, setIsSearching] = useState(false)
   const [showResults, setShowResults] = useState(false)
   const [activeAudience, setActiveAudience] = useState(audiences[0])
-  const [selectedSignals, setSelectedSignals] = useState<string[]>(["AI and data science", "Paid positions"])
+  const [platformCounts, setPlatformCounts] = useState({ phd: 0, master: 0, programs: 0, guides: 0 })
   const searchRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -173,12 +154,32 @@ function HomePageContent() {
     const fetchData = async () => {
       setLoading(true)
       try {
-        const [{ data: thesesData }, { data: progData }, { data: postsData }, { data: testData }] = await Promise.all([
+        const [
+          { data: thesesData },
+          { data: progData },
+          { data: postsData },
+          { data: testData },
+          phdCount,
+          masterCount,
+          programCount,
+          guideCount,
+        ] = await Promise.all([
           supabase.from("theses").select("*, profiles:posted_by_user_id (is_verified, verification_badge)").eq("status", "approved").limit(6),
           supabase.from("trainee_programs").select("*, profiles:posted_by_user_id (is_verified, verification_badge)").eq("status", "approved").limit(3),
-          supabase.from("blog_posts").select("*, profiles(avatar)").eq("status", "approved").order("created_at", { ascending: false }).limit(3),
+          supabase.from("blog_posts").select("id, title, slug, excerpt, author, category, cover_image, created_at, read_time, status, posted_by_user_id, profiles(avatar)").eq("status", "approved").order("created_at", { ascending: false }).limit(3),
           supabase.from("testimonials").select("*, profiles(avatar)").eq("status", "approved").limit(3),
+          supabase.from("theses").select("id", { count: "exact", head: true }).eq("status", "approved").eq("type", "phd"),
+          supabase.from("theses").select("id", { count: "exact", head: true }).eq("status", "approved").eq("type", "master"),
+          supabase.from("trainee_programs").select("id", { count: "exact", head: true }).eq("status", "approved"),
+          supabase.from("blog_posts").select("id", { count: "exact", head: true }).eq("status", "approved"),
         ])
+
+        setPlatformCounts({
+          phd: phdCount.count || 0,
+          master: masterCount.count || 0,
+          programs: programCount.count || 0,
+          guides: guideCount.count || 0,
+        })
 
         if (thesesData) {
           setTheses(thesesData.map((t: any) => ({
@@ -229,7 +230,7 @@ function HomePageContent() {
             title: p.title,
             slug: p.slug,
             excerpt: p.excerpt,
-            content: p.content,
+            content: "",
             author: p.author,
             category: p.category,
             coverImage: p.cover_image,
@@ -317,6 +318,8 @@ function HomePageContent() {
     switch (category) {
       case "thesis":
         return <BookOpen className="h-4 w-4" />
+      case "phd":
+        return <GraduationCap className="h-4 w-4" />
       case "program":
         return <Briefcase className="h-4 w-4" />
       case "blog":
@@ -330,6 +333,8 @@ function HomePageContent() {
     switch (result.category) {
       case "thesis":
         return `/theses/${result.id}`
+      case "phd":
+        return `/phd-positions/${result.id}`
       case "program":
         return `/trainee-programs/${result.id}`
       case "blog":
@@ -339,15 +344,27 @@ function HomePageContent() {
     }
   }
 
-  const toggleSignal = (signal: string) => {
-    setSelectedSignals((current) =>
-      current.includes(signal) ? current.filter((item) => item !== signal) : [...current, signal]
-    )
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (searchResults[0]) {
+      router.push(getResultLink(searchResults[0]))
+      setShowResults(false)
+      return
+    }
+
+    if (searchQuery.trim().length >= 2) setShowResults(true)
   }
+
+  const stats = [
+    { label: "PhD positions", value: platformCounts.phd, icon: GraduationCap },
+    { label: "Master's theses", value: platformCounts.master, icon: BookOpen },
+    { label: "Trainee programs", value: platformCounts.programs, icon: Briefcase },
+    { label: "Career guides", value: platformCounts.guides, icon: FileText },
+  ]
 
   return (
     <PublicLayout>
-      <section className="relative overflow-hidden px-4 pb-28 pt-16 text-primary-foreground lg:pb-32 lg:pt-24">
+      <section className="relative min-h-[640px] overflow-hidden px-4 pb-24 pt-16 text-primary-foreground sm:min-h-[680px] lg:pb-28 lg:pt-24">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
@@ -355,30 +372,34 @@ function HomePageContent() {
               "url('https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?q=80&w=2400&auto=format&fit=crop')",
           }}
         />
-        <div className="absolute inset-0 bg-[linear-gradient(105deg,rgba(24,74,156,0.92)_0%,rgba(66,133,244,0.78)_46%,rgba(255,255,255,0.22)_100%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_24%,rgba(251,188,5,0.20),transparent_18rem),radial-gradient(circle_at_42%_72%,rgba(52,168,83,0.18),transparent_24rem),radial-gradient(circle_at_18%_18%,rgba(234,67,53,0.12),transparent_18rem)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(7,31,68,0.96)_0%,rgba(20,66,135,0.90)_48%,rgba(16,58,103,0.48)_78%,rgba(8,35,60,0.35)_100%)]" />
         <div className="absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(180deg,transparent_0%,var(--background)_100%)]" />
 
-        <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
-          <div>
+        <div className="relative mx-auto flex max-w-7xl flex-col justify-center">
+          <div className="max-w-3xl">
             <Badge className="mb-6 gap-2 border border-primary-foreground/20 bg-primary-foreground/12 px-3 py-1.5 text-primary-foreground shadow-sm backdrop-blur hover:bg-primary-foreground/18">
               <Sparkles className="h-3.5 w-3.5" />
-              Next-gen graduate opportunity platform
+              Academic and early-career opportunities
             </Badge>
-            <h1 className="max-w-4xl text-balance text-5xl font-bold leading-[1.02] text-primary-foreground lg:text-7xl">
+            <h1 className="max-w-4xl text-balance text-5xl font-bold leading-[1.04] text-primary-foreground sm:text-6xl lg:text-7xl">
               Graduates Corner
             </h1>
             <p className="mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-primary-foreground/82 lg:text-xl">
-              Find the right master thesis, PhD position, or trainee program with a polished search experience built for students, universities, and companies.
+              Discover credible master&apos;s theses, PhD positions, and graduate programs from universities and companies around the world.
             </p>
 
-            <div className="mt-8 max-w-2xl" ref={searchRef}>
-              <div className="premium-border relative flex flex-col gap-2 rounded-2xl bg-primary-foreground/18 p-2 shadow-[0_24px_80px_rgba(66,133,244,0.24)] backdrop-blur-xl sm:flex-row">
+            <div className="relative mt-8 max-w-2xl" ref={searchRef}>
+              <form
+                onSubmit={handleSearchSubmit}
+                role="search"
+                className="relative flex flex-col gap-2 rounded-xl border border-primary-foreground/20 bg-primary-foreground/14 p-2 shadow-[0_24px_80px_rgba(4,20,46,0.28)] backdrop-blur-xl sm:flex-row"
+              >
                 <div className="flex min-h-14 flex-1 items-center gap-3 rounded-xl bg-card px-4 shadow-inner">
                   <Search className="h-5 w-5 shrink-0 text-primary" />
                   <input
                     type="text"
                     placeholder="Search thesis, PhD, trainee programs, topics..."
+                    aria-label="Search opportunities and guides"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
@@ -390,11 +411,11 @@ function HomePageContent() {
                     </button>
                   )}
                 </div>
-                <Button className="min-h-14 shrink-0 gap-2 rounded-xl px-6 font-semibold shadow-[0_14px_32px_rgba(66,133,244,0.24)]">
+                <Button type="submit" className="min-h-14 shrink-0 gap-2 rounded-xl px-6 font-semibold shadow-[0_14px_32px_rgba(66,133,244,0.24)]">
                   {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
                   Search
                 </Button>
-              </div>
+              </form>
 
               {showResults && (
                 <div className="absolute left-0 right-0 z-50 mt-2 max-h-[400px] overflow-y-auto rounded-xl border border-border bg-card p-2 text-foreground shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 lg:right-auto lg:w-[42rem]">
@@ -455,58 +476,18 @@ function HomePageContent() {
             </div>
           </div>
 
-          <div className="premium-border relative rounded-2xl bg-card/94 p-5 text-foreground shadow-[0_28px_90px_rgba(66,133,244,0.20)] backdrop-blur">
-            <div className="flex items-center justify-between border-b border-border/70 pb-4">
-              <div>
-                <p className="text-xs font-semibold uppercase text-primary">Match cockpit</p>
-                <h2 className="mt-1 text-xl font-bold">Opportunity fit score</h2>
-              </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                <Network className="h-5 w-5" />
-              </div>
+          <div className="mt-10 grid max-w-3xl gap-3 border-t border-primary-foreground/18 pt-5 text-sm text-primary-foreground/78 sm:grid-cols-3">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-[#76d58f]" />
+              Verified organizations
             </div>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              {signalOptions.map((signal) => {
-                const selected = selectedSignals.includes(signal)
-                return (
-                  <button
-                    key={signal}
-                    onClick={() => toggleSignal(signal)}
-                    className={`flex min-h-12 items-center gap-2 rounded-xl border px-3 text-left text-sm font-medium transition-all ${
-                      selected
-                        ? "border-primary/30 bg-primary/10 text-primary shadow-sm"
-                        : "border-border bg-background/70 text-muted-foreground hover:border-primary/25 hover:text-foreground"
-                    }`}
-                  >
-                    <CheckCircle2 className={`h-4 w-4 ${selected ? "text-primary" : "text-muted-foreground/50"}`} />
-                    {signal}
-                  </button>
-                )
-              })}
+            <div className="flex items-center gap-2">
+              <CalendarClock className="h-4 w-4 text-[#ffd76a]" />
+              Deadline-aware discovery
             </div>
-
-            <div className="mt-5 rounded-xl border border-border bg-background/72 p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <span className="text-sm font-semibold">Live market signals</span>
-                <Badge variant="secondary" className="gap-1">
-                  <TrendingUp className="h-3 w-3" />
-                  High demand
-                </Badge>
-              </div>
-              <div className="space-y-3">
-                {["Research depth", "Career velocity", "Location flexibility"].map((label, index) => (
-                  <div key={label}>
-                    <div className="mb-1 flex justify-between text-xs text-muted-foreground">
-                      <span>{label}</span>
-                      <span>{92 - index * 8}%</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-secondary">
-                      <div className="h-2 rounded-full bg-primary" style={{ width: `${92 - index * 8}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="flex items-center gap-2">
+              <Globe2 className="h-4 w-4 text-[#8ab4f8]" />
+              International coverage
             </div>
           </div>
         </div>
@@ -519,7 +500,7 @@ function HomePageContent() {
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_10px_24px_rgba(66,133,244,0.20)]">
                 <stat.icon className="h-5 w-5" />
               </div>
-              <span className="text-3xl font-bold text-foreground">{stat.value}</span>
+              <span className="text-3xl font-bold tabular-nums text-foreground">{loading ? "--" : stat.value}</span>
               <span className="text-sm font-medium text-muted-foreground">{stat.label}</span>
             </div>
           ))}

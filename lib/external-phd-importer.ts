@@ -1,3 +1,8 @@
+import "server-only"
+
+import { lookup } from "node:dns/promises"
+import { isIP } from "node:net"
+
 export type ExternalPhdCandidate = {
   id: string
   title: string
@@ -33,27 +38,151 @@ const fallbackSubjects = [
   "Environmental Science",
 ]
 
+const MAX_FEEDS = 10
+const MAX_REDIRECTS = 3
+const MAX_FEED_BYTES = 2 * 1024 * 1024
+
+function isPrivateIpv4(address: string) {
+  const octets = address.split(".").map(Number)
+  if (octets.length !== 4 || octets.some((value) => !Number.isInteger(value) || value < 0 || value > 255)) {
+    return true
+  }
+
+  const [a, b, c] = octets
+  return (
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 0) ||
+    (a === 192 && b === 168) ||
+    (a === 198 && (b === 18 || b === 19)) ||
+    (a === 198 && b === 51 && c === 100) ||
+    (a === 203 && b === 0 && c === 113) ||
+    a >= 224
+  )
+}
+
+function isPrivateAddress(address: string) {
+  const normalized = address.toLowerCase().replace(/^\[|\]$/g, "")
+
+  if (isIP(normalized) === 4) return isPrivateIpv4(normalized)
+  if (isIP(normalized) !== 6) return true
+
+  if (normalized.startsWith("::ffff:")) {
+    return isPrivateIpv4(normalized.slice(7))
+  }
+
+  return (
+    normalized === "::" ||
+    normalized === "::1" ||
+    normalized.startsWith("fc") ||
+    normalized.startsWith("fd") ||
+    normalized.startsWith("fe8") ||
+    normalized.startsWith("fe9") ||
+    normalized.startsWith("fea") ||
+    normalized.startsWith("feb")
+  )
+}
+
+async function assertPublicFeedUrl(value: string) {
+  const url = new URL(value)
+
+  if (!new Set(["http:", "https:"]).has(url.protocol) || url.username || url.password) {
+    throw new Error("Feed URL must be a public HTTP or HTTPS address")
+  }
+
+  if (url.port && !new Set(["80", "443"]).has(url.port)) {
+    throw new Error("Feed URL uses a blocked port")
+  }
+
+  if (isIP(url.hostname)) {
+    if (isPrivateAddress(url.hostname)) throw new Error("Private feed addresses are blocked")
+    return url
+  }
+
+  const addresses = await lookup(url.hostname, { all: true, verbatim: true })
+  if (addresses.length === 0 || addresses.some(({ address }) => isPrivateAddress(address))) {
+    throw new Error("Feed hostname does not resolve to a public address")
+  }
+
+  return url
+}
+
+async function fetchPublicFeed(value: string) {
+  let currentUrl = await assertPublicFeedUrl(value)
+
+  for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
+    const response = await fetch(currentUrl, {
+      headers: {
+        accept: "application/rss+xml, application/atom+xml, application/feed+json, application/json, text/xml, */*",
+        "user-agent": "GraduatesCorner opportunity importer",
+      },
+      redirect: "manual",
+      signal: AbortSignal.timeout(12_000),
+      next: { revalidate: 0 },
+    })
+
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location")
+      if (!location || redirectCount === MAX_REDIRECTS) throw new Error("Feed redirected too many times")
+      currentUrl = await assertPublicFeedUrl(new URL(location, currentUrl).toString())
+      continue
+    }
+
+    return response
+  }
+
+  throw new Error("Unable to fetch feed")
+}
+
+async function readLimitedText(response: Response) {
+  const declaredLength = Number(response.headers.get("content-length") || 0)
+  if (declaredLength > MAX_FEED_BYTES) throw new Error("Feed is too large")
+  if (!response.body) return ""
+
+  const reader = response.body.getReader()
+  const chunks: Uint8Array[] = []
+  let received = 0
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    received += value.byteLength
+    if (received > MAX_FEED_BYTES) {
+      await reader.cancel()
+      throw new Error("Feed is too large")
+    }
+    chunks.push(value)
+  }
+
+  const combined = new Uint8Array(received)
+  let offset = 0
+  for (const chunk of chunks) {
+    combined.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+
+  return new TextDecoder().decode(combined)
+}
+
 export async function fetchExternalPhdCandidates(feedUrls: string[]) {
-  const uniqueFeeds = Array.from(new Set(feedUrls.map((url) => url.trim()).filter(Boolean)))
+  const uniqueFeeds = Array.from(new Set(feedUrls.map((url) => url.trim()).filter(Boolean))).slice(0, MAX_FEEDS)
   const batches = await Promise.allSettled(uniqueFeeds.map((url) => fetchFeed(url)))
 
   return batches.flatMap((result) => result.status === "fulfilled" ? result.value : [])
 }
 
 async function fetchFeed(feedUrl: string): Promise<ExternalPhdCandidate[]> {
-  const response = await fetch(feedUrl, {
-    headers: {
-      "accept": "application/rss+xml, application/atom+xml, application/feed+json, application/json, text/xml, */*",
-      "user-agent": "GraduatesCorner opportunity importer",
-    },
-    next: { revalidate: 0 },
-  })
+  const response = await fetchPublicFeed(feedUrl)
 
   if (!response.ok) {
     throw new Error(`Failed to fetch ${feedUrl}: ${response.status}`)
   }
 
-  const text = await response.text()
+  const text = await readLimitedText(response)
   const sourceName = inferSourceName(feedUrl, text)
   const items = text.trim().startsWith("{")
     ? parseJsonFeed(text)
@@ -191,7 +320,7 @@ function inferSubject(text: string, categories: string[]) {
 }
 
 function inferLocation(text: string) {
-  const locationMatch = text.match(/\b(?:location|country|city):\s*([A-Za-zÅÄÖåäöÉéÈèÜü ,.-]{3,60})/i)
+  const locationMatch = text.match(/\b(?:location|country|city):\s*([\p{L} ,.'-]{3,60})/iu)
   return locationMatch?.[1]?.trim().replace(/[.;,]$/, "") || "See source"
 }
 

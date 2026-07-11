@@ -72,7 +72,7 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-8 lg:col-span-7">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-7">
             <FooterColumn title="Platform" links={footerLinks.platform} />
             <FooterColumn title="Resources" links={footerLinks.resources} />
             <FooterColumn title="Legal" links={footerLinks.legal} />

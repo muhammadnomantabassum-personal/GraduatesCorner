@@ -7,7 +7,7 @@ const requestLog = new Map<string, { count: number; resetAt: number }>()
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const query = searchParams.get('q')
+  const query = searchParams.get('q')?.trim()
   const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
   const clientId = forwardedFor || request.headers.get('x-real-ip') || 'unknown'
   const now = Date.now()
@@ -33,6 +33,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ results: [] })
   }
 
+  if (query.length > 120) {
+    return NextResponse.json({ error: 'Search query is too long' }, { status: 400 })
+  }
+
   const supabase = await createClient()
 
   // Call the global_search RPC we created in SQL
@@ -45,9 +49,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Search failed' }, { status: 500 })
   }
 
-  return NextResponse.json({
-    results: data,
+  const response = NextResponse.json({
+    results: Array.isArray(data) ? data.slice(0, 20) : [],
     query,
     limit: 20
   })
+  response.headers.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60')
+  return response
 }

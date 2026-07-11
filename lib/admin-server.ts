@@ -135,7 +135,7 @@ export async function isAdminRequest(request: NextRequest) {
 
 export const adminSessionCookieOptions = {
   httpOnly: true,
-  sameSite: "lax" as const,
+  sameSite: "strict" as const,
   secure: process.env.NODE_ENV === "production",
   path: "/",
   maxAge: SESSION_MAX_AGE_SECONDS,

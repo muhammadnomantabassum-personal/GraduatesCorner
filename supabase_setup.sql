@@ -253,6 +253,15 @@ CREATE POLICY "Admins can update profiles" ON public.profiles
 REVOKE UPDATE ON public.profiles FROM authenticated;
 GRANT UPDATE (name, organization, bio, avatar) ON public.profiles TO authenticated;
 
+-- Profile emails and internal verification notes must never be exposed through
+-- public or signed-in PostgREST queries. Auth email remains available through
+-- Supabase Auth, and privileged admin APIs use the service role.
+REVOKE SELECT ON public.profiles FROM anon, authenticated;
+GRANT SELECT (
+  id, name, type, organization, bio, avatar,
+  is_verified, verified_at, verification_badge, created_at
+) ON public.profiles TO anon, authenticated;
+
 -- Theses policies
 CREATE POLICY "Approved theses are viewable by everyone" ON public.theses
   FOR SELECT USING (status = 'approved');
@@ -328,8 +337,9 @@ CREATE POLICY "Users can view their own blog comments" ON public.blog_comments
   FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Admins can view all blog comments" ON public.blog_comments
   FOR SELECT USING (public.is_admin());
-CREATE POLICY "Anyone can insert pending blog comments" ON public.blog_comments
-  FOR INSERT WITH CHECK (status = 'pending');
+-- Comments are disabled in the product. Keep the table for old records but do
+-- not allow new anonymous submissions.
+REVOKE INSERT ON public.blog_comments FROM anon, authenticated;
 CREATE POLICY "Admins can update blog comments" ON public.blog_comments
   FOR UPDATE USING (public.is_admin())
   WITH CHECK (public.is_admin());
@@ -397,3 +407,68 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- Public search contract used by /api/search. SECURITY DEFINER is safe here
+-- because every branch explicitly restricts results to approved content.
+DROP FUNCTION IF EXISTS public.global_search(TEXT);
+CREATE FUNCTION public.global_search(search_term TEXT)
+RETURNS TABLE (
+  id UUID,
+  title TEXT,
+  category TEXT,
+  meta TEXT,
+  slug TEXT
+)
+LANGUAGE SQL
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT results.id, results.title, results.category, results.meta, results.slug
+  FROM (
+    SELECT
+      t.id,
+      t.title,
+      CASE WHEN t.type = 'phd' THEN 'phd' ELSE 'thesis' END::TEXT AS category,
+      concat_ws(' - ', t.organization, t.location)::TEXT AS meta,
+      NULL::TEXT AS slug,
+      t.created_at
+    FROM public.theses t
+    WHERE t.status = 'approved'
+      AND length(trim(search_term)) BETWEEN 2 AND 120
+      AND concat_ws(' ', t.title, t.subject, t.organization, t.location) ILIKE '%' || trim(search_term) || '%'
+
+    UNION ALL
+
+    SELECT
+      p.id,
+      p.title,
+      'program'::TEXT AS category,
+      concat_ws(' - ', p.company, p.location)::TEXT AS meta,
+      NULL::TEXT AS slug,
+      p.created_at
+    FROM public.trainee_programs p
+    WHERE p.status = 'approved'
+      AND length(trim(search_term)) BETWEEN 2 AND 120
+      AND concat_ws(' ', p.title, p.field, p.company, p.location) ILIKE '%' || trim(search_term) || '%'
+
+    UNION ALL
+
+    SELECT
+      b.id,
+      b.title,
+      'blog'::TEXT AS category,
+      concat_ws(' - ', b.category, b.author)::TEXT AS meta,
+      b.slug,
+      b.created_at
+    FROM public.blog_posts b
+    WHERE b.status = 'approved'
+      AND length(trim(search_term)) BETWEEN 2 AND 120
+      AND concat_ws(' ', b.title, b.excerpt, b.category, b.author) ILIKE '%' || trim(search_term) || '%'
+  ) results
+  ORDER BY results.created_at DESC
+  LIMIT 20;
+$$;
+
+REVOKE ALL ON FUNCTION public.global_search(TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.global_search(TEXT) TO anon, authenticated;

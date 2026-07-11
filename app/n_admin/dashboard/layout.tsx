@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { BrandLogo } from "@/components/shared/brand-logo"
 import { LazyOpportunityAssistant } from "@/components/shared/lazy-opportunity-assistant"
 import { SiteProgress } from "@/components/shared/site-progress"
+import { PageTransition } from "@/components/shared/page-transition"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -98,6 +99,12 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
 
   return (
     <div className="flex min-h-screen bg-[linear-gradient(135deg,#f8fbff_0%,#f6f9ff_52%,#f0f8f3_100%)]">
+      <a
+        href="#admin-content"
+        className="fixed left-4 top-3 z-[100] -translate-y-20 rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#0f172a] shadow-lg transition-transform focus:translate-y-0"
+      >
+        Skip to admin content
+      </a>
       <SiteProgress />
       {/* Sidebar */}
       <aside className="hidden w-80 shrink-0 flex-col border-r border-white/10 bg-[linear-gradient(180deg,#0f172a_0%,#102a5c_52%,#12372f_100%)] text-white shadow-[18px_0_70px_rgba(15,23,42,0.20)] lg:flex">
@@ -244,7 +251,9 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
           })}
         </nav>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+        <main id="admin-content" className="flex-1 p-4 sm:p-6 lg:p-8" tabIndex={-1}>
+          <PageTransition>{children}</PageTransition>
+        </main>
       </div>
       <LazyOpportunityAssistant surface="admin" />
     </div>

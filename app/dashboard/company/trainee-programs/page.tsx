@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
@@ -34,7 +34,7 @@ export default function CompanyTraineeProgramsPage() {
 
   const supabase = createClient()
 
-  const fetchMyPrograms = async () => {
+  const fetchMyPrograms = useCallback(async () => {
     if (!user) return
     setLoading(true)
     const { data, error } = await supabase
@@ -64,11 +64,11 @@ export default function CompanyTraineeProgramsPage() {
       })))
     }
     setLoading(false)
-  }
+  }, [user, supabase])
 
   useEffect(() => {
     fetchMyPrograms()
-  }, [user, supabase])
+  }, [fetchMyPrograms])
 
   const filtered = useMemo(() =>
     activeTab === "all" ? myPrograms : myPrograms.filter((p) => p.status === activeTab),

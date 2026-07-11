@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -35,7 +35,7 @@ export default function UniversityTestimonialsPage() {
 
   const supabase = createClient()
 
-  const fetchMyTestimonials = async () => {
+  const fetchMyTestimonials = useCallback(async () => {
     if (!user) return
     setLoading(true)
     const { data, error } = await supabase
@@ -60,11 +60,11 @@ export default function UniversityTestimonialsPage() {
       })))
     }
     setLoading(false)
-  }
+  }, [user, supabase])
 
   useEffect(() => {
     fetchMyTestimonials()
-  }, [user, supabase])
+  }, [fetchMyTestimonials])
 
   const approvedTestimonial = localTestimonials.find((t) => t.status === "approved")
   const pendingTestimonial = localTestimonials.find((t) => t.status === "pending")

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { Card, CardContent } from "@/components/ui/card"
@@ -31,7 +31,7 @@ export default function UniversityBlogsPage() {
 
   const supabase = createClient()
 
-  const fetchMyBlogs = async () => {
+  const fetchMyBlogs = useCallback(async () => {
     if (!user) return
     setLoading(true)
     const { data, error } = await supabase
@@ -59,11 +59,11 @@ export default function UniversityBlogsPage() {
       })))
     }
     setLoading(false)
-  }
+  }, [user, supabase])
 
   useEffect(() => {
     fetchMyBlogs()
-  }, [user, supabase])
+  }, [fetchMyBlogs])
 
   const filtered = useMemo(() =>
     activeTab === "all" ? myBlogs : myBlogs.filter((b) => b.status === activeTab),

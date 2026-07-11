@@ -192,7 +192,8 @@ export function GlobalSearchCommand() {
                   key={`${result.category}-${result.id}`}
                   value={`${result.title} ${result.meta} ${result.category}`}
                   onSelect={() => runCommand(() => {
-                    const link = result.category === 'thesis' ? `/theses/${result.id}` :
+                    const link = result.category === 'phd' ? `/phd-positions/${result.id}` :
+                                 result.category === 'thesis' ? `/theses/${result.id}` :
                                  result.category === 'program' ? `/trainee-programs/${result.id}` :
                                  `/blog/${result.slug || result.id}`;
                     router.push(link);

@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data: p, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, name, type, organization, bio, avatar, is_verified, verified_at, verification_badge, created_at")
         .eq("id", authUser.id)
         .single()
 
@@ -87,11 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           bio: p.bio ?? undefined,
           avatar: p.avatar || authUser.user_metadata?.avatar_url || undefined,
           createdAt: p.created_at,
-          welcomeEmailSent: p.welcome_email_sent ?? false,
+          welcomeEmailSent: false,
           isVerified: p.is_verified ?? false,
           verifiedAt: p.verified_at ?? undefined,
-          verifiedBy: p.verified_by ?? undefined,
-          verificationNote: p.verification_note ?? undefined,
           verificationBadge: p.verification_badge ?? undefined,
         }
       }
