@@ -4,16 +4,18 @@ import { useState } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Calendar, Building2, GraduationCap, BookOpen, Heart, Tags, ArrowUpRight, ShieldCheck, Gauge, Sparkles, Laptop, WalletCards } from "lucide-react"
+import { MapPin, Calendar, Building2, GraduationCap, BookOpen, Heart, Tags, ArrowUpRight, ShieldCheck, Gauge, Sparkles, Laptop, WalletCards, GitCompareArrows } from "lucide-react"
 import type { Thesis } from "@/lib/data/types"
 import { useWishlist } from "@/lib/wishlist-context"
 import { VerifiedBadge } from "@/components/shared/verified-badge"
 import { htmlToPlainText } from "@/lib/text"
 import { getSignalToneClass, getThesisIntelligence } from "@/lib/opportunity-intelligence"
 import { getWorkMode } from "@/lib/opportunity-filters"
+import { useComparison } from "@/lib/comparison-context"
 
 export function ThesisCard({ thesis }: { thesis: Thesis }) {
   const { isInWishlist, toggleWishlist } = useWishlist()
+  const { isCompared, toggleComparison } = useComparison()
   const isPhD = thesis.type === "phd"
   const [showAllSubjects, setShowAllSubjects] = useState(false)
 
@@ -23,6 +25,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
   const deadlineTone = intelligence.deadlineTone
   const deadlineLabel = intelligence.deadlineLabel
   const workMode = getWorkMode(thesis.location)
+  const isInComparison = isCompared(thesis.id, "thesis")
 
   const subjects = thesis.subject.split(",").map((s) => s.trim())
   const MAX_VISIBLE_SUBJECTS = 2
@@ -30,24 +33,26 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
   const hiddenSubjectCount = subjects.length - MAX_VISIBLE_SUBJECTS
   const detailHref = isPhD ? `/phd-positions/${thesis.id}` : `/theses/${thesis.id}`
   const descriptionPreview = htmlToPlainText(thesis.description)
+  const comparisonItem = {
+    id: thesis.id,
+    kind: "thesis" as const,
+    typeLabel: isPhD ? "PhD position" : "Master's thesis",
+    title: thesis.title,
+    organization: thesis.organization,
+    field: thesis.subject,
+    location: thesis.location,
+    compensation: thesis.compensation,
+    deadline: thesis.deadline,
+    workMode,
+    verified: Boolean(isVerified),
+    signalScore: intelligence.score,
+    href: detailHref,
+  }
 
   return (
     <Card className={`premium-border group relative flex min-h-[410px] flex-col overflow-hidden border-border/70 bg-card/94 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_55px_rgba(66,133,244,0.14)] ${isPhD ? "ring-1 ring-accent/20" : ""
       }`}>
       <div className={`h-1.5 w-full ${isPhD ? "bg-[#34a853]" : "bg-primary"}`} />
-      <button
-        onClick={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          toggleWishlist(thesis.id, "thesis")
-        }}
-        aria-label={isLiked ? "Remove from wishlist" : "Save to wishlist"}
-        title={isLiked ? "Remove from wishlist" : "Save to wishlist"}
-        className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-white/90 shadow-sm backdrop-blur-sm transition-all hover:scale-110 active:scale-95 ${isLiked ? "text-[#ea4335]" : "text-muted-foreground hover:text-[#ea4335]"
-          }`}
-      >
-        <Heart className={`h-4.5 w-4.5 ${isLiked ? "fill-current" : ""}`} />
-      </button>
       <CardHeader className="pb-2">
         <div className="mb-1 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -92,7 +97,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
           <div className="mb-2 flex items-center justify-between gap-3">
             <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase text-primary">
               <Gauge className="h-3.5 w-3.5" />
-              Smart fit
+              Opportunity signal
             </span>
             <span className="inline-flex items-center gap-1.5 text-sm font-bold text-foreground">
               <Sparkles className="h-3.5 w-3.5 text-[#fbbc05]" />
@@ -163,15 +168,34 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
         </div>
       </CardContent>
       <CardFooter className="mt-auto pt-0.5">
-        <div className="flex w-full justify-between gap-3">
-          <span className="rounded-lg bg-secondary px-3 py-2 text-xs font-semibold capitalize text-secondary-foreground">
-            {thesis.compensation}
-          </span>
+        <div className="flex w-full items-center justify-between gap-3">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => toggleWishlist(thesis.id, "thesis")}
+              aria-label={isLiked ? "Remove from wishlist" : "Save to wishlist"}
+              aria-pressed={isLiked}
+              title={isLiked ? "Remove from wishlist" : "Save to wishlist"}
+              className={`flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background transition-all hover:-translate-y-0.5 hover:border-[#ea4335]/35 ${isLiked ? "text-[#ea4335]" : "text-muted-foreground hover:text-[#ea4335]"}`}
+            >
+              <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleComparison(comparisonItem)}
+              aria-label={isInComparison ? "Remove from comparison" : "Add to comparison"}
+              aria-pressed={isInComparison}
+              title={isInComparison ? "Remove from comparison" : "Add to comparison"}
+              className={`flex h-9 w-9 items-center justify-center rounded-md border transition-all hover:-translate-y-0.5 ${isInComparison ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-primary/35 hover:text-primary"}`}
+            >
+              <GitCompareArrows className="h-4 w-4" />
+            </button>
+          </div>
           <Link
             href={detailHref}
-            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-md hover:shadow-accent/25 active:scale-[0.97]"
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 active:scale-[0.97]"
           >
-            View Details
+            View details
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </div>

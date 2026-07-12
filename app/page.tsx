@@ -23,6 +23,7 @@ import {
   Cpu,
   FileText,
   Globe2,
+  GitCompareArrows,
   GraduationCap,
   Heart,
   Layers3,
@@ -102,9 +103,9 @@ const userFriendlyFeatures = [
     color: "text-[#fbbc05]",
   },
   {
-    title: "Smart fit signals",
-    copy: "Search, field tags, compensation chips, and role-specific cards help users compare options without getting lost.",
-    icon: Target,
+    title: "Side-by-side comparison",
+    copy: "Compare up to three thesis, PhD, or trainee opportunities across funding, deadline, location, trust, and work mode.",
+    icon: GitCompareArrows,
     color: "text-primary",
   },
   {

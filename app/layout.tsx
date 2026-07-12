@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/lib/auth-context'
 import { WishlistProvider } from '@/lib/wishlist-context'
+import { ComparisonProvider } from '@/lib/comparison-context'
 import { LogoutLoader } from '@/components/logout-loader'
 import { Toaster } from 'sonner'
 import './globals.css'
@@ -65,9 +66,11 @@ export default function RootLayout({
       <body className="bg-background font-sans antialiased" suppressHydrationWarning>
         <AuthProvider>
           <WishlistProvider>
-            {children}
-            <LogoutLoader />
-            <Toaster position="bottom-left" richColors />
+            <ComparisonProvider>
+              {children}
+              <LogoutLoader />
+              <Toaster position="bottom-left" richColors />
+            </ComparisonProvider>
           </WishlistProvider>
         </AuthProvider>
         <Analytics />

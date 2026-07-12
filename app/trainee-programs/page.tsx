@@ -5,13 +5,16 @@ import { PublicLayout } from "@/components/layout/public-layout"
 import { ProgramCard } from "@/components/shared/program-card"
 import { FilterPanel, type FilterSection } from "@/components/shared/filter-panel"
 import { OpportunityIntelligencePanel } from "@/components/shared/opportunity-intelligence-panel"
+import { OpportunitySortSelect } from "@/components/shared/opportunity-sort-select"
+import { OpportunityGridSkeleton } from "@/components/shared/opportunity-grid-skeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { useAuth } from "@/lib/auth-context"
 import type { TraineeProgram } from "@/lib/data/types"
-import { Search, SlidersHorizontal, X, Loader2, Briefcase, Building2, MapPin, Heart, Sparkles } from "lucide-react"
+import { Search, SlidersHorizontal, X, Briefcase, Building2, MapPin, Heart, Sparkles } from "lucide-react"
 import { getDeadlineBucket, getWorkMode, matchesDeadline, matchesWorkMode } from "@/lib/opportunity-filters"
+import { sortOpportunityResults, type OpportunitySort } from "@/lib/opportunity-sort"
 
 
 /* Duration options */
@@ -30,6 +33,7 @@ export default function TraineeProgramsPage() {
   const [programs, setPrograms] = useState<TraineeProgram[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState<OpportunitySort>("recommended")
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState<Record<string, string[]>>({
     field: [],
@@ -296,6 +300,8 @@ export default function TraineeProgramsPage() {
       })
   }, [programs, search, filters])
 
+  const sortedResults = useMemo(() => sortOpportunityResults(filtered, sort), [filtered, sort])
+
   const paidCount = programs.filter((p) => p.compensation === "paid" || p.compensation === "stipend").length
   const companyCount = new Set(programs.map((p) => p.company)).size
   const locationCount = new Set(programs.map((p) => p.location)).size
@@ -320,7 +326,6 @@ export default function TraineeProgramsPage() {
           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=2200&auto=format&fit=crop')" }}
         />
         <div className="absolute inset-0 bg-[linear-gradient(105deg,rgba(43,50,98,0.94)_0%,rgba(66,133,244,0.82)_44%,rgba(251,188,5,0.48)_100%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_24%,rgba(52,168,83,0.24),transparent_20rem)]" />
         <div className="relative mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_24rem] lg:items-end">
           <div>
             <Badge className="mb-5 gap-2 border border-white/20 bg-white/12 text-white backdrop-blur">
@@ -423,10 +428,13 @@ export default function TraineeProgramsPage() {
                   Showing <span className="font-semibold text-foreground">{filtered.length}</span> {filtered.length === 1 ? "program" : "programs"} from career-building companies
                 </p>
               </div>
-              <Badge variant="outline" className="gap-2">
-                <Heart className="h-3.5 w-3.5 text-[#ea4335]" />
-                Save with wishlist
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="hidden gap-2 sm:inline-flex">
+                  <Heart className="h-3.5 w-3.5 text-[#ea4335]" />
+                  Save and compare
+                </Badge>
+                <OpportunitySortSelect value={sort} onChange={setSort} />
+              </div>
             </div>
             {activeFilterCount > 0 && (
               <div className="mt-4 flex flex-wrap items-center gap-1.5">
@@ -470,13 +478,10 @@ export default function TraineeProgramsPage() {
             {/* Results */}
             <div className="flex-1">
               {loading ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card py-20">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="mt-4 text-muted-foreground">Loading trainee programs...</p>
-                </div>
+                <OpportunityGridSkeleton />
               ) : filtered.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2">
-                  {filtered.map((program) => (
+                  {sortedResults.map((program) => (
                     <ProgramCard key={program.id} program={program} />
                   ))}
                 </div>

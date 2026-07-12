@@ -3,6 +3,7 @@ import { Footer } from "./footer"
 import { LazyOpportunityAssistant } from "@/components/shared/lazy-opportunity-assistant"
 import { SiteProgress } from "@/components/shared/site-progress"
 import { PageTransition } from "@/components/shared/page-transition"
+import { ComparisonTray } from "@/components/shared/comparison-tray"
 
 export function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,6 +20,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
         <PageTransition>{children}</PageTransition>
       </main>
       <Footer />
+      <ComparisonTray />
       <LazyOpportunityAssistant surface="public" />
     </div>
   )

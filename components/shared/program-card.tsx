@@ -4,16 +4,18 @@ import { useState } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Calendar, Building2, Clock, Heart, Tags, ArrowUpRight, ShieldCheck, Gauge, Sparkles, Laptop, WalletCards } from "lucide-react"
+import { MapPin, Calendar, Building2, Clock, Heart, Tags, ArrowUpRight, ShieldCheck, Gauge, Sparkles, Laptop, WalletCards, GitCompareArrows } from "lucide-react"
 import type { TraineeProgram } from "@/lib/data/types"
 import { useWishlist } from "@/lib/wishlist-context"
 import { VerifiedBadge } from "@/components/shared/verified-badge"
 import { htmlToPlainText } from "@/lib/text"
 import { getProgramIntelligence, getSignalToneClass } from "@/lib/opportunity-intelligence"
 import { getWorkMode } from "@/lib/opportunity-filters"
+import { useComparison } from "@/lib/comparison-context"
 
 export function ProgramCard({ program }: { program: TraineeProgram }) {
   const { isInWishlist, toggleWishlist } = useWishlist()
+  const { isCompared, toggleComparison } = useComparison()
   const [showAllFields, setShowAllFields] = useState(false)
 
   const isLiked = isInWishlist(program.id, "program")
@@ -22,29 +24,34 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
   const deadlineTone = intelligence.deadlineTone
   const deadlineLabel = intelligence.deadlineLabel
   const workMode = getWorkMode(program.location)
+  const isInComparison = isCompared(program.id, "program")
 
   const fields = program.field.split(",").map((f) => f.trim())
   const MAX_VISIBLE_FIELDS = 2
   const visibleFields = showAllFields ? fields : fields.slice(0, MAX_VISIBLE_FIELDS)
   const hiddenFieldCount = fields.length - MAX_VISIBLE_FIELDS
   const descriptionPreview = htmlToPlainText(program.description)
+  const detailHref = `/trainee-programs/${program.id}`
+  const comparisonItem = {
+    id: program.id,
+    kind: "program" as const,
+    typeLabel: "Trainee program",
+    title: program.title,
+    organization: program.company,
+    field: program.field,
+    location: program.location,
+    compensation: program.compensation,
+    deadline: program.deadline,
+    duration: program.duration,
+    workMode,
+    verified: Boolean(isVerified),
+    signalScore: intelligence.score,
+    href: detailHref,
+  }
 
   return (
     <Card className="premium-border group relative flex min-h-[410px] flex-col overflow-hidden border-border/70 bg-card/94 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_55px_rgba(66,133,244,0.14)]">
       <div className="h-1.5 w-full bg-[#fbbc05]" />
-      <button
-        onClick={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          toggleWishlist(program.id, "program")
-        }}
-        aria-label={isLiked ? "Remove from wishlist" : "Save to wishlist"}
-        title={isLiked ? "Remove from wishlist" : "Save to wishlist"}
-        className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-white/90 shadow-sm backdrop-blur-sm transition-all hover:scale-110 active:scale-95 ${isLiked ? "text-[#ea4335]" : "text-muted-foreground hover:text-[#ea4335]"
-          }`}
-      >
-        <Heart className={`h-4.5 w-4.5 ${isLiked ? "fill-current" : ""}`} />
-      </button>
       <CardHeader className="pb-2">
         <div className="mb-1 flex items-center justify-between gap-3">
           <Badge className="bg-accent text-accent-foreground hover:bg-accent/90">
@@ -57,7 +64,7 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
             </span>
           )}
         </div>
-        <Link href={`/trainee-programs/${program.id}`}>
+        <Link href={detailHref}>
           <h3 className="text-balance text-lg font-semibold leading-tight text-foreground transition-colors hover:text-primary">
             {program.title}
           </h3>
@@ -81,7 +88,7 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
           <div className="mb-2 flex items-center justify-between gap-3">
             <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase text-primary">
               <Gauge className="h-3.5 w-3.5" />
-              Smart fit
+              Opportunity signal
             </span>
             <span className="inline-flex items-center gap-1.5 text-sm font-bold text-foreground">
               <Sparkles className="h-3.5 w-3.5 text-[#fbbc05]" />
@@ -152,15 +159,34 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
         </div>
       </CardContent>
       <CardFooter className="mt-auto pt-0.5">
-        <div className="flex w-full justify-between gap-3">
-          <span className="rounded-lg bg-secondary px-3 py-2 text-xs font-semibold capitalize text-secondary-foreground">
-            {program.compensation}
-          </span>
+        <div className="flex w-full items-center justify-between gap-3">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => toggleWishlist(program.id, "program")}
+              aria-label={isLiked ? "Remove from wishlist" : "Save to wishlist"}
+              aria-pressed={isLiked}
+              title={isLiked ? "Remove from wishlist" : "Save to wishlist"}
+              className={`flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background transition-all hover:-translate-y-0.5 hover:border-[#ea4335]/35 ${isLiked ? "text-[#ea4335]" : "text-muted-foreground hover:text-[#ea4335]"}`}
+            >
+              <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleComparison(comparisonItem)}
+              aria-label={isInComparison ? "Remove from comparison" : "Add to comparison"}
+              aria-pressed={isInComparison}
+              title={isInComparison ? "Remove from comparison" : "Add to comparison"}
+              className={`flex h-9 w-9 items-center justify-center rounded-md border transition-all hover:-translate-y-0.5 ${isInComparison ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-primary/35 hover:text-primary"}`}
+            >
+              <GitCompareArrows className="h-4 w-4" />
+            </button>
+          </div>
           <Link
-            href={`/trainee-programs/${program.id}`}
-            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-md hover:shadow-accent/25 active:scale-[0.97]"
+            href={detailHref}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 active:scale-[0.97]"
           >
-            View Details
+            View details
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </div>
