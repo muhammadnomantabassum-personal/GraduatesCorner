@@ -305,7 +305,7 @@ function HomePageContent() {
               <Sparkles className="h-3.5 w-3.5" />
               Academic and early-career opportunities
             </Badge>
-            <h1 className="max-w-4xl text-balance text-5xl font-bold leading-[1.04] text-primary-foreground sm:text-6xl lg:text-7xl">
+            <h1 className="max-w-full text-balance break-words text-4xl font-bold leading-[1.08] text-primary-foreground sm:text-6xl sm:leading-[1.04] lg:max-w-4xl lg:text-7xl">
               Graduates Corner
             </h1>
             <p className="mt-5 max-w-2xl text-pretty text-lg leading-relaxed text-primary-foreground/82 lg:text-xl">
@@ -428,14 +428,16 @@ function HomePageContent() {
             <Link
               key={stat.label}
               href={stat.href}
-              className="group flex min-h-24 items-center justify-center gap-3 px-2 py-4 text-center transition-colors hover:bg-secondary/55 sm:px-6"
+              className="group flex min-h-24 min-w-0 items-center justify-center gap-3 overflow-hidden px-1.5 py-4 text-center transition-colors hover:bg-secondary/55 sm:px-6"
             >
               <stat.icon className="hidden h-5 w-5 shrink-0 text-primary sm:block" />
               <div className="min-w-0">
                 <span className="block text-2xl font-bold tabular-nums text-foreground sm:text-3xl">
                   {loading ? "--" : stat.value}
                 </span>
-                <span className="block text-xs font-medium text-muted-foreground sm:text-sm">{stat.label}</span>
+                <span className="block break-words text-[11px] font-medium leading-tight text-muted-foreground sm:text-sm sm:leading-normal">
+                  {stat.label}
+                </span>
               </div>
             </Link>
           ))}
