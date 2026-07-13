@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process"
-import { readFileSync } from "node:fs"
+import { readdirSync, readFileSync } from "node:fs"
+import path from "node:path"
 
 const secretPatterns = [
   ["Supabase secret or publishable key", /sb_(?:secret|publishable)_[A-Za-z0-9_-]{16,}/g],
@@ -18,10 +19,35 @@ const sensitiveServerReference = /process\.env\.(?:SUPABASE_SERVICE_ROLE_KEY|ADM
 const credentialAssignment = /\b(?:password|passwd|apiKey|api_key|accessToken|access_token|authToken|auth_token|clientSecret|client_secret|serviceRoleKey|service_role_key|jwtSecret|jwt_secret)\b\s*[:=]\s*["'`]([^"'`\r\n]+)["'`]/gi
 const ignoredPaths = new Set(["yarn.lock"])
 
+function walkSourceFiles(directory = ".") {
+  const ignoredDirectories = new Set([".git", ".next", ".vercel", "node_modules"])
+  const files = []
+
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    if (entry.isDirectory() && ignoredDirectories.has(entry.name)) continue
+
+    const filePath = path.join(directory, entry.name)
+    if (entry.isDirectory()) {
+      files.push(...walkSourceFiles(filePath))
+    } else if (entry.isFile()) {
+      files.push(filePath.replace(/^\.\\/, "").replaceAll("\\", "/"))
+    }
+  }
+
+  return files
+}
+
 function sourceFiles() {
-  return execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], { encoding: "utf8" })
-    .split("\0")
-    .filter(Boolean)
+  try {
+    return execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .split("\0")
+      .filter(Boolean)
+  } catch {
+    return walkSourceFiles()
+  }
 }
 
 function lineNumber(content, index) {
