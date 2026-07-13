@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createAdminClient, isAdminRequest } from "@/lib/admin-server"
+import { internalErrorResponse } from "@/lib/server-error"
 import { toNullableUuid } from "@/lib/uuid"
 
 function normalizeStatus(value: unknown) {
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .maybeSingle()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return internalErrorResponse("admin trainee program detail", error, "Unable to load this trainee program.")
   }
 
   if (!data) {
@@ -89,7 +90,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return internalErrorResponse("admin trainee program update", error, "Unable to update this trainee program.")
   }
 
   return NextResponse.json({ program: data })
@@ -112,7 +113,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     .eq("id", id)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return internalErrorResponse("admin trainee program delete", error, "Unable to delete this trainee program.")
   }
 
   return NextResponse.json({ ok: true })

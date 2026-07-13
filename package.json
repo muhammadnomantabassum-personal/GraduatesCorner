@@ -5,9 +5,12 @@
   "packageManager": "yarn@1.22.22",
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/check-secrets.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "security:secrets": "node scripts/check-secrets.mjs",
+    "security:rls": "node scripts/check-supabase-rls.mjs"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.7.4",

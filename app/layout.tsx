@@ -7,6 +7,18 @@ import { LogoutLoader } from '@/components/logout-loader'
 import { Toaster } from 'sonner'
 import './globals.css'
 
+function getSupabaseOrigin() {
+  const value = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!value) return null
+
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' ? url.origin : null
+  } catch {
+    return null
+  }
+}
+
 export const metadata: Metadata = {
   metadataBase: new URL('https://graduatescorner.com'),
   title: 'Graduates Corner - Find Your Academic Opportunity',
@@ -55,13 +67,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const supabaseOrigin = getSupabaseOrigin()
+
   return (
     <html lang="en">
       <head>
         <link rel="preconnect" href="https://images.unsplash.com" />
-        <link rel="preconnect" href="https://vfxvfjchtxjhazpnlgpv.supabase.co" />
+        {supabaseOrigin ? <link rel="preconnect" href={supabaseOrigin} /> : null}
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
-        <link rel="dns-prefetch" href="https://vfxvfjchtxjhazpnlgpv.supabase.co" />
+        {supabaseOrigin ? <link rel="dns-prefetch" href={supabaseOrigin} /> : null}
       </head>
       <body className="bg-background font-sans antialiased" suppressHydrationWarning>
         <AuthProvider>

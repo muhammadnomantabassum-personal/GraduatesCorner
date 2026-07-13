@@ -13,7 +13,11 @@ USAGE
 4. Set the values in your PowerShell session or system environment:
    $env:NEXT_PUBLIC_SUPABASE_URL = "https://..."
    $env:NEXT_PUBLIC_SUPABASE_ANON_KEY = "..."
+   $env:ADMIN_SESSION_SECRET = "..."
+   $env:ADMIN_USERNAME = "..."
+   $env:ADMIN_PASSWORD_HASH = "..."
    $env:SUPABASE_SERVICE_ROLE_KEY = "..."  # optional
+   $env:CRON_SECRET = "..."  # optional
 5. Run: powershell -ExecutionPolicy Bypass -File .\scripts\set-vercel-env-noninteractive.ps1
 
 OPTIONS
@@ -63,7 +67,13 @@ if (-not (Ensure-Command 'vercel')) {
     exit 1
 }
 
-$required = @('NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY')
+$required = @(
+    'NEXT_PUBLIC_SUPABASE_URL',
+    'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+    'ADMIN_SESSION_SECRET',
+    'ADMIN_USERNAME',
+    'ADMIN_PASSWORD_HASH'
+)
 $missing = @()
 foreach ($name in $required) {
     if (-not [string]::IsNullOrEmpty((Get-EnvValue $name))) { continue }
@@ -78,9 +88,25 @@ if ($missing.Count -gt 0) {
 $supabaseUrl = Get-EnvValue 'NEXT_PUBLIC_SUPABASE_URL'
 $supabaseAnonKey = Get-EnvValue 'NEXT_PUBLIC_SUPABASE_ANON_KEY'
 $supabaseServiceRoleKey = Get-EnvValue 'SUPABASE_SERVICE_ROLE_KEY'
+$adminSessionSecret = Get-EnvValue 'ADMIN_SESSION_SECRET'
+$adminUsername = Get-EnvValue 'ADMIN_USERNAME'
+$adminPasswordHash = Get-EnvValue 'ADMIN_PASSWORD_HASH'
+$cronSecret = Get-EnvValue 'CRON_SECRET'
+
+if ($adminSessionSecret.Length -lt 32) {
+    Write-Host "ADMIN_SESSION_SECRET must contain at least 32 characters." -ForegroundColor Red
+    exit 1
+}
 
 Add-Env 'NEXT_PUBLIC_SUPABASE_URL' $supabaseUrl 'production'
 Add-Env 'NEXT_PUBLIC_SUPABASE_ANON_KEY' $supabaseAnonKey 'production'
+Add-Env 'ADMIN_SESSION_SECRET' $adminSessionSecret 'production'
+Add-Env 'ADMIN_USERNAME' $adminUsername 'production'
+Add-Env 'ADMIN_PASSWORD_HASH' $adminPasswordHash 'production'
+
+if (-not [string]::IsNullOrEmpty($cronSecret)) {
+    Add-Env 'CRON_SECRET' $cronSecret 'production'
+}
 
 if ($ServiceRole) {
     if (-not [string]::IsNullOrEmpty($supabaseServiceRoleKey)) {
@@ -93,6 +119,9 @@ if ($ServiceRole) {
 if ($Preview) {
     Add-Env 'NEXT_PUBLIC_SUPABASE_URL' $supabaseUrl 'preview'
     Add-Env 'NEXT_PUBLIC_SUPABASE_ANON_KEY' $supabaseAnonKey 'preview'
+    Add-Env 'ADMIN_SESSION_SECRET' $adminSessionSecret 'preview'
+    Add-Env 'ADMIN_USERNAME' $adminUsername 'preview'
+    Add-Env 'ADMIN_PASSWORD_HASH' $adminPasswordHash 'preview'
     if ($ServiceRole -and -not [string]::IsNullOrEmpty($supabaseServiceRoleKey)) {
         Add-Env 'SUPABASE_SERVICE_ROLE_KEY' $supabaseServiceRoleKey 'preview'
     }
@@ -101,6 +130,9 @@ if ($Preview) {
 if ($Development) {
     Add-Env 'NEXT_PUBLIC_SUPABASE_URL' $supabaseUrl 'development'
     Add-Env 'NEXT_PUBLIC_SUPABASE_ANON_KEY' $supabaseAnonKey 'development'
+    Add-Env 'ADMIN_SESSION_SECRET' $adminSessionSecret 'development'
+    Add-Env 'ADMIN_USERNAME' $adminUsername 'development'
+    Add-Env 'ADMIN_PASSWORD_HASH' $adminPasswordHash 'development'
     if ($ServiceRole -and -not [string]::IsNullOrEmpty($supabaseServiceRoleKey)) {
         Add-Env 'SUPABASE_SERVICE_ROLE_KEY' $supabaseServiceRoleKey 'development'
     }

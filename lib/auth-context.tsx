@@ -109,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(appUser)
       }
     } catch (err) {
-      console.error("Refresh profile error:", err)
+      console.error("Unable to refresh the profile.")
     }
   }, [supabase, fetchProfile])
 
@@ -131,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       await refreshProfile()
     } catch (err) {
-      console.error("Update profile error:", err)
+      console.error("Unable to update the profile.")
       throw err
     }
   }, [user, supabase, refreshProfile])
@@ -306,7 +306,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast.success("Logged out successfully", { id: toastId })
       router.push("/")
     } catch (error) {
-      console.error("Logout error:", error)
+      console.error("Unable to complete logout cleanly.")
       toast.error("Error during logout", { id: toastId })
     } finally {
       setIsLoggingOut(false)

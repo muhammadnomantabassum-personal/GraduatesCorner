@@ -54,7 +54,7 @@ export default function TraineeProgramsPage() {
         .eq('status', 'approved')
 
       if (error) {
-        console.error('Error fetching trainee programs:', error)
+        console.error('Unable to load trainee programs.')
       } else {
         const formattedData = data.map((p: any) => ({
           id: p.id,

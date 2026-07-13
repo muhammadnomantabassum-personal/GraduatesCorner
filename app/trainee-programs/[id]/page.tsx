@@ -44,7 +44,7 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
         .single()
 
       if (error) {
-        console.error('Error fetching trainee program:', error)
+        console.error('Unable to load the trainee program.')
       } else if (data) {
         const formattedProgram: TraineeProgram = {
           id: data.id,

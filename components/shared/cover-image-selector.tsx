@@ -156,8 +156,8 @@ export function CoverImageSelector({ value, onChange, allowAdminUpload = false }
       onChange(result.publicUrl)
       toast.success("Blog cover image optimized and uploaded")
     } catch (error: any) {
-      console.error("Error uploading blog cover:", error)
-      toast.error(error.message || "Failed to upload image")
+      console.error("Unable to upload the blog cover.")
+      toast.error("Failed to upload image")
     } finally {
       setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ""

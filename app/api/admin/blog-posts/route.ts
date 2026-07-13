@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createAdminClient, isAdminRequest } from "@/lib/admin-server"
+import { internalErrorResponse } from "@/lib/server-error"
 import { toNullableUuid } from "@/lib/uuid"
 
 function normalizeStatus(value: unknown) {
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     .order("created_at", { ascending: false })
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return internalErrorResponse("admin blog list", error, "Unable to load blog posts.")
   }
 
   return NextResponse.json({ posts: data || [] })
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return internalErrorResponse("admin blog create", error, "Unable to publish this blog post.")
   }
 
   return NextResponse.json({ post: data })

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createAdminClient, isAdminRequest } from "@/lib/admin-server"
+import { internalErrorResponse } from "@/lib/server-error"
 
 function normalizeStatus(value: unknown) {
   return value === "approved" || value === "pending" || value === "rejected" ? value : "approved"
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 404 })
+    return NextResponse.json({ error: "Blog post not found." }, { status: 404 })
   }
 
   return NextResponse.json({ post: data })
@@ -72,7 +73,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return internalErrorResponse("admin blog update", error, "Unable to update this blog post.")
   }
 
   return NextResponse.json({ post: data })
@@ -96,7 +97,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     .eq("id", id)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return internalErrorResponse("admin blog delete", error, "Unable to delete this blog post.")
   }
 
   return NextResponse.json({ ok: true })

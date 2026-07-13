@@ -27,7 +27,7 @@ export default function TestimonialsPage() {
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Error fetching testimonials:', error)
+        console.error('Unable to load testimonials.')
       } else {
         const formattedData = data.map((t: any) => ({
           id: t.id,

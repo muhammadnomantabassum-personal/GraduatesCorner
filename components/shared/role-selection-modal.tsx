@@ -98,8 +98,8 @@ export function RoleSelectionModal({ open, onClose, userId }: RoleSelectionModal
       
       router.push(`/dashboard/${selectedRole}`)
     } catch (error: any) {
-      console.error("Setup error:", error)
-      toast.error(error.message || "Failed to update role")
+      console.error("Unable to complete role setup.")
+      toast.error("Failed to update role")
     } finally {
       setIsSubmitting(false)
     }

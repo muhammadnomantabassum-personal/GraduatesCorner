@@ -64,7 +64,7 @@ export default function StudentDeadlineCalendarPage() {
       if (!active) return
 
       if (error) {
-        console.error("Error fetching calendar deadlines:", error)
+        console.error("Unable to load calendar deadlines.")
         setItems([])
       } else {
         const thesisItems: CalendarItem[] = (data || [])

@@ -34,15 +34,13 @@ function createStubClient() {
 export async function createClient() {
   const cookieStore = await cookies()
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-  const key =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!url || !key) {
     // During static builds in environments without secrets (like forks or preview builds),
     // return a safe stub client so prerender can continue without failing the build.
-    // Log a clear warning to help debugging in build logs.
-    console.warn('[supabase] Missing SUPABASE URL or KEY; using stub client for build.')
+    console.warn('[supabase] Public configuration is unavailable; using the build stub.')
     return createStubClient() as any
   }
 

@@ -258,7 +258,7 @@ function HomePageContent() {
           })))
         }
       } catch (err) {
-        console.error("Fetch Data Error:", err)
+        console.error("Unable to load homepage data.")
       } finally {
         setLoading(false)
       }
@@ -277,7 +277,7 @@ function HomePageContent() {
           setSearchResults(data.results || [])
           setShowResults(true)
         } catch (error) {
-          console.error("Search failed:", error)
+          console.error("Homepage search failed.")
         } finally {
           setIsSearching(false)
         }

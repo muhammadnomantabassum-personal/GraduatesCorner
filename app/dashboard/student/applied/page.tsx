@@ -35,7 +35,7 @@ export default function StudentAppliedPage() {
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error("Error fetching applications:", error)
+        console.error("Unable to load applications.")
       } else if (data) {
         const theses = data
           .filter((item: any) => item.theses)

@@ -98,7 +98,7 @@ export default function AdminExternalImportsPage() {
 
       toast.success(`Found ${nextCandidates.length} PhD-style opportunities`)
     } catch (error: any) {
-      toast.error(error.message || "Unable to preview external feed")
+      toast.error("Unable to preview the external feed.")
     } finally {
       setLoading(false)
     }

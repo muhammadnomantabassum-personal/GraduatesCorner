@@ -85,7 +85,7 @@ export function GlobalSearchCommand() {
         }))
       }))
     } catch (error) {
-      console.error("Failed to fetch search items:", error)
+      console.error("Failed to fetch search items.")
     } finally {
       setLoading(false)
     }
@@ -111,7 +111,7 @@ export function GlobalSearchCommand() {
         const data = await response.json()
         setItems(prev => ({ ...prev, searchResults: data.results || [] }))
       } catch (error) {
-        console.error("Global search failed:", error)
+        console.error("Global search failed.")
       } finally {
         setLoading(false)
       }

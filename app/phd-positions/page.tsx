@@ -44,7 +44,7 @@ export default function PhDPositionsPage() {
         .eq('type', 'phd')
 
       if (error) {
-        console.error('Error fetching theses:', error)
+        console.error('Unable to load PhD opportunities.')
       } else {
         const profileIds = Array.from(new Set(
           data

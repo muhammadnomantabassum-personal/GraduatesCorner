@@ -50,11 +50,20 @@ function Add-EnvInteractive($name) {
 
 Add-EnvInteractive 'NEXT_PUBLIC_SUPABASE_URL'
 Add-EnvInteractive 'NEXT_PUBLIC_SUPABASE_ANON_KEY'
+Add-EnvInteractive 'ADMIN_SESSION_SECRET'
+Add-EnvInteractive 'ADMIN_USERNAME'
+Add-EnvInteractive 'ADMIN_PASSWORD_HASH'
 
 $addService = Read-Host "Do you want to add the service role key (SUPABASE_SERVICE_ROLE_KEY)? This should be server-only. (y/N)"
 if ($addService -match '^[Yy]') {
     Write-Host "Adding SUPABASE_SERVICE_ROLE_KEY to Production only (server key)." -ForegroundColor Yellow
     vercel env add SUPABASE_SERVICE_ROLE_KEY production
+}
+
+$addCron = Read-Host "Do you want to add a cron authorization secret (CRON_SECRET)? (y/N)"
+if ($addCron -match '^[Yy]') {
+    Write-Host "Adding CRON_SECRET to Production only." -ForegroundColor Yellow
+    vercel env add CRON_SECRET production
 }
 
 Write-Host "\nDone. Trigger a redeploy from the Vercel dashboard or push an empty commit:`n  git commit --allow-empty -m 'chore: trigger vercel redeploy'`" -ForegroundColor Cyan

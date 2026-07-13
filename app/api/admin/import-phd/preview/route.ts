@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { fetchExternalPhdCandidates } from "@/lib/external-phd-importer"
 import { isAdminRequest } from "@/lib/admin-server"
+import { internalErrorResponse } from "@/lib/server-error"
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +23,10 @@ export async function POST(request: NextRequest) {
       count: candidates.length,
     })
   } catch (error) {
-    console.error("External PhD preview import failed:", error)
-    return NextResponse.json({ error: "Unable to import from the selected source" }, { status: 500 })
+    return internalErrorResponse(
+      "external PhD preview",
+      error,
+      "Unable to import from the selected source."
+    )
   }
 }

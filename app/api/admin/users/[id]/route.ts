@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createAdminClient, isAdminRequest } from "@/lib/admin-server"
+import { internalErrorResponse } from "@/lib/server-error"
 
 function normalizeBadge(value: unknown) {
   return value === "trusted" || value === "featured" ? value : "verified"
@@ -34,7 +35,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return internalErrorResponse("admin user trust update", error, "Unable to update this user.")
   }
 
   return NextResponse.json({ user: data })

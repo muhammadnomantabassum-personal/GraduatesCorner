@@ -187,7 +187,7 @@ export function BlogPostForm({
           .eq("id", blogId)
           .single()
 
-        if (error) loadError = error.message
+        if (error) loadError = "Unable to load this blog post."
         else post = data as BlogRow
       }
 
@@ -293,7 +293,7 @@ export function BlogPostForm({
       setIsSubmitting(false)
 
       if (error) {
-        toast.error(`Failed to ${isAdmin ? "publish" : "submit"} blog post: ${error.message}`)
+        toast.error(`Failed to ${isAdmin ? "publish" : "submit"} the blog post. Please try again.`)
         return
       }
 
@@ -341,7 +341,7 @@ export function BlogPostForm({
     setIsSubmitting(false)
 
     if (error) {
-      toast.error(`Failed to update blog post: ${error.message}`)
+      toast.error("Failed to update the blog post. Please try again.")
       return
     }
 

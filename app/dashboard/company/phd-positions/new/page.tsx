@@ -119,7 +119,7 @@ export default function NewCompanyPhDPositionPage() {
     setIsSubmitting(false)
 
     if (error) {
-      toast.error("Failed to submit PhD position: " + error.message)
+      toast.error("Failed to submit the PhD position. Please try again.")
     } else {
       toast.success("PhD position submitted for review!", {
         description: "You'll be notified once it's approved by an admin.",

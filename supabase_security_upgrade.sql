@@ -3,6 +3,26 @@
 
 BEGIN;
 
+-- Enforce RLS even when this focused upgrade is applied without the full setup
+-- script. The service role remains the only intentional bypass.
+DO $$
+DECLARE
+  table_name TEXT;
+BEGIN
+  FOREACH table_name IN ARRAY ARRAY[
+    'profiles', 'theses', 'trainee_programs', 'blog_posts',
+    'blog_comments', 'testimonials', 'wishlist', 'applications'
+  ]
+  LOOP
+    IF to_regclass('public.' || table_name) IS NOT NULL THEN
+      EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', table_name);
+    END IF;
+  END LOOP;
+END
+$$;
+
+DROP TABLE IF EXISTS public.admin_users;
+
 DO $$
 BEGIN
   IF to_regclass('public.blog_comments') IS NOT NULL THEN

@@ -48,7 +48,7 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
         .maybeSingle()
 
       if (error) {
-        console.error('Error fetching opportunity:', error)
+        console.error('Unable to load the opportunity.')
       } else if (data) {
         let profile: { is_verified?: boolean; verification_badge?: Thesis["verificationBadge"] } | null = null
 

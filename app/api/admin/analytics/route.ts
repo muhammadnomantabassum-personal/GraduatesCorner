@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createAdminClient, isAdminRequest } from "@/lib/admin-server"
+import { internalErrorResponse } from "@/lib/server-error"
 
 export async function GET(request: NextRequest) {
   if (!(await isAdminRequest(request))) {
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
   const firstError = [profiles, theses, programs, blogs, testimonials].find((result) => result.error)?.error
 
   if (firstError) {
-    return NextResponse.json({ error: firstError.message }, { status: 500 })
+    return internalErrorResponse("admin analytics", firstError, "Unable to load analytics.")
   }
 
   return NextResponse.json({

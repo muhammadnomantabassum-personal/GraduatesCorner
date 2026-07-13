@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { isAdminRequest } from "@/lib/admin-server"
+import { internalErrorResponse } from "@/lib/server-error"
 
 const MAX_UPLOAD_SIZE = 2 * 1024 * 1024
 const BUCKET = "blog-covers"
@@ -29,8 +30,8 @@ function detectImageType(buffer: Buffer) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl) {
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const storageClient = serviceRoleKey
+  const storageClient = isAdmin && serviceRoleKey
     ? createClient(supabaseUrl, serviceRoleKey, {
         auth: { persistSession: false },
       })
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
 
   if (!storageClient) {
     return NextResponse.json(
-      { error: "Blog cover upload needs a signed-in Supabase session or a server service role key." },
+      { error: "You must be logged in to upload a cover image." },
       { status: 401 }
     )
   }
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
   })
 
   if (error) {
-    return NextResponse.json({ error: error.message || "Failed to upload cover image." }, { status: 500 })
+    return internalErrorResponse("blog cover upload", error, "Failed to upload cover image.")
   }
 
   const {

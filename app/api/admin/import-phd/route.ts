@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createAdminClient, isAdminRequest } from "@/lib/admin-server"
+import { internalErrorResponse } from "@/lib/server-error"
 import { toNullableUuid } from "@/lib/uuid"
 
 const compensationValues = new Set(["paid", "unpaid", "stipend"])
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
     .select("id, title, external_url")
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return internalErrorResponse("admin PhD import", error, "Unable to import the selected positions.")
   }
 
   return NextResponse.json({ imported: data || [], count: data?.length || 0 })

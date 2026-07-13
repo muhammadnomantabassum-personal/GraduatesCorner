@@ -36,7 +36,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       .eq("user_id", user.id)
 
     if (error) {
-      console.error("Error fetching wishlist:", error)
+      console.error("Unable to load the wishlist.")
     } else {
       setWishlistItems(data || [])
     }

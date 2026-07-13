@@ -37,7 +37,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
       const { data, error } = await query.single()
 
       if (error) {
-        console.error('Error fetching blog post:', error)
+        console.error('Unable to load the blog post.')
       } else if (data) {
         const formattedPost: BlogPost = {
           id: data.id,
@@ -156,7 +156,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy content:", err);
+      console.error("Failed to copy content.");
     }
   }
 

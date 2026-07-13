@@ -43,11 +43,8 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-  const key =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.SUPABASE_ANON_KEY ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!url || !key) {
     return supabaseResponse
@@ -94,7 +91,7 @@ export async function updateSession(request: NextRequest) {
 
   const isSignedAdminSession = await verifySignedAdminToken(
     request.cookies.get('gc_admin_token')?.value,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
+    process.env.ADMIN_SESSION_SECRET
   )
 
   // If unauthenticated and on a protected route, redirect to home

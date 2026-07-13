@@ -70,7 +70,7 @@ function LoginForm() {
         },
       },
     })
-    if (error) toast.error(error.message)
+    if (error) toast.error("Unable to sign in. Check your details and try again.")
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

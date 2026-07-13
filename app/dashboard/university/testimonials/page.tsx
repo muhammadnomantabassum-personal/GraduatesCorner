@@ -107,7 +107,7 @@ export default function UniversityTestimonialsPage() {
     setIsSubmitting(false)
 
     if (error) {
-      toast.error("Failed to submit feedback: " + error.message)
+      toast.error("Failed to submit feedback. Please try again.")
     } else {
       toast.success(
         isEditing

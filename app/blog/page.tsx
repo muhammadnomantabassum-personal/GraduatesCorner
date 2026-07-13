@@ -26,7 +26,7 @@ export default function BlogPage() {
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Error fetching blog posts:', error)
+        console.error('Unable to load blog posts.')
       } else {
         const formattedData = data.map((p: any) => ({
           id: p.id,

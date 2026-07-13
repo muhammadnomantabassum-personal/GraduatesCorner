@@ -26,10 +26,7 @@ export function verifyAdminPassword(password: string, storedPassword: string) {
   const [prefix, iterationsValue, salt, expectedDigest] = storedPassword.split("$")
 
   if (prefix !== HASH_PREFIX || !iterationsValue || !salt || !expectedDigest) {
-    return {
-      valid: safeEqual(password, storedPassword),
-      needsUpgrade: true,
-    }
+    return { valid: false, needsUpgrade: false }
   }
 
   const iterations = Number(iterationsValue)
@@ -45,4 +42,8 @@ export function verifyAdminPassword(password: string, storedPassword: string) {
     valid: safeEqual(actualDigest, expectedDigest),
     needsUpgrade: iterations !== ITERATIONS,
   }
+}
+
+export function verifyAdminIdentifier(identifier: string, expectedIdentifier: string) {
+  return safeEqual(identifier, expectedIdentifier)
 }

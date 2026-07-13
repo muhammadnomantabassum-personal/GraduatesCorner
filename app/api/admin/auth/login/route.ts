@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
-import { adminSessionCookieOptions, createAdminClient, createLegacyAdminSessionToken } from "@/lib/admin-server"
-import { hashAdminPassword, verifyAdminPassword } from "@/lib/admin-password"
+import { adminSessionCookieOptions, createLegacyAdminSessionToken, getAdminCredentials } from "@/lib/admin-server"
+import { verifyAdminIdentifier, verifyAdminPassword } from "@/lib/admin-password"
 
 const RATE_LIMIT_WINDOW_MS = 60_000
 const MAX_ATTEMPTS_PER_WINDOW = 8
@@ -33,9 +33,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Too many login attempts. Try again shortly." }, { status: 429 })
   }
 
-  const adminClient = createAdminClient()
+  const credentials = getAdminCredentials()
 
-  if (!adminClient) {
+  if (!credentials) {
     return NextResponse.json({ error: "Admin login is not configured." }, { status: 500 })
   }
 
@@ -47,28 +47,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Username and password are required." }, { status: 400 })
   }
 
-  const { data, error } = await adminClient
-    .from("admin_users")
-    .select("id, username, password")
-    .eq("username", identifier)
-    .maybeSingle()
+  const identifierMatches = verifyAdminIdentifier(identifier, credentials.username)
+  const passwordCheck = verifyAdminPassword(password, credentials.passwordHash)
 
-  const passwordCheck = data ? verifyAdminPassword(password, data.password) : null
-
-  if (error || !data || !passwordCheck?.valid) {
+  if (!identifierMatches || !passwordCheck.valid) {
     return NextResponse.json({ error: "Invalid admin username or password." }, { status: 401 })
-  }
-
-  if (passwordCheck.needsUpgrade) {
-    const { error: migrationError } = await adminClient
-      .from("admin_users")
-      .update({ password: hashAdminPassword(password) })
-      .eq("id", data.id)
-
-    if (migrationError) {
-      console.error("Unable to migrate legacy admin password hash:", migrationError.message)
-      return NextResponse.json({ error: "Admin account security upgrade failed." }, { status: 500 })
-    }
   }
 
   const token = createLegacyAdminSessionToken()

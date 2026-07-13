@@ -143,15 +143,9 @@ CREATE TABLE IF NOT EXISTS public.applications (
   UNIQUE (user_id, program_id)
 );
 
--- Legacy admin login table used by /api/admin/auth/login. Keep it server-only:
--- the app reads it through the Supabase service role and no client RLS policies
--- are created for it.
-CREATE TABLE IF NOT EXISTS public.admin_users (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  username TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+-- Admin credentials live only in server-side deployment secrets. Remove the
+-- retired table so a database policy regression can never expose a login hash.
+DROP TABLE IF EXISTS public.admin_users;
 
 -- Helper for RLS policies. SECURITY DEFINER avoids recursive policy checks when
 -- policies need to know whether the current authenticated user is an admin.
@@ -179,7 +173,6 @@ ALTER TABLE public.blog_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.testimonials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wishlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
 
 -- Reset policies so this script is repeatable.
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;

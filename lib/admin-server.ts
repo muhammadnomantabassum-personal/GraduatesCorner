@@ -14,15 +14,28 @@ type AdminSessionPayload = {
 }
 
 function getSupabaseUrl() {
-  return process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+  return process.env.NEXT_PUBLIC_SUPABASE_URL
 }
 
 function getAnonKey() {
-  return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+  return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 }
 
 function getServiceRoleKey() {
   return process.env.SUPABASE_SERVICE_ROLE_KEY
+}
+
+function getAdminSessionSecret() {
+  const secret = process.env.ADMIN_SESSION_SECRET
+  return secret && secret.length >= 32 ? secret : undefined
+}
+
+export function getAdminCredentials() {
+  const username = process.env.ADMIN_USERNAME?.trim()
+  const passwordHash = process.env.ADMIN_PASSWORD_HASH?.trim()
+
+  if (!username || !passwordHash) return null
+  return { username, passwordHash }
 }
 
 function base64Url(value: string | Buffer) {
@@ -30,7 +43,7 @@ function base64Url(value: string | Buffer) {
 }
 
 function signPayload(payload: string) {
-  const secret = getServiceRoleKey()
+  const secret = getAdminSessionSecret()
   if (!secret) return ""
   return crypto.createHmac("sha256", secret).update(payload).digest("base64url")
 }

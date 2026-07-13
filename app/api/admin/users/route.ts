@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createAdminClient, isAdminRequest } from "@/lib/admin-server"
+import { internalErrorResponse } from "@/lib/server-error"
 
 export async function GET(request: NextRequest) {
   if (!(await isAdminRequest(request))) {
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
     .order("created_at", { ascending: false })
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return internalErrorResponse("admin users list", error, "Unable to load users.")
   }
 
   return NextResponse.json({ users: data || [] })

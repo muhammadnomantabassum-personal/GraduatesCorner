@@ -70,7 +70,7 @@ export default function AdminLoginPage() {
               <Input
                 id="identifier"
                 type="text"
-                placeholder="myadmin or admin@example.com"
+                placeholder="Admin username or email"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 className="h-10 rounded-lg border-border bg-background px-3.5 text-[13px]"

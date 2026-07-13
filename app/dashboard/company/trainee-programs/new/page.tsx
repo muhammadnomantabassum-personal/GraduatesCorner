@@ -133,7 +133,7 @@ export default function NewTraineeProgramPage() {
     setIsSubmitting(false)
 
     if (error) {
-      toast.error("Failed to submit program: " + error.message)
+      toast.error("Failed to submit the program. Please try again.")
     } else {
       toast.success("Trainee program submitted for review!", {
         description: "You'll be notified once it's approved by an admin.",

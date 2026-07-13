@@ -87,7 +87,7 @@ function RegisterForm() {
     })
 
     if (error) {
-      toast.error(error.message)
+      toast.error("Unable to continue with Google. Please try again.")
     }
   }
 
@@ -125,7 +125,7 @@ function RegisterForm() {
           }
         )
       } else {
-        toast.error(error.message)
+        toast.error("Unable to create your account. Please try again.")
       }
     } else if (data.user && data.user.identities && data.user.identities.length === 0) {
       toast.error(

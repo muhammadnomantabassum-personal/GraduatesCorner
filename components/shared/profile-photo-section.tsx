@@ -79,8 +79,8 @@ export function ProfilePhotoSection({ size = "md", editable = true }: ProfilePho
       await updateProfile({ avatar: publicUrl })
       toast.success("Profile photo updated")
     } catch (error: any) {
-      console.error("Error uploading avatar:", error)
-      toast.error(error.message || "Failed to upload image")
+      console.error("Unable to upload the profile image.")
+      toast.error("Failed to upload image")
     } finally {
       setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ""

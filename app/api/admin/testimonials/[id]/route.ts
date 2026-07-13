@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createAdminClient, isAdminRequest } from "@/lib/admin-server"
+import { internalErrorResponse } from "@/lib/server-error"
 
 function normalizeStatus(value: unknown) {
   return value === "approved" || value === "pending" || value === "rejected" ? value : undefined
@@ -31,7 +32,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return internalErrorResponse("admin testimonial update", error, "Unable to update this testimonial.")
   }
 
   return NextResponse.json({ testimonial: data })
@@ -54,7 +55,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     .eq("id", id)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return internalErrorResponse("admin testimonial delete", error, "Unable to delete this testimonial.")
   }
 
   return NextResponse.json({ ok: true })

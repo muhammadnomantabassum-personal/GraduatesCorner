@@ -44,7 +44,7 @@ export default function MasterThesisPage() {
         .eq('type', 'master')
 
       if (error) {
-        console.error('Error fetching theses:', error)
+        console.error('Unable to load thesis opportunities.')
       } else {
         // Map snake_case from DB to camelCase in Thesis type
         const formattedData = data.map((t: any) => ({
