@@ -15,7 +15,6 @@ import type { Thesis } from "@/lib/data/types"
 import { VerifiedBadge } from "@/components/shared/verified-badge"
 import { sanitizeHtml } from "@/lib/sanitize-html"
 import { isHtmlContent } from "@/lib/text"
-import { trackAnalyticsEvent } from "@/lib/analytics"
 import {
   ArrowLeft,
   MapPin,
@@ -137,12 +136,6 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
   }, [id, supabase])
 
   const handleApply = async () => {
-    trackAnalyticsEvent("apply_click", {
-      item_id: id,
-      item_name: thesis?.title,
-      opportunity_type: expectedPhdRoute ? "phd" : "master_thesis",
-      organization: thesis?.organization,
-    })
     if (user?.type === "student") {
       await supabase
         .from("applications")

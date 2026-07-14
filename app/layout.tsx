@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Analytics } from '@vercel/analytics/next'
-import { GoogleAnalyticsConsent } from '@/components/analytics/google-analytics-consent'
 import { AuthProvider } from '@/lib/auth-context'
 import { WishlistProvider } from '@/lib/wishlist-context'
 import { ComparisonProvider } from '@/lib/comparison-context'
@@ -158,7 +157,6 @@ export default function RootLayout({
             </ComparisonProvider>
           </WishlistProvider>
         </AuthProvider>
-        <GoogleAnalyticsConsent />
         <Analytics />
       </body>
     </html>

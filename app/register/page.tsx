@@ -18,7 +18,6 @@ import {
   Check,
 } from "lucide-react"
 import { toast } from "sonner"
-import { trackAnalyticsEvent } from "@/lib/analytics"
 
 type UserType = "student" | "university" | "company"
 
@@ -66,10 +65,6 @@ function RegisterForm() {
   }, [searchParams])
 
   const handleGoogleSignUp = async () => {
-    trackAnalyticsEvent("registration_started", {
-      method: "google",
-      account_type: selectedRole,
-    })
     // Store role in a cookie BEFORE redirecting to Google.
     // Google strips custom query params from the redirectTo URL, so we can't
     // pass ?role=company through the redirect — it gets dropped.
@@ -145,10 +140,6 @@ function RegisterForm() {
       )
     } else {
       if (data.user) {
-        trackAnalyticsEvent("registration_complete", {
-          method: "email",
-          account_type: selectedRole,
-        })
         toast.success("Registration successful! Redirecting to dashboard...")
         // For email signup, we redirect to dashboard after a short delay
         // Note: In a real app with email verification, they might need to verify first

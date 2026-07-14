@@ -40,9 +40,9 @@ export default function PrivacyPolicyPage() {
                 <li>Subscribe to newsletters or updates</li>
               </ul>
               <p className="mt-3">
-                We process limited technical and usage data needed to operate and secure the
-                platform. Optional Google Analytics measurement is disabled until you provide
-                analytics consent.
+                We process limited technical data needed to operate and secure the platform.
+                Vercel Web Analytics provides anonymized usage measurements such as page activity,
+                general location, browser, and device category without analytics cookies.
               </p>
             </div>
 
@@ -64,9 +64,9 @@ export default function PrivacyPolicyPage() {
               <p>
                 We do not sell, trade, or rent your personal information to third parties. We may
                 share data with service providers that support the platform, including Supabase for
-                authentication and database services, Vercel for hosting and privacy-friendly web
-                analytics, and Google Analytics when you consent to optional measurement. We may
-                also disclose information if required by law or to protect our rights.
+                authentication and database services and Vercel for hosting and privacy-friendly
+                web analytics. We may also disclose information if required by law or to protect our
+                rights.
               </p>
             </div>
 
@@ -81,19 +81,12 @@ export default function PrivacyPolicyPage() {
             </div>
 
             <div>
-              <h2 className="mb-3 text-lg font-semibold text-foreground">6. Cookies and Analytics</h2>
-              <p className="mb-3">
-                Essential storage supports authentication, security, and your saved preferences.
-                Vercel Web Analytics measures anonymized page activity without analytics cookies.
-                If you accept optional analytics, Google Analytics 4 may process page paths, general
-                location, browser and device categories, traffic sources, and interactions such as
-                opportunity views, wishlist saves, and application clicks.
-              </p>
+              <h2 className="mb-3 text-lg font-semibold text-foreground">6. Local Storage and Analytics</h2>
               <p>
-                We do not send account names, email addresses, message content, or internal user IDs
-                to Google Analytics. Advertising storage and ad-personalization signals remain
-                disabled. You can withdraw or change analytics consent at any time through the
-                Analytics preferences control in the website footer.
+                Essential cookies and local storage support authentication, security, and saved
+                preferences. Vercel Web Analytics measures aggregated, anonymized website activity
+                without analytics cookies. Graduates Corner does not use Google Analytics or
+                advertising trackers.
               </p>
             </div>
 
