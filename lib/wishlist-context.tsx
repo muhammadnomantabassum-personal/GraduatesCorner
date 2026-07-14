@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
+import { trackAnalyticsEvent } from "@/lib/analytics"
 
 interface WishlistItem {
   thesis_id?: string
@@ -105,6 +106,10 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         setWishlistItems(prev => [...prev, newItem])
       } else {
         toast.success("Removed from wishlist")
+        trackAnalyticsEvent("wishlist_remove", {
+          item_id: itemId,
+          opportunity_type: type,
+        })
       }
     } else {
       const { error } = await supabase
@@ -122,6 +127,10 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         ))
       } else {
         toast.success("Added to wishlist")
+        trackAnalyticsEvent("wishlist_save", {
+          item_id: itemId,
+          opportunity_type: type,
+        })
       }
     }
   }

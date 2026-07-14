@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Mail, MapPin, Clock, Send } from "lucide-react"
 import { toast } from "sonner"
+import { trackAnalyticsEvent } from "@/lib/analytics"
 
 const contactInfo = [
   {
@@ -40,6 +41,10 @@ export default function ContactPage() {
     }
     const subject = encodeURIComponent(form.subject || `Website message from ${form.name}`)
     const body = encodeURIComponent(`Name: ${form.name}\nEmail: ${form.email}\n\n${form.message}`)
+    trackAnalyticsEvent("contact_admin", {
+      contact_method: "email",
+      has_subject: Boolean(form.subject),
+    })
     toast.success("Opening your email application.")
     window.location.href = `mailto:admin@graduatescorner.com?subject=${subject}&body=${body}`
   }

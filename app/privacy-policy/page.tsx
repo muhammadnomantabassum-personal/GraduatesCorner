@@ -10,7 +10,7 @@ export default function PrivacyPolicyPage() {
           <Shield className="mx-auto mb-5 h-10 w-10 text-accent" />
           <h1 className="mb-3 text-3xl font-bold tracking-tight lg:text-4xl">Privacy Policy</h1>
           <p className="text-[15px] text-primary-foreground/60">
-            Last updated: March 1, 2026
+            Last updated: July 14, 2026
           </p>
         </div>
       </section>
@@ -40,9 +40,9 @@ export default function PrivacyPolicyPage() {
                 <li>Subscribe to newsletters or updates</li>
               </ul>
               <p className="mt-3">
-                We also automatically collect certain technical data such as your IP address,
-                browser type, device information, and usage patterns through cookies and similar
-                technologies.
+                We process limited technical and usage data needed to operate and secure the
+                platform. Optional Google Analytics measurement is disabled until you provide
+                analytics consent.
               </p>
             </div>
 
@@ -63,10 +63,10 @@ export default function PrivacyPolicyPage() {
               <h2 className="mb-3 text-lg font-semibold text-foreground">4. Sharing Your Information</h2>
               <p>
                 We do not sell, trade, or rent your personal information to third parties. We may
-                share your data with trusted service providers who assist us in operating our
-                platform (e.g., hosting, analytics), provided they agree to keep your information
-                confidential. We may also disclose information if required by law or to protect our
-                rights.
+                share data with service providers that support the platform, including Supabase for
+                authentication and database services, Vercel for hosting and privacy-friendly web
+                analytics, and Google Analytics when you consent to optional measurement. We may
+                also disclose information if required by law or to protect our rights.
               </p>
             </div>
 
@@ -81,12 +81,19 @@ export default function PrivacyPolicyPage() {
             </div>
 
             <div>
-              <h2 className="mb-3 text-lg font-semibold text-foreground">6. Cookies</h2>
+              <h2 className="mb-3 text-lg font-semibold text-foreground">6. Cookies and Analytics</h2>
+              <p className="mb-3">
+                Essential storage supports authentication, security, and your saved preferences.
+                Vercel Web Analytics measures anonymized page activity without analytics cookies.
+                If you accept optional analytics, Google Analytics 4 may process page paths, general
+                location, browser and device categories, traffic sources, and interactions such as
+                opportunity views, wishlist saves, and application clicks.
+              </p>
               <p>
-                Our platform uses cookies to enhance your browsing experience, analyze site traffic,
-                and understand user preferences. You can choose to disable cookies through your
-                browser settings, though some features of the platform may not function properly
-                without them.
+                We do not send account names, email addresses, message content, or internal user IDs
+                to Google Analytics. Advertising storage and ad-personalization signals remain
+                disabled. You can withdraw or change analytics consent at any time through the
+                Analytics preferences control in the website footer.
               </p>
             </div>
 
@@ -102,8 +109,8 @@ export default function PrivacyPolicyPage() {
               </ul>
               <p className="mt-3">
                 To exercise these rights, please contact us at{" "}
-                <a href="mailto:privacy@graduatecorner.com" className="font-medium text-accent underline underline-offset-2 hover:text-accent/80">
-                  privacy@graduatecorner.com
+                <a href="mailto:admin@graduatescorner.com" className="font-medium text-accent underline underline-offset-2 hover:text-accent/80">
+                  admin@graduatescorner.com
                 </a>.
               </p>
             </div>
@@ -121,8 +128,8 @@ export default function PrivacyPolicyPage() {
               <h2 className="mb-3 text-lg font-semibold text-foreground">9. Contact Us</h2>
               <p>
                 If you have questions about this Privacy Policy, please contact us at{" "}
-                <a href="mailto:privacy@graduatecorner.com" className="font-medium text-accent underline underline-offset-2 hover:text-accent/80">
-                  privacy@graduatecorner.com
+                <a href="mailto:admin@graduatescorner.com" className="font-medium text-accent underline underline-offset-2 hover:text-accent/80">
+                  admin@graduatescorner.com
                 </a>.
               </p>
             </div>

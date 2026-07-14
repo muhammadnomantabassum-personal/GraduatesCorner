@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { RoleSelectionModal } from "@/components/shared/role-selection-modal"
 import { useAuth } from "@/lib/auth-context"
+import { trackAnalyticsEvent } from "@/lib/analytics"
 import type { Thesis, TraineeProgram } from "@/lib/data/types"
 import {
   ArrowRight,
@@ -262,6 +263,11 @@ function HomePageContent() {
 
   const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    trackAnalyticsEvent("search_performed", {
+      result_count: searchResults.length,
+      has_results: searchResults.length > 0,
+      interaction: "submit",
+    })
     if (searchResults[0]) {
       router.push(getResultLink(searchResults[0]))
       setShowResults(false)
@@ -358,7 +364,15 @@ function HomePageContent() {
                           key={`${result.category}-${result.id}`}
                           href={getResultLink(result)}
                           className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-secondary"
-                          onClick={() => setShowResults(false)}
+                          onClick={() => {
+                            trackAnalyticsEvent("search_performed", {
+                              result_count: searchResults.length,
+                              has_results: true,
+                              interaction: "result_click",
+                              selected_category: result.category,
+                            })
+                            setShowResults(false)
+                          }}
                         >
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                             {getResultIcon(result.category)}

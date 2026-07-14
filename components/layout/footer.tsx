@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Github, Linkedin, Mail, MapPin, ShieldCheck, Sparkles } from "lucide-react"
 import { BrandLogo } from "@/components/shared/brand-logo"
+import { AnalyticsPreferencesButton } from "@/components/analytics/analytics-preferences-button"
 
 const footerLinks = {
   platform: [
@@ -77,7 +78,14 @@ export function Footer() {
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-7">
             <FooterColumn title="Platform" links={footerLinks.platform} />
             <FooterColumn title="Resources" links={footerLinks.resources} />
-            <FooterColumn title="Legal" links={footerLinks.legal} />
+            <div>
+              <FooterColumn title="Legal" links={footerLinks.legal} />
+              {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ? (
+                <div className="mt-3">
+                  <AnalyticsPreferencesButton />
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
 

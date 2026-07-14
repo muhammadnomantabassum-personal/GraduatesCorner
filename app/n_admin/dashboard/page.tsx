@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type ElementType } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { TrafficAnalyticsPanel } from "@/components/admin/traffic-analytics-panel"
 import {
   Area,
   AreaChart,
@@ -188,6 +189,8 @@ export default function AdminOverviewPage() {
           href="/n_admin/dashboard/blogs"
         />
       </section>
+
+      <TrafficAnalyticsPanel />
 
       {analytics.totalPending > 0 && (
         <section className="rounded-2xl border border-[#fbbc05]/40 bg-[#fbbc05]/10 p-5 shadow-sm">

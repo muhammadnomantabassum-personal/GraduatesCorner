@@ -14,6 +14,7 @@ import type { TraineeProgram } from "@/lib/data/types"
 import { VerifiedBadge } from "@/components/shared/verified-badge"
 import { sanitizeHtml } from "@/lib/sanitize-html"
 import { isHtmlContent } from "@/lib/text"
+import { trackAnalyticsEvent } from "@/lib/analytics"
 import {
   ArrowLeft,
   MapPin,
@@ -117,6 +118,12 @@ export default function ProgramDetailPage({ params }: { params: Promise<{ id: st
   }, [id, supabase])
 
   const handleApply = async () => {
+    trackAnalyticsEvent("apply_click", {
+      item_id: id,
+      item_name: program?.title,
+      opportunity_type: "trainee_program",
+      organization: program?.company,
+    })
     if (user?.type === "student") {
       await supabase
         .from("applications")

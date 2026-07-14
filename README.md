@@ -9,7 +9,7 @@ Graduates Corner is a Next.js platform for graduate opportunities, research posi
 3. Configure server-only secrets only in the deployment platform and local server environment.
 4. Run `yarn security:secrets` before committing or deploying.
 
-`NEXT_PUBLIC_SUPABASE_ANON_KEY` is intentionally visible in the browser. It is safe only while Row Level Security remains enabled on every exposed Supabase table and storage write policies remain restrictive. `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_SESSION_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, and `CRON_SECRET` are server-only and must never use a `NEXT_PUBLIC_` prefix.
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` and `NEXT_PUBLIC_GA_MEASUREMENT_ID` are intentionally visible in the browser. The Supabase anon key is safe only while Row Level Security remains enabled on every exposed Supabase table and storage write policies remain restrictive. `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_SESSION_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `CRON_SECRET`, `GA4_PROPERTY_ID`, `GA4_CLIENT_EMAIL`, and `GA4_PRIVATE_KEY` are server-only and must never use a `NEXT_PUBLIC_` prefix.
 
 Generate `ADMIN_SESSION_SECRET` and `CRON_SECRET` with a cryptographically secure password generator. Use at least 32 random bytes for the admin session secret.
 
@@ -40,3 +40,16 @@ yarn build
 Set `GOOGLE_SITE_VERIFICATION` and `BING_SITE_VERIFICATION` in the deployment
 environment after creating the corresponding webmaster accounts. Search
 rankings cannot be guaranteed; avoid purchased or automated backlinks.
+
+## Traffic analytics
+
+Vercel Web Analytics remains enabled for anonymous platform-level traffic. Optional Google Analytics 4 is consent-gated and adds acquisition, engagement, geography, content, and conversion reporting to the protected admin dashboard.
+
+1. Create a GA4 property and web data stream for `https://graduatescorner.com`.
+2. Set `NEXT_PUBLIC_GA_MEASUREMENT_ID` to the stream's public `G-...` measurement ID.
+3. Enable the Google Analytics Data API in a Google Cloud project and create a service account.
+4. Add the service-account email to the GA4 property with Viewer access.
+5. Add `GA4_PROPERTY_ID`, `GA4_CLIENT_EMAIL`, and `GA4_PRIVATE_KEY` as server-only Vercel environment variables.
+6. Redeploy, accept optional analytics on the public site, and confirm the admin Overview traffic section connects.
+
+The admin reporting endpoint authenticates every request and caches aggregate reports briefly. Raw visitor records and Google credentials are never returned to the browser.
