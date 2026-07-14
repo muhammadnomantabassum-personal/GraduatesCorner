@@ -27,10 +27,10 @@ import {
 } from "lucide-react"
 
 const metrics = [
-  { label: "Verified opportunities", value: "1,170+", icon: ShieldCheck },
-  { label: "Partner institutions", value: "120+", icon: Building2 },
-  { label: "Active candidates", value: "15k+", icon: Users },
-  { label: "Global coverage", value: "40+", icon: Globe2 },
+  { label: "Opportunity tracks", value: "3", icon: ShieldCheck },
+  { label: "Organization access", value: "Global", icon: Building2 },
+  { label: "Role-based workspaces", value: "4", icon: Users },
+  { label: "Publishing review", value: "Admin", icon: Globe2 },
 ]
 
 const principles = [

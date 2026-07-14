@@ -15,6 +15,7 @@ import type { Thesis } from "@/lib/data/types"
 import { Search, SlidersHorizontal, X, GraduationCap, Building2, MapPin, Microscope, Heart } from "lucide-react"
 import { getDeadlineBucket, getWorkMode, matchesDeadline, matchesWorkMode } from "@/lib/opportunity-filters"
 import { sortOpportunityResults, type OpportunitySort } from "@/lib/opportunity-sort"
+import { OpportunitySeoContent } from "@/components/seo/opportunity-seo-content"
 
 
 export default function PhDPositionsPage() {
@@ -503,6 +504,7 @@ export default function PhDPositionsPage() {
           </div>
         </div>
       </section>
+      <OpportunitySeoContent type="phd" />
     </PublicLayout>
   )
 }

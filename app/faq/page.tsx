@@ -7,6 +7,16 @@ import {
 } from "@/components/ui/accordion"
 import { HelpCircle } from "lucide-react"
 import Link from "next/link"
+import type { Metadata } from "next"
+import { JsonLd } from "@/components/seo/json-ld"
+import { createPageMetadata } from "@/lib/seo"
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Frequently Asked Questions About Academic Opportunities",
+  description: "Answers about finding and applying for PhD positions, master's thesis projects, graduate trainee programs, accounts, organizations, and support.",
+  path: "/faq",
+  keywords: ["PhD position FAQ", "master thesis application", "graduate program questions"],
+})
 
 const faqCategories = [
   {
@@ -35,7 +45,7 @@ const faqCategories = [
       },
       {
         q: "Do I need to create an account to use the platform?",
-        a: "No, you can browse all theses and trainee programs without an account. However, creating a free student account allows you to save bookmarks, receive alerts for new listings in your field, and leave testimonials.",
+        a: "No, you can browse all theses and trainee programs without an account. Creating a free student account lets you save opportunities, organize deadlines, track applications, and contribute approved platform content.",
       },
       {
         q: "Can I post my own thesis topic for companies to find?",
@@ -69,11 +79,11 @@ const faqCategories = [
       },
       {
         q: "How do I delete my account?",
-        a: "You can request account deletion by contacting us at support@graduatecorner.com. We will process your request and remove your personal data in accordance with our Privacy Policy.",
+        a: "You can request account deletion by contacting us at admin@graduatescorner.com. We will process your request and remove your personal data in accordance with our Privacy Policy.",
       },
       {
         q: "How can I contact support?",
-        a: "You can reach our support team through the Contact page or by emailing support@graduatecorner.com. We typically respond within 24 hours on business days.",
+        a: "You can reach the administrator through the Contact page or by emailing admin@graduatescorner.com. We typically respond within 24 hours on business days.",
       },
     ],
   },
@@ -81,7 +91,24 @@ const faqCategories = [
 
 export default function FAQPage() {
   return (
-    <PublicLayout>
+    <>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqCategories.flatMap((category) =>
+            category.items.map((item) => ({
+              "@type": "Question",
+              name: item.q,
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: item.a,
+              },
+            }))
+          ),
+        }}
+      />
+      <PublicLayout>
       {/* Hero */}
       <section className="border-b border-border bg-primary px-4 py-14 text-primary-foreground lg:py-18">
         <div className="mx-auto max-w-3xl text-center">
@@ -141,6 +168,7 @@ export default function FAQPage() {
           </div>
         </div>
       </section>
-    </PublicLayout>
+      </PublicLayout>
+    </>
   )
 }

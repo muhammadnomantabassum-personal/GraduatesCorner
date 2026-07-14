@@ -29,3 +29,14 @@ yarn lint
 npx tsc --noEmit
 yarn build
 ```
+
+## Search visibility
+
+- Sitemap: `https://graduatescorner.com/sitemap.xml`
+- Robots: `https://graduatescorner.com/robots.txt`
+- Opportunity and article feed: `https://graduatescorner.com/feed.xml`
+- Operational launch checklist: [`docs/SEO_LAUNCH_PLAN.md`](docs/SEO_LAUNCH_PLAN.md)
+
+Set `GOOGLE_SITE_VERIFICATION` and `BING_SITE_VERIFICATION` in the deployment
+environment after creating the corresponding webmaster accounts. Search
+rankings cannot be guaranteed; avoid purchased or automated backlinks.

@@ -15,6 +15,7 @@ import type { Thesis } from "@/lib/data/types"
 import { Search, SlidersHorizontal, X, BookOpen, Building2, MapPin, Sparkles, Heart } from "lucide-react"
 import { getDeadlineBucket, getWorkMode, matchesDeadline, matchesWorkMode } from "@/lib/opportunity-filters"
 import { sortOpportunityResults, type OpportunitySort } from "@/lib/opportunity-sort"
+import { OpportunitySeoContent } from "@/components/seo/opportunity-seo-content"
 
 
 export default function MasterThesisPage() {
@@ -489,6 +490,7 @@ export default function MasterThesisPage() {
           </div>
         </div>
       </section>
+      <OpportunitySeoContent type="thesis" />
     </PublicLayout>
   )
 }

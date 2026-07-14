@@ -27,6 +27,15 @@ const nextConfig = {
   },
   async headers() {
     return [
+      ...['/api/:path*', '/auth/:path*', '/dashboard/:path*', '/n_admin/:path*', '/login', '/register', '/forgot-password'].map((source) => ({
+        source,
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow, noarchive',
+          },
+        ],
+      })),
       {
         source: '/:all*(svg|jpg|jpeg|png|webp|avif|ico)',
         headers: [

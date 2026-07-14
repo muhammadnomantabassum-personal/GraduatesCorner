@@ -30,7 +30,7 @@ const contactInfo = [
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" })
-  const [sending, setSending] = useState(false)
+  const sending = false
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,13 +38,10 @@ export default function ContactPage() {
       toast.error("Please fill in all required fields.")
       return
     }
-    setSending(true)
-    // Simulate sending
-    setTimeout(() => {
-      setSending(false)
-      toast.success("Message sent! We'll get back to you soon.")
-      setForm({ name: "", email: "", subject: "", message: "" })
-    }, 1200)
+    const subject = encodeURIComponent(form.subject || `Website message from ${form.name}`)
+    const body = encodeURIComponent(`Name: ${form.name}\nEmail: ${form.email}\n\n${form.message}`)
+    toast.success("Opening your email application.")
+    window.location.href = `mailto:admin@graduatescorner.com?subject=${subject}&body=${body}`
   }
 
   const update = (field: keyof typeof form) => (
@@ -182,7 +179,7 @@ export default function ContactPage() {
                   ) : (
                     <>
                       <Send className="h-3.5 w-3.5" />
-                      Send Message
+                      Compose Email
                     </>
                   )}
                 </button>

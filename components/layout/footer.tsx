@@ -14,6 +14,8 @@ const footerLinks = {
     { href: "/faq", label: "FAQ" },
     { href: "/contact", label: "Contact" },
     { href: "/about", label: "About Us" },
+    { href: "/press", label: "Press & Partners" },
+    { href: "/feed.xml", label: "RSS Feed" },
   ],
   legal: [
     { href: "/privacy-policy", label: "Privacy Policy" },

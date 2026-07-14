@@ -15,6 +15,7 @@ import type { TraineeProgram } from "@/lib/data/types"
 import { Search, SlidersHorizontal, X, Briefcase, Building2, MapPin, Heart, Sparkles } from "lucide-react"
 import { getDeadlineBucket, getWorkMode, matchesDeadline, matchesWorkMode } from "@/lib/opportunity-filters"
 import { sortOpportunityResults, type OpportunitySort } from "@/lib/opportunity-sort"
+import { OpportunitySeoContent } from "@/components/seo/opportunity-seo-content"
 
 
 /* Duration options */
@@ -509,6 +510,7 @@ export default function TraineeProgramsPage() {
           </div>
         </div>
       </section>
+      <OpportunitySeoContent type="trainee" />
     </PublicLayout>
   )
 }
