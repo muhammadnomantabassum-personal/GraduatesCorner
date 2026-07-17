@@ -17,7 +17,17 @@ function createStubClient() {
       signOut: empty,
       exchangeCodeForSession: empty,
       updateUser: empty,
-      onAuthStateChange: () => ({ data: null, unsubscribe: () => {} }),
+      onAuthStateChange: (callback: (event: string, session: null) => void) => {
+        queueMicrotask(() => callback('INITIAL_SESSION', null))
+        return {
+          data: {
+            subscription: {
+              unsubscribe: () => {},
+            },
+          },
+          error: null,
+        }
+      },
       getUser: async () => ({ data: { user: null }, error: null }),
       getSession: async () => ({ data: { session: null }, error: null }),
     },
@@ -40,7 +50,9 @@ export function createClient() {
   if (!url || !key) {
     // During builds or preview environments without Supabase secrets,
     // return a safe stub client so prerendering does not fail.
-    console.warn('[supabase] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY; using stub client.')
+    if (typeof window === 'undefined') {
+      console.warn('[supabase] Missing public configuration; using the build stub.')
+    }
     cachedClient = createStubClient()
     return cachedClient
   }

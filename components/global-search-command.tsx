@@ -147,7 +147,8 @@ export function GlobalSearchCommand() {
       {/* Trigger Button */}
       <button
         onClick={() => setOpen(true)}
-        className="group flex h-8 items-center gap-2 rounded-lg border border-border/60 bg-secondary/50 px-2.5 text-[13px] text-muted-foreground transition-all duration-200 hover:border-border hover:bg-secondary hover:text-foreground"
+        aria-label="Search Graduates Corner"
+        className="group flex h-11 w-11 items-center justify-center gap-2 rounded-lg border border-border/60 bg-secondary/50 px-0 text-[13px] text-muted-foreground transition-all duration-200 hover:border-border hover:bg-secondary hover:text-foreground active:scale-[0.96] sm:w-auto sm:px-2.5 lg:h-8"
       >
         <Search className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">Search...</span>

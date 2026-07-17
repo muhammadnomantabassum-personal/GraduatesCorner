@@ -66,7 +66,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
             </span>
           </div>
           {isVerified && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-[#1877F2]/10 px-2 py-1 text-[10px] font-semibold text-[#1877F2] ring-1 ring-[#1877F2]/15">
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#1877F2]/10 px-2 py-1 text-[10px] font-semibold text-[#1877F2] ring-1 ring-[#1877F2]/15 dark:text-[#8ab4f8]">
               <ShieldCheck className="h-3 w-3" />
               Verified
             </span>
@@ -85,15 +85,15 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
         </p>
         <div className="grid grid-cols-2 gap-2">
           <QuickSignal icon={Calendar} label={deadlineLabel} tone={deadlineTone} />
-          <QuickSignal icon={WalletCards} label={thesis.compensation} tone="bg-[#34A853]/10 text-[#137333] ring-1 ring-[#34A853]/15" />
-          <QuickSignal icon={Laptop} label={workMode} tone="bg-[#4285F4]/10 text-[#1A73E8] ring-1 ring-[#4285F4]/15" />
+          <QuickSignal icon={WalletCards} label={thesis.compensation} tone="bg-[#34A853]/10 text-[#137333] ring-1 ring-[#34A853]/15 dark:text-[#7bd88f]" />
+          <QuickSignal icon={Laptop} label={workMode} tone="bg-[#4285F4]/10 text-[#1A73E8] ring-1 ring-[#4285F4]/15 dark:text-[#8ab4f8]" />
           <QuickSignal
             icon={ShieldCheck}
             label={isVerified ? thesis.verificationBadge || "verified" : "unverified"}
-            tone={isVerified ? "bg-[#1877F2]/10 text-[#1877F2] ring-1 ring-[#1877F2]/15" : "bg-secondary text-secondary-foreground ring-1 ring-border/60"}
+            tone={isVerified ? "bg-[#1877F2]/10 text-[#1877F2] ring-1 ring-[#1877F2]/15 dark:text-[#8ab4f8]" : "bg-secondary text-secondary-foreground ring-1 ring-border/60"}
           />
         </div>
-        <div className="rounded-xl border border-border/70 bg-[linear-gradient(135deg,#ffffff_0%,#f6f9ff_58%,#f3fbf6_100%)] p-3 shadow-sm">
+        <div className="rounded-lg border border-border/70 bg-secondary/35 p-3 shadow-sm">
           <div className="mb-2 flex items-center justify-between gap-3">
             <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase text-primary">
               <Gauge className="h-3.5 w-3.5" />
@@ -176,7 +176,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
               aria-label={isLiked ? "Remove from wishlist" : "Save to wishlist"}
               aria-pressed={isLiked}
               title={isLiked ? "Remove from wishlist" : "Save to wishlist"}
-              className={`flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background transition-all hover:-translate-y-0.5 hover:border-[#ea4335]/35 ${isLiked ? "text-[#ea4335]" : "text-muted-foreground hover:text-[#ea4335]"}`}
+              className={`flex h-11 w-11 items-center justify-center rounded-md border border-border bg-background transition-all hover:border-[#ea4335]/35 active:scale-[0.96] ${isLiked ? "text-[#ea4335]" : "text-muted-foreground hover:text-[#ea4335]"}`}
             >
               <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
             </button>
@@ -186,14 +186,14 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
               aria-label={isInComparison ? "Remove from comparison" : "Add to comparison"}
               aria-pressed={isInComparison}
               title={isInComparison ? "Remove from comparison" : "Add to comparison"}
-              className={`flex h-9 w-9 items-center justify-center rounded-md border transition-all hover:-translate-y-0.5 ${isInComparison ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-primary/35 hover:text-primary"}`}
+              className={`flex h-11 w-11 items-center justify-center rounded-md border transition-all active:scale-[0.96] ${isInComparison ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-primary/35 hover:text-primary"}`}
             >
               <GitCompareArrows className="h-4 w-4" />
             </button>
           </div>
           <Link
             href={detailHref}
-            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 active:scale-[0.97]"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors duration-200 hover:bg-primary/90 active:bg-primary/80"
           >
             View details
             <ArrowUpRight className="h-3.5 w-3.5" />

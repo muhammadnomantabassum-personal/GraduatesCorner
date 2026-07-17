@@ -72,7 +72,7 @@ export function Navbar() {
         }`}
     >
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
-        <div className={`flex items-center justify-between gap-4 transition-all duration-200 ${scrolled ? "h-16" : "h-20"
+        <div className={`flex min-w-0 items-center justify-between gap-2 transition-all duration-200 sm:gap-4 ${scrolled ? "h-16" : "h-20"
           }`}>
           {/* Logo */}
           <Link
@@ -80,7 +80,10 @@ export function Navbar() {
             aria-label="Graduates Corner home"
             className="flex shrink-0 items-center transition-opacity duration-200 hover:opacity-95"
           >
-            <BrandLogo size={scrolled ? "sm" : "md"} />
+            <BrandLogo
+              size={scrolled ? "sm" : "md"}
+              textClassName="hidden min-[350px]:inline"
+            />
           </Link>
 
           {/* Desktop Navigation — pill bar */}
@@ -103,7 +106,7 @@ export function Navbar() {
           </div>
 
           {/* Right Section */}
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             {/* Search */}
             <GlobalSearchCommand />
 
@@ -175,7 +178,7 @@ export function Navbar() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-lg text-muted-foreground"
+                  className="h-11 w-11 rounded-lg text-muted-foreground active:scale-[0.96]"
                 >
                   <Menu className="h-[18px] w-[18px]" />
                   <span className="sr-only">Toggle menu</span>

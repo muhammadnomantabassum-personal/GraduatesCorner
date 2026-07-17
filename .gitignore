@@ -15,6 +15,10 @@ env.local
 .env.local
 .env.vercel.*
 tsconfig.tsbuildinfo
+.tmp-*
+.next-dev.*.log
+__pycache__/
+*.py[cod]
 *.pem
 *.key
 *.p12

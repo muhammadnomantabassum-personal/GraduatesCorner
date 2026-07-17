@@ -1,9 +1,22 @@
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 
-export function OpportunityGridSkeleton() {
+type OpportunityGridSkeletonProps = {
+  count?: number
+  columns?: 2 | 3
+}
+
+export function OpportunityGridSkeleton({
+  count = 4,
+  columns = 2,
+}: OpportunityGridSkeletonProps = {}) {
   return (
-    <div className="grid gap-6 md:grid-cols-2" aria-label="Loading opportunities" aria-busy="true">
-      {Array.from({ length: 4 }).map((_, index) => (
+    <div
+      className={cn("grid gap-6 md:grid-cols-2", columns === 3 && "lg:grid-cols-3")}
+      aria-label="Loading opportunities"
+      aria-busy="true"
+    >
+      {Array.from({ length: count }).map((_, index) => (
         <div key={index} className="min-h-[410px] overflow-hidden rounded-lg border border-border bg-card p-5 shadow-sm">
           <Skeleton className="mb-5 h-1.5 w-full" />
           <div className="mb-4 flex items-center justify-between gap-3">

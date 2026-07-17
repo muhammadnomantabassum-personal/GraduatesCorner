@@ -126,6 +126,7 @@
 
   body {
     @apply bg-background text-foreground;
+    overflow-x: clip;
     background-image:
       linear-gradient(rgba(66, 133, 244, 0.035) 1px, transparent 1px),
       linear-gradient(90deg, rgba(66, 133, 244, 0.035) 1px, transparent 1px);

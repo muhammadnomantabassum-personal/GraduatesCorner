@@ -31,7 +31,7 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-primary/20 bg-[linear-gradient(135deg,#f8fbff_0%,#eef5ff_46%,#eaf7ef_100%)]">
+    <footer className="border-t border-primary/20 bg-secondary/35">
       <div className="mx-auto max-w-7xl px-6 pb-10 pt-14 lg:px-8">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-12">
           <div className="lg:col-span-5">
@@ -66,7 +66,7 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-white text-muted-foreground shadow-sm transition-all hover:border-primary/30 hover:bg-primary hover:text-primary-foreground"
+                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition-all hover:border-primary/30 hover:bg-primary hover:text-primary-foreground active:scale-[0.96]"
                 >
                   <social.icon className="h-4 w-4" />
                 </a>

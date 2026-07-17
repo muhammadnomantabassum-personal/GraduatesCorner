@@ -5,6 +5,7 @@ env.local
 .git
 .next
 .vercel
+.codex
 node_modules
 tsconfig.tsbuildinfo
 *.pem

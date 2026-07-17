@@ -15,7 +15,17 @@ function createStubClient() {
     auth: {
       getUser: async () => ({ data: { user: null }, error: null }),
       getSession: async () => ({ data: { session: null }, error: null }),
-      onAuthStateChange: () => ({ data: null, unsubscribe: () => {} }),
+      onAuthStateChange: (callback: (event: string, session: null) => void) => {
+        queueMicrotask(() => callback('INITIAL_SESSION', null))
+        return {
+          data: {
+            subscription: {
+              unsubscribe: () => {},
+            },
+          },
+          error: null,
+        }
+      },
       signInWithPassword: empty,
       signOut: empty,
       exchangeCodeForSession: empty,

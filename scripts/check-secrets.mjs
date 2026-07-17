@@ -7,7 +7,7 @@ const secretPatterns = [
   ["Supabase access token", /sbp_[A-Za-z0-9]{20,}/g],
   ["JWT", /eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g],
   ["GitHub token", /gh[opusr]_[A-Za-z0-9_]{20,}/g],
-  ["OpenAI key", /sk-[A-Za-z0-9_-]{20,}/g],
+  ["OpenAI key", /(?<![A-Za-z0-9_])sk-[A-Za-z0-9_-]{20,}/g],
   ["Stripe key", /[rps]k_(?:live|test)_[A-Za-z0-9]{16,}/g],
   ["AWS access key", /(?:AKIA|ASIA)[A-Z0-9]{16}/g],
   ["Database connection string", /(?:postgres(?:ql)?|mongodb(?:\+srv)?|mysql):\/\/[^\s'"`]+/gi],
