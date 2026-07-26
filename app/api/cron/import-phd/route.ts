@@ -1,66 +1,47 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
-import { fetchExternalPhdCandidates } from "@/lib/external-phd-importer"
+import { createAdminClient } from "@/lib/admin-server"
+import { runUniversityPhdImports } from "@/lib/phd-import/service"
+import { reportServerError } from "@/lib/server-error"
+
+export const maxDuration = 300
 
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET
-  const requestSecret = request.headers.get("authorization")?.replace("Bearer ", "")
+  const authHeader = request.headers.get("authorization")
 
-  if (!cronSecret || requestSecret !== cronSecret) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const feedList = process.env.EXTERNAL_PHD_FEEDS
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const adminClient = createAdminClient()
+  if (!adminClient) {
+    return NextResponse.json({ error: "University importer is not configured." }, { status: 503 })
+  }
 
-  if (!feedList || !supabaseUrl || !serviceRoleKey) {
+  try {
+    const results = await runUniversityPhdImports(adminClient)
+    const totals = results.reduce(
+      (summary, result) => ({
+        found: summary.found + result.found,
+        added: summary.added + result.added,
+        duplicates: summary.duplicates + result.duplicates,
+        published: summary.published + result.published,
+        errors: summary.errors + result.errors,
+      }),
+      { found: 0, added: 0, duplicates: 0, published: 0, errors: 0 }
+    )
+
     return NextResponse.json({
-      imported: 0,
-      skipped: 0,
-      message: "Automatic import needs EXTERNAL_PHD_FEEDS and SUPABASE_SERVICE_ROLE_KEY.",
+      ok: results.every((result) => result.status !== "failed"),
+      sources: results.length,
+      totals,
+      results,
     })
+  } catch (error) {
+    reportServerError("scheduled university PhD import", error)
+    return NextResponse.json(
+      { error: "Scheduled university import failed." },
+      { status: 500 }
+    )
   }
-
-  const feeds = feedList.split(",").map((feed) => feed.trim()).filter(Boolean)
-  const candidates = await fetchExternalPhdCandidates(feeds)
-  const supabase = createClient(supabaseUrl, serviceRoleKey)
-  let imported = 0
-  let skipped = 0
-
-  for (const candidate of candidates) {
-    const { data: existing } = await supabase
-      .from("theses")
-      .select("id")
-      .eq("external_url", candidate.externalUrl)
-      .maybeSingle()
-
-    if (existing) {
-      skipped += 1
-      continue
-    }
-
-    const { error } = await supabase.from("theses").insert({
-      title: candidate.title,
-      type: "phd",
-      subject: candidate.subject,
-      description: candidate.description,
-      location: candidate.location,
-      deadline: candidate.deadline,
-      compensation: candidate.compensation,
-      external_url: candidate.externalUrl,
-      organization: candidate.organization,
-      organization_type: candidate.organizationType,
-      posted_by: "admin",
-      status: process.env.EXTERNAL_PHD_AUTO_PUBLISH === "true" ? "approved" : "pending",
-    })
-
-    if (error) {
-      skipped += 1
-    } else {
-      imported += 1
-    }
-  }
-
-  return NextResponse.json({ imported, skipped, checked: candidates.length })
 }

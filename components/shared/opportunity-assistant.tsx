@@ -60,7 +60,7 @@ const dashboardActions = [
 const adminActions = [
   { label: "Users", href: "/n_admin/dashboard/users", icon: UsersRound },
   { label: "PhD Queue", href: "/n_admin/dashboard/phd-positions", icon: GraduationCap },
-  { label: "External Imports", href: "/n_admin/dashboard/imports", icon: Rocket },
+  { label: "University Imports", href: "/n_admin/dashboard/imports", icon: Rocket },
   { label: "Write Blog", href: "/n_admin/dashboard/blogs/new", icon: Newspaper },
 ]
 

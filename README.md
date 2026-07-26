@@ -44,3 +44,29 @@ rankings cannot be guaranteed; avoid purchased or automated backlinks.
 ## Traffic analytics
 
 Vercel Web Analytics is the platform's only website traffic service. It is loaded through `@vercel/analytics`, uses anonymized measurement without analytics cookies, and is viewed from the linked Vercel project's Analytics tab. The application does not load Google Analytics or store Google reporting credentials.
+
+## University PhD imports
+
+The admin dashboard includes a review-first import pipeline for 17 Swedish
+university vacancy portals. It supports approved HTML portals, Varbi,
+ReachMee, Linkoping University's RSS feed, and SLU's public sitemap. Arbitrary
+user-supplied feed URLs are not accepted.
+
+- Apply `supabase_phd_imports_setup.sql` to add the source registry, run
+  history, deduplication ledger, and review queue. A fresh environment may use
+  the complete `supabase_setup.sql` instead.
+- Keep `SUPABASE_SERVICE_ROLE_KEY` and `CRON_SECRET` server-only. The import
+  tables have RLS enabled and grant no browser access.
+- Vercel runs `/api/cron/import-phd` daily at 07:00 UTC. New records enter the
+  admin review queue by default; auto-publishing is an explicit per-source
+  setting.
+- Deduplication uses stable source IDs, external job IDs, fingerprints, and a
+  unique official URL. Repeated scans update `last_seen_at` instead of creating
+  duplicate PhD posts.
+- Review source health and parser errors in `Admin > University Imports`.
+  University portal markup can change, so a failed source should be inspected
+  before auto-publishing is enabled.
+
+Only import public vacancy data that the source permits you to access. Keep the
+official source link on every imported listing and honor applicable terms,
+robots directives, and removal requests.

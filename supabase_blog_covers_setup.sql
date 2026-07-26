@@ -14,9 +14,8 @@ DROP POLICY IF EXISTS "Users can upload blog covers" ON storage.objects;
 DROP POLICY IF EXISTS "Users can delete their own blog covers" ON storage.objects;
 DROP POLICY IF EXISTS "Users can update their own blog covers" ON storage.objects;
 
-CREATE POLICY "Blog Covers Public Access"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'blog-covers');
+-- Public bucket URLs remain readable without a SELECT policy. Do not add a
+-- broad SELECT policy because it would allow object enumeration.
 
 CREATE POLICY "Users can upload blog covers"
 ON storage.objects FOR INSERT

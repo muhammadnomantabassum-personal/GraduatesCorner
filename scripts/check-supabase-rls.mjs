@@ -1,7 +1,8 @@
-import { readFileSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 
 function parseEnv(path) {
   const values = {}
+  if (!existsSync(path)) return values
 
   for (const line of readFileSync(path, "utf8").split(/\r?\n/)) {
     const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/)
@@ -25,7 +26,7 @@ function parseEnv(path) {
 }
 
 const envPath = process.argv[2] || ".env.local"
-const env = parseEnv(envPath)
+const env = { ...parseEnv(envPath), ...process.env }
 const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL
 const anonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -96,8 +97,15 @@ try {
     const result = await query(`${table}?select=*&limit=1`)
     record(
       `${table} is private to authenticated owners`,
-      result.status === 200 && Array.isArray(result.body) && result.body.length === 0
+      result.status >= 400 ||
+        (result.status === 200 && Array.isArray(result.body) && result.body.length === 0),
+      `HTTP ${result.status}; rows=${Array.isArray(result.body) ? result.body.length : "n/a"}`
     )
+  }
+
+  for (const table of ["phd_import_sources", "phd_import_runs", "phd_import_items"]) {
+    const result = await query(`${table}?select=*&limit=1`)
+    record(`${table} is server-only`, result.status >= 400, `HTTP ${result.status}`)
   }
 
   for (const table of ["theses", "trainee_programs", "blog_posts", "blog_comments", "testimonials"]) {

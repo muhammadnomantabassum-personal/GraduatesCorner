@@ -1,316 +1,571 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { useAuth } from "@/lib/auth-context"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import type { ExternalPhdCandidate } from "@/lib/external-phd-importer"
-import { toNullableUuid } from "@/lib/uuid"
 import {
-  ArrowRight,
+  Activity,
   CheckCircle2,
+  CircleAlert,
+  Clock3,
   DatabaseZap,
   ExternalLink,
   GraduationCap,
   Loader2,
+  Play,
   RefreshCw,
-  Rss,
+  RotateCcw,
+  Satellite,
   ShieldCheck,
-  Sparkles,
+  University,
   X,
+  Zap,
 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Switch } from "@/components/ui/switch"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-const feedPresets = [
-  {
-    name: "EURAXESS",
-    description: "Paste an official EURAXESS RSS/API feed URL for PhD or doctoral jobs.",
+type ImportSource = {
+  id: string
+  name: string
+  organization: string
+  country: string
+  platform: "html" | "feed" | "sitemap"
+  public_url: string
+  enabled: boolean
+  auto_publish: boolean
+  last_checked_at: string | null
+  last_success_at: string | null
+  consecutive_failures: number
+  last_error: string | null
+}
+
+type ImportCandidate = {
+  id: string
+  title: string
+  organization: string
+  location: string
+  subject: string
+  deadline: string
+  published_at: string | null
+  external_url: string
+  status: "pending" | "ignored"
+  first_seen_at: string
+  source: { name: string; organization: string } | Array<{ name: string; organization: string }> | null
+}
+
+type ImportRun = {
+  id: string
+  status: "running" | "succeeded" | "partial" | "failed"
+  started_at: string
+  completed_at: string | null
+  found_count: number
+  new_count: number
+  duplicate_count: number
+  published_count: number
+  error_count: number
+  error_message: string | null
+  source: { name: string } | Array<{ name: string }> | null
+}
+
+type ImportPayload = {
+  sources: ImportSource[]
+  candidates: ImportCandidate[]
+  runs: ImportRun[]
+  summary: {
+    enabledSources: number
+    pendingCandidates: number
+    ignoredCandidates: number
+    recentFailures: number
+  }
+}
+
+const emptyPayload: ImportPayload = {
+  sources: [],
+  candidates: [],
+  runs: [],
+  summary: {
+    enabledSources: 0,
+    pendingCandidates: 0,
+    ignoredCandidates: 0,
+    recentFailures: 0,
   },
-  {
-    name: "FindAPhD",
-    description: "Use an official FindAPhD alert/feed URL when available for your search.",
-  },
-  {
-    name: "University feeds",
-    description: "Works with university RSS/Atom job feeds and JSON Feed sources.",
-  },
-]
+}
+
+function relationName<T extends { name: string }>(relation: T | T[] | null) {
+  return Array.isArray(relation) ? relation[0]?.name : relation?.name
+}
+
+function formatDate(value: string | null, includeTime = false) {
+  if (!value) return "Never"
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    ...(includeTime ? { hour: "2-digit", minute: "2-digit" } : {}),
+  }).format(new Date(value))
+}
+
+function sourceHealth(source: ImportSource) {
+  if (!source.enabled) return { label: "Paused", className: "bg-muted text-muted-foreground" }
+  if (source.consecutive_failures > 0) {
+    return { label: "Needs attention", className: "bg-[#EA4335]/10 text-[#C5221F]" }
+  }
+  if (source.last_success_at) return { label: "Healthy", className: "bg-[#34A853]/10 text-[#188038]" }
+  return { label: "Ready", className: "bg-[#4285F4]/10 text-[#1967D2]" }
+}
+
+function runStatus(run: ImportRun) {
+  if (run.status === "succeeded") return { label: "Succeeded", className: "bg-[#34A853]/10 text-[#188038]" }
+  if (run.status === "partial") return { label: "Partial", className: "bg-[#FBBC04]/15 text-[#8A5A00]" }
+  if (run.status === "failed") return { label: "Failed", className: "bg-[#EA4335]/10 text-[#C5221F]" }
+  return { label: "Running", className: "bg-[#4285F4]/10 text-[#1967D2]" }
+}
 
 export default function AdminExternalImportsPage() {
-  const { user, supabase } = useAuth()
-  const [feedText, setFeedText] = useState("")
-  const [candidates, setCandidates] = useState<ExternalPhdCandidate[]>([])
-  const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [existingUrls, setExistingUrls] = useState<string[]>([])
-  const [loading, setLoading] = useState(false)
-  const [importing, setImporting] = useState(false)
+  const [payload, setPayload] = useState<ImportPayload>(emptyPayload)
+  const [loading, setLoading] = useState(true)
+  const [activeAction, setActiveAction] = useState("")
+  const [showIgnored, setShowIgnored] = useState(false)
 
-  const feeds = useMemo(() =>
-    feedText
-      .split(/\r?\n|,/)
-      .map((feed) => feed.trim())
-      .filter(Boolean),
-    [feedText]
+  const loadImports = useCallback(async () => {
+    const response = await fetch("/api/admin/phd-imports", { cache: "no-store" })
+    const result = await response.json().catch(() => null)
+    if (!response.ok) throw new Error(result?.error || "Unable to load university imports")
+    setPayload(result)
+  }, [])
+
+  useEffect(() => {
+    loadImports()
+      .catch(() => toast.error("Unable to load the university importer"))
+      .finally(() => setLoading(false))
+  }, [loadImports])
+
+  const visibleCandidates = useMemo(
+    () => payload.candidates.filter((candidate) => showIgnored ? candidate.status === "ignored" : candidate.status === "pending"),
+    [payload.candidates, showIgnored]
   )
 
-  const selectableCandidates = candidates.filter((candidate) => !existingUrls.includes(candidate.externalUrl))
-  const selectedCandidates = candidates.filter((candidate) => selectedIds.includes(candidate.id))
+  const scanSources = async (sourceIds?: string[]) => {
+    const actionId = sourceIds?.[0] ? `scan:${sourceIds[0]}` : "scan:all"
+    setActiveAction(actionId)
+    const response = await fetch("/api/admin/phd-imports", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "scan", sourceIds }),
+    })
+    const result = await response.json().catch(() => null)
+    setActiveAction("")
 
-  const handlePreview = async () => {
-    if (feeds.length === 0) {
-      toast.error("Add at least one RSS, Atom, or JSON feed URL")
+    if (!response.ok) {
+      toast.error(result?.error || "University scan failed")
       return
     }
 
-    setLoading(true)
-    setCandidates([])
-    setSelectedIds([])
-    setExistingUrls([])
-
-    try {
-      const response = await fetch("/api/admin/import-phd/preview", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ feeds }),
-      })
-      const payload = await response.json()
-
-      if (!response.ok) {
-        throw new Error(payload.error || "Import preview failed")
-      }
-
-      const nextCandidates = payload.candidates || []
-      setCandidates(nextCandidates)
-      setSelectedIds(nextCandidates.map((candidate: ExternalPhdCandidate) => candidate.id))
-
-      const urls = nextCandidates.map((candidate: ExternalPhdCandidate) => candidate.externalUrl).filter(Boolean)
-      if (urls.length > 0) {
-        const { data } = await supabase
-          .from("theses")
-          .select("external_url")
-          .in("external_url", urls)
-
-        setExistingUrls((data || []).map((row: any) => row.external_url).filter(Boolean))
-      }
-
-      toast.success(`Found ${nextCandidates.length} PhD-style opportunities`)
-    } catch (error: any) {
-      toast.error("Unable to preview the external feed.")
-    } finally {
-      setLoading(false)
-    }
+    const totals = (result?.results || []).reduce(
+      (summary: { added: number; found: number; errors: number }, run: { added: number; found: number; errors: number }) => ({
+        added: summary.added + run.added,
+        found: summary.found + run.found,
+        errors: summary.errors + run.errors,
+      }),
+      { added: 0, found: 0, errors: 0 }
+    )
+    toast.success(`Scan complete: ${totals.added} new from ${totals.found} current PhD vacancies`)
+    if (totals.errors) toast.warning(`${totals.errors} vacancy records need another check`)
+    await loadImports()
   }
 
-  const toggleCandidate = (candidateId: string) => {
-    setSelectedIds((current) =>
-      current.includes(candidateId)
-        ? current.filter((id) => id !== candidateId)
-        : [...current, candidateId]
+  const updateSource = async (
+    source: ImportSource,
+    update: { enabled?: boolean; autoPublish?: boolean }
+  ) => {
+    const actionId = `source:${source.id}`
+    setActiveAction(actionId)
+    const response = await fetch("/api/admin/phd-imports", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sourceId: source.id, ...update }),
+    })
+    const result = await response.json().catch(() => null)
+    setActiveAction("")
+
+    if (!response.ok) {
+      toast.error(result?.error || "Unable to update this source")
+      return
+    }
+
+    setPayload((current) => ({
+      ...current,
+      sources: current.sources.map((item) => item.id === source.id ? result.source : item),
+    }))
+  }
+
+  const updateCandidate = async (
+    candidate: ImportCandidate,
+    action: "publish" | "ignore" | "restore"
+  ) => {
+    const actionId = `${action}:${candidate.id}`
+    setActiveAction(actionId)
+    const response = await fetch("/api/admin/phd-imports", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action, candidateId: candidate.id }),
+    })
+    const result = await response.json().catch(() => null)
+    setActiveAction("")
+
+    if (!response.ok) {
+      toast.error(result?.error || "Unable to update this candidate")
+      return
+    }
+
+    toast.success(
+      action === "publish"
+        ? "PhD position published"
+        : action === "ignore"
+          ? "Candidate moved to ignored"
+          : "Candidate restored to review"
+    )
+    await loadImports()
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[55vh] items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+          <p className="mt-3 text-sm text-muted-foreground">Loading university source intelligence...</p>
+        </div>
+      </div>
     )
   }
 
-  const handleImport = async () => {
-    const toImport = selectedCandidates.filter((candidate) => !existingUrls.includes(candidate.externalUrl))
-
-    if (toImport.length === 0) {
-      toast.error("Select at least one new PhD position to import")
-      return
-    }
-
-    setImporting(true)
-
-    const response = await fetch("/api/admin/import-phd", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        candidates: toImport,
-        adminUserId: toNullableUuid(user?.id),
-      }),
-    })
-    const payload = await response.json().catch(() => ({}))
-
-    setImporting(false)
-
-    if (!response.ok) {
-      toast.error(`Import failed: ${payload.error || "Unable to publish selected positions"}`)
-      return
-    }
-
-    toast.success(`${payload.count || toImport.length} PhD positions imported and published`)
-    setExistingUrls((current) => [...current, ...toImport.map((candidate) => candidate.externalUrl)])
-    setSelectedIds([])
-  }
-
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <section className="overflow-hidden rounded-2xl border border-border bg-[linear-gradient(135deg,#ffffff_0%,#eef6ff_46%,#edf8f1_100%)] p-6 shadow-sm">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <Badge className="mb-4 gap-2 bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2]/10">
-              <DatabaseZap className="h-3.5 w-3.5" />
-              External opportunity importer
-            </Badge>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Import PhD Positions</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Bring PhD opportunities from official RSS, Atom, or JSON feeds into GraduatesCorner. Preview first, then publish selected positions.
-            </p>
+    <div className="mx-auto max-w-7xl space-y-6">
+      <section className="flex flex-col gap-4 border-b border-border/70 pb-6 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase text-primary">
+            <Satellite className="h-4 w-4" />
+            University source network
           </div>
-          <Link href="/n_admin/dashboard/phd-positions">
-            <Button variant="outline" className="gap-2">
-              Manage PhD positions
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
+          <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">PhD Import Operations</h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+            Monitor approved Swedish university career portals, review newly discovered PhD positions, and control publishing from one workspace.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" asChild className="h-11 gap-2">
+            <Link href="/n_admin/dashboard/phd-positions">
+              <GraduationCap className="h-4 w-4" />
+              Published positions
+            </Link>
+          </Button>
+          <Button
+            onClick={() => scanSources()}
+            disabled={Boolean(activeAction)}
+            className="h-11 gap-2"
+          >
+            {activeAction === "scan:all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            Scan enabled sources
+          </Button>
         </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-        <div className="space-y-4">
-          <Card>
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Rss className="h-4 w-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-semibold text-foreground">Feed URLs</h2>
-                  <p className="text-xs text-muted-foreground">One URL per line, or comma separated.</p>
-                </div>
-              </div>
-              <Textarea
-                value={feedText}
-                onChange={(event) => setFeedText(event.target.value)}
-                rows={8}
-                className="mt-4"
-                placeholder="https://example.com/phd-jobs.rss"
-              />
-              <Button onClick={handlePreview} disabled={loading} className="mt-4 w-full gap-2">
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                Preview Feed
-              </Button>
-            </CardContent>
-          </Card>
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Importer summary">
+        <MetricCard icon={University} label="Enabled sources" value={payload.summary.enabledSources} helper={`${payload.sources.length} approved portals`} tone="blue" />
+        <MetricCard icon={DatabaseZap} label="Review queue" value={payload.summary.pendingCandidates} helper="New, unpublished positions" tone="green" />
+        <MetricCard icon={Clock3} label="Ignored" value={payload.summary.ignoredCandidates} helper="Available for restoration" tone="yellow" />
+        <MetricCard icon={CircleAlert} label="Recent failures" value={payload.summary.recentFailures} helper="Across the latest 40 runs" tone="red" />
+      </section>
 
-          <Card>
-            <CardContent className="p-5">
-              <h2 className="text-sm font-semibold text-foreground">Supported Sources</h2>
-              <div className="mt-4 space-y-3">
-                {feedPresets.map((preset) => (
-                  <div key={preset.name} className="rounded-xl border border-border/70 bg-secondary/30 p-3">
-                    <p className="text-sm font-semibold text-foreground">{preset.name}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{preset.description}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 rounded-xl border border-[#FBBC04]/25 bg-[#FBBC04]/10 p-3 text-xs leading-relaxed text-[#7A4E00]">
-                Use official feeds/APIs where possible. Avoid copying full copyrighted posts; imported descriptions link users back to the original source.
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      <Tabs defaultValue="review" className="space-y-5">
+        <TabsList className="h-auto w-full justify-start overflow-x-auto bg-secondary/70 p-1 sm:w-auto">
+          <TabsTrigger value="review" className="min-h-10 gap-2">
+            <ShieldCheck className="h-4 w-4" />
+            Review queue
+          </TabsTrigger>
+          <TabsTrigger value="sources" className="min-h-10 gap-2">
+            <University className="h-4 w-4" />
+            Sources
+          </TabsTrigger>
+          <TabsTrigger value="activity" className="min-h-10 gap-2">
+            <Activity className="h-4 w-4" />
+            Run history
+          </TabsTrigger>
+        </TabsList>
 
-        <div className="space-y-4">
-          <Card>
-            <CardContent className="p-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-sm font-semibold text-foreground">Preview Results</h2>
-                  <p className="text-xs text-muted-foreground">
-                    {candidates.length} found, {selectableCandidates.length} new, {existingUrls.length} duplicate
-                  </p>
-                </div>
-                <Button onClick={handleImport} disabled={importing || selectedCandidates.length === 0} className="gap-2">
-                  {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                  Publish selected
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="review" className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">{showIgnored ? "Ignored candidates" : "Ready for review"}</h2>
+              <p className="text-sm text-muted-foreground">
+                {showIgnored ? "Restore a candidate when it should return to the publishing queue." : "Nothing is public until you approve it, unless its source has auto-publish enabled."}
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => setShowIgnored((current) => !current)} className="h-10 gap-2">
+              {showIgnored ? <ShieldCheck className="h-4 w-4" /> : <X className="h-4 w-4" />}
+              {showIgnored ? "Show review queue" : "Show ignored"}
+            </Button>
+          </div>
 
-          {candidates.length > 0 ? (
-            <div className="space-y-3">
-              {candidates.map((candidate) => {
-                const duplicate = existingUrls.includes(candidate.externalUrl)
-                const selected = selectedIds.includes(candidate.id)
-
-                return (
-                  <Card key={candidate.id} className={`border-l-[3px] ${duplicate ? "border-l-muted" : selected ? "border-l-[#1877F2]" : "border-l-border"}`}>
-                    <CardContent className="p-5">
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0 flex-1">
-                          <div className="mb-2 flex flex-wrap gap-2">
-                            <Badge className="bg-primary/10 text-primary hover:bg-primary/10">
-                              <GraduationCap className="mr-1 h-3 w-3" />
-                              PhD
-                            </Badge>
-                            <Badge variant="outline">{candidate.sourceName}</Badge>
-                            {duplicate && <Badge variant="secondary">Already imported</Badge>}
-                          </div>
-                          <h3 className="text-sm font-semibold leading-snug text-foreground">{candidate.title}</h3>
-                          <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{candidate.description}</p>
-                          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <span>{candidate.organization}</span>
-                            <span>{candidate.location}</span>
-                            <span>Deadline {new Date(candidate.deadline).toLocaleDateString("en-GB")}</span>
-                            <span>{candidate.subject}</span>
-                          </div>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2">
-                          <a href={candidate.externalUrl} target="_blank" rel="noreferrer">
-                            <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs">
-                              Source
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </Button>
-                          </a>
+          {visibleCandidates.length > 0 ? (
+            <div className="grid gap-4 xl:grid-cols-2">
+              {visibleCandidates.map((candidate) => (
+                <Card key={candidate.id} className="border-border/75 shadow-sm">
+                  <CardContent className="flex h-full flex-col p-5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge className="bg-[#34A853]/10 text-[#188038] hover:bg-[#34A853]/10">PhD</Badge>
+                      <Badge variant="outline">{relationName(candidate.source) || candidate.organization}</Badge>
+                      <span className="ml-auto text-xs text-muted-foreground">Found {formatDate(candidate.first_seen_at)}</span>
+                    </div>
+                    <h3 className="mt-4 text-base font-semibold leading-6 text-foreground">{candidate.title}</h3>
+                    <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                      <span>{candidate.location}</span>
+                      <span>{candidate.subject}</span>
+                      <span>Deadline {formatDate(candidate.deadline)}</span>
+                      <span>{candidate.published_at ? `Published ${formatDate(candidate.published_at)}` : "Publication date not supplied"}</span>
+                    </div>
+                    <div className="mt-auto flex flex-wrap items-center gap-2 pt-5">
+                      <Button variant="outline" size="sm" asChild className="h-10 gap-2">
+                        <a href={candidate.external_url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                          Official source
+                        </a>
+                      </Button>
+                      {candidate.status === "ignored" ? (
+                        <Button
+                          size="sm"
+                          className="h-10 gap-2"
+                          disabled={Boolean(activeAction)}
+                          onClick={() => updateCandidate(candidate, "restore")}
+                        >
+                          {activeAction === `restore:${candidate.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                          Restore
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-10 gap-2 text-muted-foreground"
+                            disabled={Boolean(activeAction)}
+                            onClick={() => updateCandidate(candidate, "ignore")}
+                          >
+                            {activeAction === `ignore:${candidate.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                            Ignore
+                          </Button>
                           <Button
                             size="sm"
-                            variant={selected ? "default" : "outline"}
-                            disabled={duplicate}
-                            onClick={() => toggleCandidate(candidate.id)}
-                            className="h-8 gap-1.5 text-xs"
+                            className="h-10 gap-2"
+                            disabled={Boolean(activeAction)}
+                            onClick={() => updateCandidate(candidate, "publish")}
                           >
-                            {selected ? <CheckCircle2 className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
-                            {selected ? "Selected" : "Select"}
+                            {activeAction === `publish:${candidate.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                            Publish
                           </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
+                        </>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           ) : (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <Sparkles className="mb-3 h-12 w-12 text-muted-foreground/30" />
-                <h3 className="text-base font-semibold text-foreground">No feed preview yet</h3>
-                <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                  Add an official source feed and preview it before publishing imported PhD positions.
-                </p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={showIgnored ? RotateCcw : ShieldCheck}
+              title={showIgnored ? "No ignored candidates" : "The review queue is clear"}
+              description={showIgnored ? "Candidates you ignore will remain available here." : "Run a source scan to check for newly published university PhD positions."}
+            />
           )}
+        </TabsContent>
 
-          <Card className="bg-[#202124] text-white">
-            <CardContent className="p-5">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10">
-                  <ShieldCheck className="h-4 w-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-semibold">Automation Ready</h2>
-                  <p className="mt-1 text-xs leading-relaxed text-white/65">
-                    Daily auto-import is available through `/api/cron/import-phd` when `EXTERNAL_PHD_FEEDS` and `SUPABASE_SERVICE_ROLE_KEY` are configured in Vercel.
-                  </p>
-                </div>
+        <TabsContent value="sources">
+          <div className="grid gap-4 lg:grid-cols-2">
+            {payload.sources.map((source) => {
+              const health = sourceHealth(source)
+              const busy = activeAction === `source:${source.id}` || activeAction === `scan:${source.id}`
+              return (
+                <Card key={source.id} className="border-border/75 shadow-sm">
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                        <University className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-semibold text-foreground">{source.organization}</h3>
+                          <Badge className={health.className}>{health.label}</Badge>
+                          <Badge variant="outline" className="uppercase">{source.platform}</Badge>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Last checked {formatDate(source.last_checked_at, true)}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10"
+                        title={`Scan ${source.organization}`}
+                        disabled={Boolean(activeAction)}
+                        onClick={() => scanSources([source.id])}
+                      >
+                        {activeAction === `scan:${source.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                        <span className="sr-only">Scan {source.organization}</span>
+                      </Button>
+                    </div>
+
+                    {source.last_error && (
+                      <div className="mt-4 rounded-md border border-[#EA4335]/20 bg-[#EA4335]/5 p-3 text-xs leading-5 text-[#A50E0E]">
+                        {source.last_error}
+                      </div>
+                    )}
+
+                    <div className="mt-5 grid gap-4 border-t border-border/70 pt-4 sm:grid-cols-2">
+                      <label className="flex min-h-11 items-center justify-between gap-3">
+                        <span>
+                          <span className="block text-sm font-medium text-foreground">Scheduled scans</span>
+                          <span className="block text-xs text-muted-foreground">Include in the daily run</span>
+                        </span>
+                        <Switch
+                          checked={source.enabled}
+                          disabled={busy}
+                          onCheckedChange={(enabled) => updateSource(source, { enabled })}
+                          aria-label={`Enable scheduled scans for ${source.organization}`}
+                        />
+                      </label>
+                      <label className="flex min-h-11 items-center justify-between gap-3">
+                        <span>
+                          <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                            Auto-publish
+                            <Zap className="h-3.5 w-3.5 text-[#FBBC04]" />
+                          </span>
+                          <span className="block text-xs text-muted-foreground">Skip manual approval</span>
+                        </span>
+                        <Switch
+                          checked={source.auto_publish}
+                          disabled={busy || !source.enabled}
+                          onCheckedChange={(autoPublish) => updateSource(source, { autoPublish })}
+                          aria-label={`Auto-publish positions from ${source.organization}`}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between border-t border-border/70 pt-4 text-xs">
+                      <span className="text-muted-foreground">
+                        {source.last_success_at ? `Last successful scan ${formatDate(source.last_success_at, true)}` : "Awaiting first successful scan"}
+                      </span>
+                      <a href={source.public_url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center gap-1.5 font-medium text-primary hover:underline">
+                        Careers page
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="activity">
+          {payload.runs.length > 0 ? (
+            <div className="overflow-hidden rounded-md border border-border bg-card">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[820px] text-left text-sm">
+                  <thead className="bg-secondary/60 text-xs uppercase text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold">Source</th>
+                      <th className="px-4 py-3 font-semibold">Status</th>
+                      <th className="px-4 py-3 font-semibold">Started</th>
+                      <th className="px-4 py-3 text-right font-semibold">Found</th>
+                      <th className="px-4 py-3 text-right font-semibold">New</th>
+                      <th className="px-4 py-3 text-right font-semibold">Duplicates</th>
+                      <th className="px-4 py-3 text-right font-semibold">Published</th>
+                      <th className="px-4 py-3 text-right font-semibold">Errors</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {payload.runs.map((run) => {
+                      const status = runStatus(run)
+                      return (
+                        <tr key={run.id} className="hover:bg-secondary/25">
+                          <td className="px-4 py-3 font-medium text-foreground">{relationName(run.source) || "University source"}</td>
+                          <td className="px-4 py-3"><Badge className={status.className}>{status.label}</Badge></td>
+                          <td className="px-4 py-3 text-muted-foreground">{formatDate(run.started_at, true)}</td>
+                          <td className="px-4 py-3 text-right">{run.found_count}</td>
+                          <td className="px-4 py-3 text-right font-medium text-[#188038]">{run.new_count}</td>
+                          <td className="px-4 py-3 text-right text-muted-foreground">{run.duplicate_count}</td>
+                          <td className="px-4 py-3 text-right">{run.published_count}</td>
+                          <td className="px-4 py-3 text-right text-[#C5221F]">{run.error_count}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          ) : (
+            <EmptyState icon={Activity} title="No import runs yet" description="Run an enabled source scan to create the first activity record." />
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
+
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  helper,
+  tone,
+}: {
+  icon: typeof University
+  label: string
+  value: number
+  helper: string
+  tone: "blue" | "green" | "yellow" | "red"
+}) {
+  const tones = {
+    blue: "bg-[#4285F4]/10 text-[#1967D2]",
+    green: "bg-[#34A853]/10 text-[#188038]",
+    yellow: "bg-[#FBBC04]/15 text-[#8A5A00]",
+    red: "bg-[#EA4335]/10 text-[#C5221F]",
+  }
+
+  return (
+    <Card className="border-border/75 shadow-sm">
+      <CardContent className="flex items-center gap-4 p-4">
+        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${tones[tone]}`}>
+          <Icon className="h-5 w-5" />
         </div>
+        <div className="min-w-0">
+          <p className="text-2xl font-bold text-foreground">{value}</p>
+          <p className="text-sm font-medium text-foreground">{label}</p>
+          <p className="truncate text-xs text-muted-foreground">{helper}</p>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function EmptyState({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: typeof University
+  title: string
+  description: string
+}) {
+  return (
+    <div className="flex min-h-64 flex-col items-center justify-center rounded-md border border-dashed border-border bg-secondary/20 px-6 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary/10 text-primary">
+        <Icon className="h-5 w-5" />
       </div>
+      <h3 className="mt-4 text-base font-semibold text-foreground">{title}</h3>
+      <p className="mt-1 max-w-md text-sm leading-6 text-muted-foreground">{description}</p>
     </div>
   )
 }

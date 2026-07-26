@@ -53,7 +53,7 @@ const sidebarSections = [
     links: [
       { href: "/n_admin/dashboard/phd-positions", label: "PhD Positions", mobileLabel: "PhD", icon: GraduationCap, mobileHidden: false },
       { href: "/n_admin/dashboard/phd-positions/new", label: "Post PhD Position", mobileLabel: "Post PhD", icon: Plus, mobileHidden: true },
-      { href: "/n_admin/dashboard/imports", label: "External Imports", mobileLabel: "Imports", icon: DatabaseZap, mobileHidden: false },
+      { href: "/n_admin/dashboard/imports", label: "University Imports", mobileLabel: "Imports", icon: DatabaseZap, mobileHidden: false },
     ]
   },
   {
