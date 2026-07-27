@@ -64,6 +64,14 @@ export function extractOpportunityId(value: string | null | undefined) {
     const varbiId = decodedPath.match(/jobID:(\d+)/i)?.[1]
     if (varbiId) return varbiId
 
+    const structuredPathId = decodedPath.match(
+      /\/(?:jobs?|job|stilling|available-jobs\/job)\/(\d+)(?:\/|$)/i
+    )?.[1]
+    if (structuredPathId) return structuredPathId
+
+    const talentAdoreId = decodedPath.match(/\/apply\/[^/]+\/([a-z0-9_-]+)\/?$/i)?.[1]
+    if (talentAdoreId) return talentAdoreId.toLowerCase()
+
     const pathId = decodedPath.match(/\/(\d+)\/?$/)?.[1]
     if (pathId) return pathId
   } catch {

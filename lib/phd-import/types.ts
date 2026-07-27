@@ -1,4 +1,16 @@
-export type PhdSourcePlatform = "html" | "feed" | "sitemap"
+export type PhdSourcePlatform = "html" | "feed" | "sitemap" | "json"
+
+export type PhdSourceAdapter =
+  | "standard"
+  | "academictransfer-api"
+  | "jobbnorge-api"
+  | "talentadore-json"
+
+export type PhdImportOrganizationDefinition = {
+  name: string
+  aliases: string[]
+  defaultLocation: string
+}
 
 export type PhdImportSourceDefinition = {
   id: string
@@ -11,6 +23,14 @@ export type PhdImportSourceDefinition = {
   platform: PhdSourcePlatform
   allowedHosts: string[]
   detailUrlPrefix?: string
+  adapter?: PhdSourceAdapter
+  jobUrlPattern?: RegExp
+  listingPageCount?: number
+  listingPageParameter?: string
+  listingPageStart?: number
+  maxJobs?: number
+  maxListingBytes?: number
+  organizations?: PhdImportOrganizationDefinition[]
 }
 
 export type PhdImportCandidate = {

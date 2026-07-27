@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS public.phd_import_sources (
   country TEXT NOT NULL,
   source_url TEXT NOT NULL,
   public_url TEXT NOT NULL,
-  platform TEXT NOT NULL CHECK (platform IN ('html', 'feed', 'sitemap')),
+  platform TEXT NOT NULL CHECK (platform IN ('html', 'feed', 'sitemap', 'json')),
   enabled BOOLEAN NOT NULL DEFAULT TRUE,
   auto_publish BOOLEAN NOT NULL DEFAULT FALSE,
   last_checked_at TIMESTAMPTZ,
@@ -170,6 +170,12 @@ CREATE TABLE IF NOT EXISTS public.phd_import_sources (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE public.phd_import_sources
+  DROP CONSTRAINT IF EXISTS phd_import_sources_platform_check;
+ALTER TABLE public.phd_import_sources
+  ADD CONSTRAINT phd_import_sources_platform_check
+  CHECK (platform IN ('html', 'feed', 'sitemap', 'json'));
 
 CREATE TABLE IF NOT EXISTS public.phd_import_runs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -649,7 +655,7 @@ $$;
 REVOKE ALL ON FUNCTION public.global_search(TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.global_search(TEXT) TO anon, authenticated;
 
--- Managed Swedish university sources. Sources are review-first by default;
+-- Managed Nordic and Dutch university sources. Sources are review-first by default;
 -- administrators may enable auto-publishing per source after validation.
 INSERT INTO public.phd_import_sources (
   id, name, organization, country, source_url, public_url, platform
@@ -670,7 +676,18 @@ INSERT INTO public.phd_import_sources (
   ('karlstad-university', 'Karlstad University vacancies', 'Karlstad University', 'Sweden', 'https://kau.varbi.com/en/', 'https://www.kau.se/en/work-us/work/vacancies', 'html'),
   ('malardalen-university', 'Malardalen University vacancies', 'Malardalen University', 'Sweden', 'https://www.mdu.se/en/malardalen-university/about-mdu/work-with-us/job-opportunities', 'https://www.mdu.se/en/malardalen-university/about-mdu/work-with-us/job-opportunities', 'html'),
   ('slu', 'SLU vacancies', 'Swedish University of Agricultural Sciences', 'Sweden', 'https://www.slu.se/sitemap.xml', 'https://www.slu.se/en/about-slu/work-at-slu/jobs-and-vacancies/', 'sitemap'),
-  ('jonkoping-university', 'Jonkoping University vacancies', 'Jonkoping University', 'Sweden', 'https://ju.se/en/about-us/work-at-jonkoping-university/job-vacancies.html', 'https://ju.se/en/about-us/work-at-jonkoping-university/job-vacancies.html', 'html')
+  ('jonkoping-university', 'Jonkoping University vacancies', 'Jonkoping University', 'Sweden', 'https://ju.se/en/about-us/work-at-jonkoping-university/job-vacancies.html', 'https://ju.se/en/about-us/work-at-jonkoping-university/job-vacancies.html', 'html'),
+  ('norwegian-universities-jobbnorge', 'Norwegian university vacancies via Jobbnorge', 'Norwegian universities', 'Norway', 'https://publicapi.jobbnorge.no/v3/jobs?OrderBy=Published&Period=All&language=1', 'https://www.jobbnorge.no/search/en?OrderBy=Published&Period=All', 'json'),
+  ('netherlands-academictransfer', 'Dutch university PhD vacancies via AcademicTransfer', 'Dutch universities', 'Netherlands', 'https://www.academictransfer.com/en/job-type/phd/', 'https://www.academictransfer.com/en/job-type/phd/', 'json'),
+  ('university-of-helsinki', 'University of Helsinki vacancies', 'University of Helsinki', 'Finland', 'https://jobs.helsinki.fi/search/', 'https://jobs.helsinki.fi/', 'html'),
+  ('aalto-university', 'Aalto University vacancies', 'Aalto University', 'Finland', 'https://www.aalto.fi/en/open-positions', 'https://www.aalto.fi/en/open-positions', 'html'),
+  ('tampere-university', 'Tampere University vacancies', 'Tampere University', 'Finland', 'https://www.tuni.fi/en/tau/work-with-us/open-positions?navref=search--list', 'https://www.tuni.fi/en/tau/work-with-us/open-positions', 'html'),
+  ('university-of-turku', 'University of Turku vacancies', 'University of Turku', 'Finland', 'https://ats.talentadore.com/positions/3VMfJS4/json?v=2&display_language=en&tags=&notTags=&businessUnits=&notBusinessUnits=&display_description=job_ad&categories=tags_and_extras', 'https://www.utu.fi/en/university/come-work-with-us/open-vacancies', 'json'),
+  ('university-of-jyvaskyla', 'University of Jyvaskyla vacancies', 'University of Jyvaskyla', 'Finland', 'https://www.jyu.fi/en/about-us/work-with-us/current-vacancies-at-the-university-of-jyvaskyla', 'https://www.jyu.fi/en/about-us/work-with-us/current-vacancies-at-the-university-of-jyvaskyla', 'html'),
+  ('university-of-oulu', 'University of Oulu vacancies', 'University of Oulu', 'Finland', 'https://oulunyliopisto.varbi.com/en/', 'https://oulunyliopisto.varbi.com/en/', 'html'),
+  ('university-of-eastern-finland', 'University of Eastern Finland vacancies', 'University of Eastern Finland', 'Finland', 'https://www.uef.fi/en/open-positions', 'https://www.uef.fi/en/open-positions', 'html'),
+  ('lut-university', 'LUT University vacancies', 'LUT University', 'Finland', 'https://lut.rekrytointi.com/paikat/index.php?fid=4&lang=en&list=1&o=A_LOJ', 'https://lut.rekrytointi.com/paikat/index.php?fid=4&lang=en&list=1&o=A_LOJ', 'html'),
+  ('abo-akademi-university', 'Abo Akademi University vacancies', 'Abo Akademi University', 'Finland', 'https://abo.rekrytointi.com/paikat/index.php?key=&lang=en&list=1&o=A_LOJ', 'https://abo.rekrytointi.com/paikat/index.php?key=&lang=en&list=1&o=A_LOJ', 'html')
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
   organization = EXCLUDED.organization,

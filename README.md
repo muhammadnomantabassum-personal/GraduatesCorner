@@ -47,9 +47,11 @@ Vercel Web Analytics is the platform's only website traffic service. It is loade
 
 ## University PhD imports
 
-The admin dashboard includes a review-first import pipeline for 17 Swedish
-university vacancy portals. It supports approved HTML portals, Varbi,
-ReachMee, Linkoping University's RSS feed, and SLU's public sitemap. Arbitrary
+The admin dashboard includes a review-first import pipeline for Swedish,
+Norwegian, Dutch, and Finnish university vacancies. It supports approved HTML
+portals, Varbi, ReachMee, Linkoping University's RSS feed, SLU's public
+sitemap, the public Jobbnorge vacancy API, AcademicTransfer's public browser
+data API, and University of Turku's official TalentAdore JSON feed. Arbitrary
 user-supplied feed URLs are not accepted.
 
 - Apply `supabase_phd_imports_setup.sql` to add the source registry, run
@@ -65,6 +67,9 @@ user-supplied feed URLs are not accepted.
   title/university/deadline fallback for legacy posts. Repeated scans update
   `last_seen_at` and link the import ledger to an existing post instead of
   creating a duplicate.
+- Network feeds resolve each record to an allowlisted university before it can
+  enter the queue. Every imported post stores its country and up to five
+  relevant research fields for public country, university, and field filters.
 - Review source health and parser errors in `Admin > University Imports`.
   University portal markup can change, so a failed source should be inspected
   before auto-publishing is enabled.

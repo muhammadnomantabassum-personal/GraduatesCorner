@@ -1,8 +1,17 @@
 import assert from "node:assert/strict"
 import {
+  extractOpportunityId,
   findExistingPhdMatch,
   normalizeOpportunityUrl,
 } from "../lib/phd-import/dedupe.ts"
+import {
+  inferResearchFields,
+  resolveCoveredOrganization,
+} from "../lib/phd-import/classify.ts"
+import {
+  getPhdImportSource,
+  PHD_IMPORT_SOURCES,
+} from "../lib/phd-import/sources.ts"
 
 const manualLinkopingPost = {
   id: "manual-linkoping",
@@ -67,4 +76,52 @@ assert.equal(
   "canonical URLs should ignore fragments and trailing slashes"
 )
 
-console.log("PhD import deduplication checks passed.")
+assert.equal(
+  extractOpportunityId("https://www.jobbnorge.no/ledige-stillinger/stilling/305607/example"),
+  "305607",
+  "Jobbnorge path IDs should remain stable across title slug changes"
+)
+
+assert.equal(
+  extractOpportunityId("https://www.academictransfer.com/en/jobs/362932/phd-position/"),
+  "362932",
+  "AcademicTransfer path IDs should be used for deduplication"
+)
+
+assert.equal(
+  extractOpportunityId("https://ats.talentadore.com/apply/doctoral-researcher/mEo931"),
+  "meo931",
+  "TalentAdore job tokens should be used for deduplication"
+)
+
+const classifiedFields = inferResearchFields(
+  "Doctoral researcher in machine learning for soft robotics and medical imaging",
+  "The project combines artificial intelligence, robotics, neuroscience, statistics, and materials science."
+)
+assert.ok(classifiedFields.includes("Artificial Intelligence"))
+assert.ok(classifiedFields.includes("Robotics and Automation"))
+assert.ok(classifiedFields.length <= 5, "research field classification must never exceed five values")
+
+const norwaySource = getPhdImportSource("norwegian-universities-jobbnorge")
+assert.ok(norwaySource, "the Norwegian university network source should be registered")
+assert.equal(
+  resolveCoveredOrganization(norwaySource, [
+    "NTNU - Norges teknisk-naturvitenskapelige universitet",
+  ])?.name,
+  "NTNU",
+  "network imports should resolve the canonical university name"
+)
+
+assert.equal(PHD_IMPORT_SOURCES.length, 28, "all 17 Swedish and 11 new sources should be registered")
+assert.equal(
+  new Set(PHD_IMPORT_SOURCES.map((source) => source.id)).size,
+  PHD_IMPORT_SOURCES.length,
+  "source IDs must be unique"
+)
+assert.equal(
+  PHD_IMPORT_SOURCES.filter((source) => source.country === "Finland").length,
+  9,
+  "all requested Finnish universities should be configured"
+)
+
+console.log("PhD import deduplication, source registry, and classification checks passed.")

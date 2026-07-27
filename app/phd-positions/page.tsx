@@ -26,6 +26,8 @@ export default function PhDPositionsPage() {
   const [sort, setSort] = useState<OpportunitySort>("recommended")
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState<Record<string, string[]>>({
+    country: [],
+    university: [],
     field: [],
     location: [],
     compensation: [],
@@ -101,7 +103,17 @@ export default function PhDPositionsPage() {
   }
 
   const handleClearAll = () => {
-    setFilters({ field: [], location: [], compensation: [], deadline: [], workMode: [], organizationType: [], trust: [] })
+    setFilters({
+      country: [],
+      university: [],
+      field: [],
+      location: [],
+      compensation: [],
+      deadline: [],
+      workMode: [],
+      organizationType: [],
+      trust: [],
+    })
   }
 
   const activeFilterCount = Object.values(filters).reduce(
@@ -121,39 +133,22 @@ export default function PhDPositionsPage() {
       })
     })
 
-    /* Location tree from data */
-    const locTree: Record<string, Record<string, number>> = {}
+    /* Country, university, and location counts from approved records */
+    const countryCounts: Record<string, number> = {}
+    const universityCounts: Record<string, number> = {}
+    const locationCounts: Record<string, number> = {}
     theses.forEach((t) => {
-      const parts = t.location.split(", ")
-      const country = parts[parts.length - 1]
-      const city = parts.slice(0, -1).join(", ") || parts[0]
-      if (!locTree[country]) locTree[country] = {}
-      locTree[country][city] = (locTree[country][city] || 0) + 1
+      const parts = t.location.split(",").map((part) => part.trim()).filter(Boolean)
+      const country = parts.at(-1) || "Other"
+      countryCounts[country] = (countryCounts[country] || 0) + 1
+      universityCounts[t.organization] = (universityCounts[t.organization] || 0) + 1
+      locationCounts[t.location] = (locationCounts[t.location] || 0) + 1
     })
 
     /* Merge data locations into the filter options — only show locations with data */
-    const locationOptions = Object.entries(locTree)
-      .sort((a, b) => {
-        const countA = Object.values(a[1]).reduce((s, c) => s + c, 0)
-        const countB = Object.values(b[1]).reduce((s, c) => s + c, 0)
-        return countB - countA
-      })
-      .map(([country, cities]) => {
-        const countryCount = Object.values(cities).reduce((s, c) => s + c, 0)
-
-        return {
-          value: country,
-          label: country,
-          count: countryCount,
-          children: Object.entries(cities)
-            .sort((a, b) => b[1] - a[1])
-            .map(([city, count]) => ({
-              value: `${city}, ${country}`,
-              label: city,
-              count: count,
-            })),
-        }
-      })
+    const locationOptions = Object.entries(locationCounts)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([location, count]) => ({ value: location, label: location, count }))
 
     const compCounts: Record<string, number> = {}
     theses.forEach((t) => {
@@ -176,6 +171,28 @@ export default function PhDPositionsPage() {
 
     return [
       {
+        id: "country",
+        label: "Country",
+        type: "checkbox" as const,
+        options: Object.entries(countryCounts)
+          .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+          .map(([country, count]) => ({ value: country, label: country, count })),
+        maxVisible: 6,
+      },
+      {
+        id: "university",
+        label: "University",
+        type: "checkbox" as const,
+        options: Object.entries(universityCounts)
+          .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+          .map(([university, count]) => ({
+            value: university,
+            label: university,
+            count,
+          })),
+        maxVisible: 6,
+      },
+      {
         id: "field",
         label: "Field",
         type: "checkbox" as const,
@@ -187,8 +204,8 @@ export default function PhDPositionsPage() {
       },
       {
         id: "location",
-        label: "Location",
-        type: "location" as const,
+        label: "City / region",
+        type: "checkbox" as const,
         options: locationOptions,
         maxVisible: 6,
       },
@@ -265,10 +282,24 @@ export default function PhDPositionsPage() {
             t.title.toLowerCase().includes(q) ||
             t.description.toLowerCase().includes(q) ||
             t.organization.toLowerCase().includes(q) ||
-            t.subject.toLowerCase().includes(q)
+            t.subject.toLowerCase().includes(q) ||
+            t.location.toLowerCase().includes(q)
           )
         }
         return true
+      })
+      .filter((t) => {
+        if (filters.country.length === 0) return true
+        const country = t.location
+          .split(",")
+          .map((part) => part.trim())
+          .filter(Boolean)
+          .at(-1)
+        return Boolean(country && filters.country.includes(country))
+      })
+      .filter((t) => {
+        if (filters.university.length === 0) return true
+        return filters.university.includes(t.organization)
       })
       .filter((t) => {
         if (filters.field.length === 0) return true
@@ -277,14 +308,7 @@ export default function PhDPositionsPage() {
       })
       .filter((t) => {
         if (filters.location.length === 0) return true
-        return filters.location.some((loc) => {
-          if (loc.includes(",")) {
-            return t.location === loc
-          }
-          return (
-            t.location.endsWith(`, ${loc}`) || t.location === loc
-          )
-        })
+        return filters.location.includes(t.location)
       })
       .filter((t) => {
         if (filters.compensation.length === 0) return true

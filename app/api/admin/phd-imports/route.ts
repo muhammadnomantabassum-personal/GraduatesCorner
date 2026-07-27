@@ -5,7 +5,7 @@ import {
   runUniversityPhdImports,
   setUniversityPhdCandidateStatus,
 } from "@/lib/phd-import/service"
-import { getPhdImportSource } from "@/lib/phd-import/sources"
+import { getPhdImportSource, PHD_IMPORT_SOURCES } from "@/lib/phd-import/sources"
 import { internalErrorResponse } from "@/lib/server-error"
 import { toNullableUuid } from "@/lib/uuid"
 
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
         ? body.sourceIds
             .map(String)
             .filter((sourceId: string) => Boolean(getPhdImportSource(sourceId)))
-            .slice(0, 17)
+            .slice(0, PHD_IMPORT_SOURCES.length)
         : undefined
       const results = await runUniversityPhdImports(adminClient, {
         sourceIds,

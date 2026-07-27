@@ -115,7 +115,11 @@ async function readLimitedText(response: Response, maxBytes: number) {
 export async function fetchApprovedSourceText(
   source: PhdImportSourceDefinition,
   value: string,
-  options: { maxBytes?: number; timeoutMs?: number } = {}
+  options: {
+    maxBytes?: number
+    timeoutMs?: number
+    headers?: Record<string, string>
+  } = {}
 ) {
   let currentUrl = await assertAllowedPublicUrl(source, value)
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES
@@ -123,8 +127,9 @@ export async function fetchApprovedSourceText(
   for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
     const response = await fetch(currentUrl, {
       headers: {
-        accept: "text/html, application/xhtml+xml, application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.5",
+        accept: "text/html, application/xhtml+xml, application/json, application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.5",
         "user-agent": "GraduatesCorner opportunity importer (+https://graduatescorner.com)",
+        ...options.headers,
       },
       redirect: "manual",
       signal: AbortSignal.timeout(options.timeoutMs ?? DEFAULT_TIMEOUT_MS),

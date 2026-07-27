@@ -2,6 +2,7 @@ import "server-only"
 
 import { createHash } from "node:crypto"
 import { load, type CheerioAPI } from "cheerio"
+import { inferResearchFields, resolveCoveredOrganization } from "./classify"
 import { extractOpportunityId, normalizeOpportunityUrl } from "./dedupe"
 import { fetchApprovedSourceText } from "./fetch"
 import type { PhdImportCandidate, PhdImportSourceDefinition } from "./types"
@@ -10,47 +11,50 @@ type DiscoveredJob = {
   title: string
   url: string
   deadline: string | null
+  publishedAt?: string | null
+  externalId?: string | null
+  organization?: string | null
+  location?: string | null
+  descriptionHtml?: string | null
+  bodyText?: string | null
+  fieldHints?: string[]
 }
 
 const MAX_JOBS_PER_SOURCE = 60
 const DETAIL_CONCURRENCY = 6
-const PHD_TITLE_PATTERN = /\b(?:ph\.?\s*d|doctoral|doctorate|doktorand(?:er|plats|student)?|forskarstuderande|licentiate)\b/i
+const LISTING_CONCURRENCY = 3
+const PHD_TITLE_PATTERN = /\b(?:ph\.?\s*d|doctoral|doctorate|doktorand(?:er|plats|student)?|forskarstuderande|licentiate|stipendiat|promovendus|v\u00e4it\u00f6skirjatutkija|tohtorikoulutettava)\b/i
 const POSTDOC_PATTERN = /\b(?:postdoc|post-doctor)\b/i
 const EDUCATION_PAGE_PATTERN = /\b(?:doctoral studies|doctoral education|doctoral course|doctoral school|doctoral programme|doctoral program|doctoral degree|doctoral thesis|prospective phd|regulations?)\b/i
-const PHD_ROLE_PATTERN = /\b(?:(?:ph\.?\s*d|doctoral|doctorate)\s+(?:student|students|candidate|position|researcher|studentship)|doktorand(?:er|plats|student)?|forskarstuderande|licentiate)\b/i
+const PHD_ROLE_PATTERN = /\b(?:(?:ph\.?\s*d|doctoral|doctorate)\s+(?:student|students|candidate|position|researcher|studentship)|doktorand(?:er|plats|student)?|forskarstuderande|licentiate|stipendiat|promovendus|v\u00e4it\u00f6skirjatutkija|tohtorikoulutettava)\b/i
 const STOP_CONTENT_PATTERN = /^(?:share links|cookies?|return to job vacancies|more vacancies|apply for position|login and apply)$/i
-
-const subjectRules: Array<[RegExp, string]> = [
-  [/\b(?:artificial intelligence|machine learning|deep learning|computer science|software|cybersecurity|data science)\b/i, "Computer Science"],
-  [/\b(?:electrical engineering|electronics|wireless|robotics|automation|control systems)\b/i, "Electrical Engineering"],
-  [/\b(?:mechanical engineering|manufacturing|materials science|energy technology)\b/i, "Engineering"],
-  [/\b(?:medicine|medical|biomed|health|clinical|neuroscience|cancer)\b/i, "Medical Sciences"],
-  [/\b(?:biology|ecology|microbiology|genomics|proteomics|biochemistry)\b/i, "Life Sciences"],
-  [/\b(?:chemistry|chemical)\b/i, "Chemistry"],
-  [/\b(?:physics|astronomy|optics|quantum)\b/i, "Physics"],
-  [/\b(?:mathematics|statistics)\b/i, "Mathematics"],
-  [/\b(?:economics|business|management|finance)\b/i, "Economics and Management"],
-  [/\b(?:social science|sociology|political science|peace and development|education|media|communication)\b/i, "Social Sciences"],
-  [/\b(?:environment|sustainability|climate|agriculture|forestry)\b/i, "Environmental Sciences"],
-  [/\b(?:humanities|history|philosophy|language|literature|religious studies)\b/i, "Humanities"],
-]
 
 const monthNumbers: Record<string, string> = {
   jan: "01",
   january: "01",
+  januar: "01",
+  januari: "01",
   feb: "02",
   february: "02",
+  februar: "02",
+  februari: "02",
   mar: "03",
   march: "03",
+  mars: "03",
   apr: "04",
   april: "04",
   may: "05",
+  mai: "05",
+  maj: "05",
   jun: "06",
   june: "06",
+  juni: "06",
   jul: "07",
   july: "07",
+  juli: "07",
   aug: "08",
   august: "08",
+  augusti: "08",
   sep: "09",
   sept: "09",
   september: "09",
@@ -60,7 +64,12 @@ const monthNumbers: Record<string, string> = {
   november: "11",
   dec: "12",
   december: "12",
+  desember: "12",
 }
+
+const monthNamePattern = Object.keys(monthNumbers)
+  .sort((a, b) => b.length - a.length)
+  .join("|")
 
 function normalizeWhitespace(value: string) {
   return value.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim()
@@ -74,7 +83,8 @@ function normalizeTitle(value: string) {
 
 function isPhdTitle(value: string) {
   const title = normalizeTitle(value)
-  if (!PHD_TITLE_PATTERN.test(title) || POSTDOC_PATTERN.test(title)) return false
+  if (!PHD_TITLE_PATTERN.test(title)) return false
+  if (POSTDOC_PATTERN.test(title) && !PHD_ROLE_PATTERN.test(title)) return false
   return !EDUCATION_PAGE_PATTERN.test(title) || PHD_ROLE_PATTERN.test(title)
 }
 
@@ -108,6 +118,11 @@ function isApprovedJobUrl(source: PhdImportSourceDefinition, value: string) {
       return url.href.startsWith(source.detailUrlPrefix) && url.href !== source.detailUrlPrefix
     }
 
+    if (source.jobUrlPattern) {
+      source.jobUrlPattern.lastIndex = 0
+      return source.jobUrlPattern.test(`${decodedPath}${url.search}`)
+    }
+
     return false
   } catch {
     return false
@@ -121,7 +136,10 @@ function parseDateValue(value: string) {
   if (iso) return `${iso[1]}-${iso[2].padStart(2, "0")}-${iso[3].padStart(2, "0")}`
 
   const dayMonthYear = normalized.match(
-    /\b(0?[1-9]|[12]\d|3[01])[\s./-]+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t|tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)[\s,./-]+(20\d{2})(?!\d)/i
+    new RegExp(
+      `\\b(0?[1-9]|[12]\\d|3[01])[\\s./-]+(${monthNamePattern})[\\s,./-]+(20\\d{2})(?!\\d)`,
+      "i"
+    )
   )
   if (dayMonthYear) {
     const month = monthNumbers[dayMonthYear[2].toLowerCase()]
@@ -129,7 +147,10 @@ function parseDateValue(value: string) {
   }
 
   const monthDayYear = normalized.match(
-    /\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t|tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(0?[1-9]|[12]\d|3[01]),?\s+(20\d{2})(?!\d)/i
+    new RegExp(
+      `\\b(${monthNamePattern})\\s+(0?[1-9]|[12]\\d|3[01]),?\\s+(20\\d{2})(?!\\d)`,
+      "i"
+    )
   )
   if (monthDayYear) {
     const month = monthNumbers[monthDayYear[1].toLowerCase()]
@@ -144,7 +165,7 @@ function parseDateValue(value: string) {
 
 function extractDeadline(value: string) {
   const pattern =
-    /(?:last application date|application deadline|last day to apply|closing date for application|closing date|apply by|deadline|no later than)\s*:?\s*([^|]{4,80})/gi
+    /(?:last application date|application deadline|application period ends|application closes on|applications? must be submitted by|last day to apply|closing date for application|closing date|apply by|deadline|due date|ends on|no later than|s\u00f8knadsfrist|soknadsfrist|ans\u00f6kningstiden slutar|ansokningstiden slutar|hakuaika p\u00e4\u00e4ttyy)\s*:?\s*([^|]{4,100})/gi
 
   for (const match of value.matchAll(pattern)) {
     const deadline = parseDateValue(match[1])
@@ -164,17 +185,22 @@ function discoverHtmlJobs(source: PhdImportSourceDefinition, html: string) {
   const jobs = new Map<string, DiscoveredJob>()
 
   $("a[href]").each((_, element) => {
-    const rawTitle = normalizeWhitespace($(element).text())
     const href = $(element).attr("href")
-    if (!href || !isPhdTitle(rawTitle)) return
+    if (!href) return
 
     const url = new URL(href, source.sourceUrl).toString()
     if (!isApprovedJobUrl(source, url)) return
 
-    const context = normalizeWhitespace(
-      $(element).closest("li, article, tr, [class*='job'], [class*='vacan']").first().text() ||
-      $(element).parent().text()
+    const container = $(element)
+      .closest("li, article, tr, [class*='job'], [class*='vacan'], [class*='position']")
+      .first()
+    const rawTitle = normalizeWhitespace(
+      $(element).text() ||
+      container.find("h1, h2, h3, h4, [class*='title']").first().text()
     )
+    if (!isPhdTitle(rawTitle)) return
+
+    const context = normalizeWhitespace(container.text() || $(element).parent().text())
 
     jobs.set(url, {
       title: normalizeTitle(rawTitle),
@@ -183,7 +209,7 @@ function discoverHtmlJobs(source: PhdImportSourceDefinition, html: string) {
     })
   })
 
-  return Array.from(jobs.values()).slice(0, MAX_JOBS_PER_SOURCE)
+  return Array.from(jobs.values()).slice(0, source.maxJobs ?? MAX_JOBS_PER_SOURCE)
 }
 
 function discoverFeedJobs(source: PhdImportSourceDefinition, xml: string) {
@@ -212,7 +238,7 @@ function discoverFeedJobs(source: PhdImportSourceDefinition, xml: string) {
     })
   })
 
-  return Array.from(jobs.values()).slice(0, MAX_JOBS_PER_SOURCE)
+  return Array.from(jobs.values()).slice(0, source.maxJobs ?? MAX_JOBS_PER_SOURCE)
 }
 
 function discoverSitemapJobs(source: PhdImportSourceDefinition, xml: string) {
@@ -233,7 +259,212 @@ function discoverSitemapJobs(source: PhdImportSourceDefinition, xml: string) {
     jobs.push({ title: "", url, deadline: null })
   })
 
-  return jobs.slice(0, MAX_JOBS_PER_SOURCE)
+  return jobs.slice(0, source.maxJobs ?? MAX_JOBS_PER_SOURCE)
+}
+
+function htmlToText(value: string) {
+  return normalizeWhitespace(load(`<main>${value}</main>`)("main").text())
+}
+
+function discoverJobbnorgeJobs(source: PhdImportSourceDefinition, value: string) {
+  const payload = JSON.parse(value) as {
+    jobs?: Array<{
+      id?: number | string
+      title?: string
+      summary?: string
+      employer?: string
+      link?: string
+      deadline?: string
+      publicationDate?: string
+      locations?: Array<{ area?: string; municipality?: string; isPrimary?: boolean }>
+    }>
+  }
+
+  const jobs = new Map<string, DiscoveredJob>()
+  for (const item of payload.jobs || []) {
+    const title = normalizeTitle(item.title || "")
+    const url = item.link ? new URL(item.link, source.sourceUrl).toString() : ""
+    const organization = resolveCoveredOrganization(source, [item.employer])
+    if (!url || !organization || !isPhdTitle(title) || !isApprovedJobUrl(source, url)) continue
+
+    const primaryLocation =
+      item.locations?.find((location) => location.isPrimary) || item.locations?.[0]
+    const location = primaryLocation?.area || primaryLocation?.municipality || null
+
+    jobs.set(url, {
+      title,
+      url,
+      deadline: item.deadline ? parseDateValue(item.deadline) : null,
+      publishedAt: item.publicationDate ? parseDateValue(item.publicationDate) : null,
+      externalId: item.id ? String(item.id) : null,
+      organization: item.employer || organization.name,
+      location,
+      bodyText: normalizeWhitespace(item.summary || ""),
+    })
+  }
+
+  return Array.from(jobs.values()).slice(0, source.maxJobs ?? MAX_JOBS_PER_SOURCE)
+}
+
+function discoverTalentAdoreJobs(source: PhdImportSourceDefinition, value: string) {
+  const payload = JSON.parse(value) as {
+    jobs?: Array<{
+      id?: string
+      job_token?: string
+      name?: string
+      link?: string
+      description_html?: string
+      description_text?: string
+      start_date?: string
+      due_date?: string
+      city?: string
+      country?: string
+    }>
+  }
+
+  const jobs = new Map<string, DiscoveredJob>()
+  for (const item of payload.jobs || []) {
+    const title = normalizeTitle(item.name || "")
+    const url = item.link ? new URL(item.link, source.sourceUrl).toString() : ""
+    if (!url || !isPhdTitle(title) || !isApprovedJobUrl(source, url)) continue
+
+    jobs.set(url, {
+      title,
+      url,
+      deadline: item.due_date ? parseDateValue(item.due_date) : null,
+      publishedAt: item.start_date ? parseDateValue(item.start_date) : null,
+      externalId: item.job_token || item.id || null,
+      location: [item.city, item.country].filter(Boolean).join(", ") || null,
+      descriptionHtml: item.description_html || null,
+      bodyText: normalizeWhitespace(
+        item.description_text || htmlToText(item.description_html || "")
+      ),
+    })
+  }
+
+  return Array.from(jobs.values()).slice(0, source.maxJobs ?? MAX_JOBS_PER_SOURCE)
+}
+
+function extractAcademicTransferToken(html: string) {
+  const payloadMatch = html.match(
+    /<script type="application\/json" data-nuxt-data="nuxt-app"[^>]*>([\s\S]*?)<\/script>/i
+  )
+  if (!payloadMatch) throw new Error("AcademicTransfer public data token payload was not found")
+
+  const tokenIndexMatch = payloadMatch[1].match(
+    /\$satDataApiPublicAccessToken"\s*:\s*(\d+)/
+  )
+  if (!tokenIndexMatch) throw new Error("AcademicTransfer public data token index was not found")
+
+  const payload = JSON.parse(payloadMatch[1]) as unknown[]
+  const token = payload[Number(tokenIndexMatch[1])]
+  if (typeof token !== "string" || token.length < 20) {
+    throw new Error("AcademicTransfer public data token was invalid")
+  }
+  return token
+}
+
+type AcademicTransferVacancy = {
+  external_id?: number | string
+  absolute_url?: string
+  title?: string
+  description?: string
+  excerpt?: string
+  start_date?: string
+  end_date?: string
+  city?: string
+  country_code?: string
+  organisation_name?: string
+  keywords?: string[]
+}
+
+function discoverAcademicTransferJobs(
+  source: PhdImportSourceDefinition,
+  records: AcademicTransferVacancy[]
+) {
+  const jobs = new Map<string, DiscoveredJob>()
+  for (const item of records) {
+    const title = normalizeTitle(item.title || "")
+    const url = item.absolute_url ? new URL(item.absolute_url, source.sourceUrl).toString() : ""
+    const organization = resolveCoveredOrganization(source, [item.organisation_name])
+    if (!url || !organization || !isPhdTitle(title) || !isApprovedJobUrl(source, url)) continue
+
+    const descriptionHtml = item.description || ""
+    jobs.set(url, {
+      title,
+      url,
+      deadline: item.end_date ? parseDateValue(item.end_date) : null,
+      publishedAt: item.start_date ? parseDateValue(item.start_date) : null,
+      externalId: item.external_id ? String(item.external_id) : null,
+      organization: item.organisation_name || organization.name,
+      location: [item.city, "Netherlands"].filter(Boolean).join(", "),
+      descriptionHtml,
+      bodyText: normalizeWhitespace(
+        `${item.excerpt || ""} ${htmlToText(descriptionHtml)}`
+      ),
+    })
+  }
+
+  return Array.from(jobs.values()).slice(0, source.maxJobs ?? MAX_JOBS_PER_SOURCE)
+}
+
+async function fetchAcademicTransferJobs(
+  source: PhdImportSourceDefinition,
+  listingHtml: string
+) {
+  const token = extractAcademicTransferToken(listingHtml)
+  const apiHeaders = {
+    accept: "application/json; version=2",
+    "accept-language": "en",
+    authorization: `Bearer ${token}`,
+  }
+  const pageSize = 50
+  const firstUrl =
+    `https://api.academictransfer.com/vacancies/?function_types=9&limit=${pageSize}&offset=0`
+  const firstResponse = await fetchApprovedSourceText(source, firstUrl, {
+    headers: apiHeaders,
+    maxBytes: source.maxListingBytes,
+  })
+  const firstPage = JSON.parse(firstResponse.text) as {
+    count?: number
+    results?: AcademicTransferVacancy[]
+  }
+  const total = Math.min(
+    Number(firstPage.count) || firstPage.results?.length || 0,
+    source.maxJobs ?? 300
+  )
+  const offsets = Array.from(
+    { length: Math.max(0, Math.ceil(total / pageSize) - 1) },
+    (_, index) => (index + 1) * pageSize
+  )
+  const pageResults = await mapWithConcurrency(offsets, LISTING_CONCURRENCY, async (offset) => {
+    const response = await fetchApprovedSourceText(
+      source,
+      `https://api.academictransfer.com/vacancies/?function_types=9&limit=${pageSize}&offset=${offset}`,
+      {
+        headers: apiHeaders,
+        maxBytes: source.maxListingBytes,
+      }
+    )
+    return (JSON.parse(response.text) as { results?: AcademicTransferVacancy[] }).results || []
+  })
+
+  const additionalRecords = pageResults.flatMap((result) =>
+    result.status === "fulfilled" ? result.value : []
+  )
+  const errors = pageResults.flatMap((result) =>
+    result.status === "rejected"
+      ? [result.reason instanceof Error ? result.reason.message : "Unable to fetch AcademicTransfer page"]
+      : []
+  )
+
+  return {
+    discovered: discoverAcademicTransferJobs(source, [
+      ...(firstPage.results || []),
+      ...additionalRecords,
+    ]),
+    errors,
+  }
 }
 
 function escapeHtml(value: string) {
@@ -245,7 +476,12 @@ function escapeHtml(value: string) {
     .replace(/'/g, "&#39;")
 }
 
-function buildDescription($: CheerioAPI, source: PhdImportSourceDefinition, externalUrl: string) {
+function buildDescription(
+  $: CheerioAPI,
+  source: PhdImportSourceDefinition,
+  organization: string,
+  externalUrl: string
+) {
   const root = $("main").first().length
     ? $("main").first().clone()
     : $("#main-content").first().length
@@ -308,7 +544,7 @@ function buildDescription($: CheerioAPI, source: PhdImportSourceDefinition, exte
 
   const sourceNote = [
     "<p>",
-    `<strong>Official university vacancy imported from ${escapeHtml(source.organization)}.</strong> `,
+    `<strong>Official university vacancy imported from ${escapeHtml(organization)}.</strong> `,
     "Details are presented for discovery and may change. ",
     `<a href="${escapeHtml(externalUrl)}" target="_blank" rel="noopener noreferrer">Confirm the latest requirements and apply on the official source.</a>`,
     "</p>",
@@ -324,30 +560,30 @@ function extractLabelledValue(text: string, labels: string[], stopLabels: string
   return normalizeWhitespace(match?.[1] || "")
 }
 
-function inferSubject(title: string, bodyText: string) {
-  const labelled = extractLabelledValue(
-    bodyText,
-    ["third-cycle subject", "third-cycle subject area", "subject area", "research field"],
-    ["admission", "project description", "description", "duties", "qualifications", "employment", "location", "scope"]
-  )
-  if (labelled && labelled.length <= 100) {
-    return labelled.replace(/^(?:area|subject)\s+/i, "")
+function inferLocation(
+  source: PhdImportSourceDefinition,
+  bodyText: string,
+  defaultLocation: string,
+  discoveredLocation?: string | null
+) {
+  if (discoveredLocation) {
+    const normalized = normalizeWhitespace(discoveredLocation)
+    if (normalized && normalized.length <= 100) {
+      return new RegExp(`\\b${source.country}\\b`, "i").test(normalized)
+        ? normalized
+        : `${normalized}, ${source.country}`
+    }
   }
 
-  const titleSubject = subjectRules.find(([pattern]) => pattern.test(title))?.[1]
-  if (titleSubject) return titleSubject
-
-  return subjectRules.find(([pattern]) => pattern.test(bodyText.slice(0, 5_000)))?.[1] || "Research"
-}
-
-function inferLocation(source: PhdImportSourceDefinition, bodyText: string) {
   const labelled = extractLabelledValue(
     bodyText,
     ["study location", "campus location", "place of work", "placement", "location", "city", "town"],
     ["school", "third-cycle subject", "county", "country", "reference number", "scope", "contract type", "salary", "published", "last application date"]
   )
-  if (!labelled || labelled.length > 80) return source.defaultLocation
-  return /sweden/i.test(labelled) ? labelled : `${labelled}, Sweden`
+  if (!labelled || labelled.length > 80) return defaultLocation
+  return new RegExp(`\\b${source.country}\\b`, "i").test(labelled)
+    ? labelled
+    : `${labelled}, ${source.country}`
 }
 
 function isExpired(deadline: string) {
@@ -359,30 +595,51 @@ async function parseJobDetail(
   source: PhdImportSourceDefinition,
   discovered: DiscoveredJob
 ): Promise<PhdImportCandidate | null> {
-  const response = await fetchApprovedSourceText(source, discovered.url)
+  const response = discovered.descriptionHtml
+    ? {
+        text: `<main><h1>${escapeHtml(discovered.title)}</h1>${discovered.descriptionHtml}</main>`,
+        finalUrl: discovered.url,
+      }
+    : await fetchApprovedSourceText(source, discovered.url)
   const $ = load(response.text)
   const title = normalizeTitle($("h1").first().text() || discovered.title)
   if (!isPhdTitle(title)) return null
 
   $("script, style, noscript, iframe, svg").remove()
-  const bodyText = normalizeWhitespace($("body").text())
+  const bodyText = normalizeWhitespace(
+    `${discovered.bodyText || ""} ${$("body").text()}`
+  )
   const deadline = extractDeadline(bodyText) || discovered.deadline
   if (!deadline || isExpired(deadline)) return null
 
-  const publishedAt = extractPublishedAt(bodyText)
+  const organization = resolveCoveredOrganization(source, [
+    discovered.organization,
+    $("title").first().text(),
+    bodyText,
+  ])
+  if (!organization) return null
+
+  const publishedAt = discovered.publishedAt || extractPublishedAt(bodyText)
   const canonicalUrl = normalizeOpportunityUrl(discovered.url)
   if (!canonicalUrl) throw new Error(`Could not normalize vacancy URL ${discovered.url}`)
   const externalId =
+    discovered.externalId ||
     extractOpportunityId(canonicalUrl) ||
     createHash("sha256").update(canonicalUrl).digest("hex").slice(0, 24)
+  const fields = inferResearchFields(title, bodyText, discovered.fieldHints)
 
   return {
     externalId,
     title,
-    organization: source.organization,
-    location: inferLocation(source, bodyText),
-    subject: inferSubject(title, bodyText),
-    description: buildDescription($, source, canonicalUrl),
+    organization: organization.name,
+    location: inferLocation(
+      source,
+      bodyText,
+      organization.defaultLocation,
+      discovered.location
+    ),
+    subject: fields.join(", "),
+    description: buildDescription($, source, organization.name, canonicalUrl),
     deadline,
     publishedAt,
     compensation: "paid",
@@ -391,6 +648,8 @@ async function parseJobDetail(
     sourceName: source.name,
     sourceMetadata: {
       country: source.country,
+      organization: organization.name,
+      fields,
       platform: source.platform,
       sourcePage: source.publicUrl,
       detailUrl: response.finalUrl,
@@ -423,18 +682,73 @@ async function mapWithConcurrency<T, R>(
   return results
 }
 
-export async function scrapeUniversityPhdSource(source: PhdImportSourceDefinition) {
-  const listing = await fetchApprovedSourceText(source, source.sourceUrl, {
-    maxBytes: source.platform === "sitemap" ? 8 * 1024 * 1024 : undefined,
-    timeoutMs: source.platform === "sitemap" ? 25_000 : undefined,
-  })
+function getListingUrls(source: PhdImportSourceDefinition) {
+  const pageCount = Math.max(1, source.listingPageCount || 1)
+  const urls = [source.sourceUrl]
+  if (pageCount === 1) return urls
 
-  const discovered =
-    source.platform === "feed"
-      ? discoverFeedJobs(source, listing.text)
-      : source.platform === "sitemap"
-        ? discoverSitemapJobs(source, listing.text)
-        : discoverHtmlJobs(source, listing.text)
+  const parameter = source.listingPageParameter || "page"
+  const start = source.listingPageStart ?? 2
+  for (let index = 0; index < pageCount - 1; index += 1) {
+    const url = new URL(source.sourceUrl)
+    url.searchParams.set(parameter, String(start + index))
+    urls.push(url.toString())
+  }
+  return urls
+}
+
+export async function scrapeUniversityPhdSource(source: PhdImportSourceDefinition) {
+  const listingResults = await mapWithConcurrency(
+    getListingUrls(source),
+    LISTING_CONCURRENCY,
+    (url) =>
+      fetchApprovedSourceText(source, url, {
+        maxBytes:
+          source.maxListingBytes ||
+          (source.platform === "sitemap" ? 8 * 1024 * 1024 : undefined),
+        timeoutMs: source.platform === "sitemap" ? 25_000 : undefined,
+      })
+  )
+  const listings = listingResults.flatMap((result) =>
+    result.status === "fulfilled" ? [result.value] : []
+  )
+  const listingErrors = listingResults.flatMap((result) =>
+    result.status === "rejected"
+      ? [result.reason instanceof Error ? result.reason.message : "Unable to fetch source listing"]
+      : []
+  )
+  if (listings.length === 0) {
+    throw new Error(listingErrors[0] || "Unable to fetch source listing")
+  }
+
+  let discoveryErrors = listingErrors
+  let discovered: DiscoveredJob[]
+  if (source.adapter === "academictransfer-api") {
+    const academicTransfer = await fetchAcademicTransferJobs(source, listings[0].text)
+    discovered = academicTransfer.discovered
+    discoveryErrors = [...discoveryErrors, ...academicTransfer.errors]
+  } else {
+    const discoveredByUrl = new Map<string, DiscoveredJob>()
+    for (const listing of listings) {
+      const jobs =
+        source.adapter === "jobbnorge-api"
+          ? discoverJobbnorgeJobs(source, listing.text)
+          : source.adapter === "talentadore-json"
+            ? discoverTalentAdoreJobs(source, listing.text)
+            : source.platform === "feed"
+              ? discoverFeedJobs(source, listing.text)
+              : source.platform === "sitemap"
+                ? discoverSitemapJobs(source, listing.text)
+                : discoverHtmlJobs(source, listing.text)
+      for (const job of jobs) {
+        discoveredByUrl.set(normalizeOpportunityUrl(job.url), job)
+      }
+    }
+    discovered = Array.from(discoveredByUrl.values()).slice(
+      0,
+      source.maxJobs ?? MAX_JOBS_PER_SOURCE
+    )
+  }
 
   const detailResults = await mapWithConcurrency(discovered, DETAIL_CONCURRENCY, (job) =>
     parseJobDetail(source, job)
@@ -442,11 +756,14 @@ export async function scrapeUniversityPhdSource(source: PhdImportSourceDefinitio
   const candidates = detailResults.flatMap((result) =>
     result.status === "fulfilled" && result.value ? [result.value] : []
   )
-  const errors = detailResults.flatMap((result) =>
-    result.status === "rejected"
-      ? [result.reason instanceof Error ? result.reason.message : "Unable to parse a vacancy"]
-      : []
-  )
+  const errors = [
+    ...discoveryErrors,
+    ...detailResults.flatMap((result) =>
+      result.status === "rejected"
+        ? [result.reason instanceof Error ? result.reason.message : "Unable to parse a vacancy"]
+        : []
+    ),
+  ]
 
   return {
     candidates,
