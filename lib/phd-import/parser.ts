@@ -580,7 +580,17 @@ function inferLocation(
     ["study location", "campus location", "place of work", "placement", "location", "city", "town"],
     ["school", "third-cycle subject", "county", "country", "reference number", "scope", "contract type", "salary", "published", "last application date"]
   )
-  if (!labelled || labelled.length > 80) return defaultLocation
+  const looksLikeProse =
+    /^(?:and|or|the|a|an|we|you|this|that|our)\b/i.test(labelled) ||
+    /\b(?:integration|competitive|employment|applicant|position|responsibilities|university)\b/i.test(labelled)
+  if (
+    !labelled ||
+    labelled.length > 60 ||
+    labelled.split(/\s+/).length > 8 ||
+    looksLikeProse
+  ) {
+    return defaultLocation
+  }
   return new RegExp(`\\b${source.country}\\b`, "i").test(labelled)
     ? labelled
     : `${labelled}, ${source.country}`
