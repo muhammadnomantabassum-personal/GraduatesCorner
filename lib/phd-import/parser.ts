@@ -2,6 +2,7 @@ import "server-only"
 
 import { createHash } from "node:crypto"
 import { load, type CheerioAPI } from "cheerio"
+import { extractOpportunityId, normalizeOpportunityUrl } from "./dedupe"
 import { fetchApprovedSourceText } from "./fetch"
 import type { PhdImportCandidate, PhdImportSourceDefinition } from "./types"
 
@@ -156,25 +157,6 @@ function extractDeadline(value: string) {
 function extractPublishedAt(value: string) {
   const labelled = value.match(/(?:publishing date|published|date published)\s*:?\s*([^|]{4,40})/i)
   return labelled ? parseDateValue(labelled[1]) : null
-}
-
-function extractExternalId(value: string) {
-  const url = new URL(value)
-  const queryId =
-    url.searchParams.get("job_id") ||
-    url.searchParams.get("rmjob") ||
-    url.searchParams.get("query") ||
-    url.searchParams.get("jid")
-  if (queryId) return queryId
-
-  const decoded = decodeURIComponent(url.pathname)
-  const varbiId = decoded.match(/jobID:(\d+)/i)?.[1]
-  if (varbiId) return varbiId
-
-  const pathId = decoded.match(/\/(\d+)\/?$/)?.[1]
-  if (pathId) return pathId
-
-  return createHash("sha256").update(url.href).digest("hex").slice(0, 24)
 }
 
 function discoverHtmlJobs(source: PhdImportSourceDefinition, html: string) {
@@ -388,24 +370,30 @@ async function parseJobDetail(
   if (!deadline || isExpired(deadline)) return null
 
   const publishedAt = extractPublishedAt(bodyText)
+  const canonicalUrl = normalizeOpportunityUrl(discovered.url)
+  if (!canonicalUrl) throw new Error(`Could not normalize vacancy URL ${discovered.url}`)
+  const externalId =
+    extractOpportunityId(canonicalUrl) ||
+    createHash("sha256").update(canonicalUrl).digest("hex").slice(0, 24)
 
   return {
-    externalId: extractExternalId(response.finalUrl),
+    externalId,
     title,
     organization: source.organization,
     location: inferLocation(source, bodyText),
     subject: inferSubject(title, bodyText),
-    description: buildDescription($, source, response.finalUrl),
+    description: buildDescription($, source, canonicalUrl),
     deadline,
     publishedAt,
     compensation: "paid",
-    externalUrl: response.finalUrl,
+    externalUrl: canonicalUrl,
     sourceId: source.id,
     sourceName: source.name,
     sourceMetadata: {
       country: source.country,
       platform: source.platform,
       sourcePage: source.publicUrl,
+      detailUrl: response.finalUrl,
       capturedAt: new Date().toISOString(),
     },
   }

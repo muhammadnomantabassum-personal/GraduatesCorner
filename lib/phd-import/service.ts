@@ -2,6 +2,11 @@ import "server-only"
 
 import { createHash } from "node:crypto"
 import type { SupabaseClient } from "@supabase/supabase-js"
+import {
+  findExistingPhdMatch,
+  type ExistingPhdIdentity,
+  type PhdIdentityMatch,
+} from "./dedupe"
 import { scrapeUniversityPhdSource } from "./parser"
 import { getPhdImportSources } from "./sources"
 import type {
@@ -16,6 +21,7 @@ type ImportOptions = {
 }
 
 const SOURCE_CONCURRENCY = 3
+const EXISTING_PHD_PAGE_SIZE = 1_000
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Unknown import error"
@@ -25,6 +31,37 @@ function fingerprint(candidate: PhdImportCandidate) {
   return createHash("sha256")
     .update(`${candidate.sourceId}:${candidate.externalId}:${candidate.externalUrl}`)
     .digest("hex")
+}
+
+function matchReviewNote(match: PhdIdentityMatch) {
+  const reason = {
+    external_url: "official URL",
+    external_id: "university vacancy ID",
+    title_organization_deadline: "title, university, and deadline",
+  }[match.reason]
+
+  return `Matched an existing PhD position by ${reason}; no duplicate was created.`
+}
+
+async function loadExistingPhds(adminClient: SupabaseClient) {
+  const rows: ExistingPhdIdentity[] = []
+
+  for (let from = 0; ; from += EXISTING_PHD_PAGE_SIZE) {
+    const { data, error } = await adminClient
+      .from("theses")
+      .select("id, title, organization, deadline, external_url, external_id, status")
+      .eq("type", "phd")
+      .order("id", { ascending: true })
+      .range(from, from + EXISTING_PHD_PAGE_SIZE - 1)
+
+    if (error) throw error
+
+    const page = (data || []) as ExistingPhdIdentity[]
+    rows.push(...page)
+    if (page.length < EXISTING_PHD_PAGE_SIZE) break
+  }
+
+  return rows
 }
 
 function thesisRow(candidate: PhdImportCandidate, status: "approved" | "pending") {
@@ -52,17 +89,13 @@ function thesisRow(candidate: PhdImportCandidate, status: "approved" | "pending"
 async function publishCandidateRow(
   adminClient: SupabaseClient,
   candidate: PhdImportCandidate,
-  importItemId: string
+  importItemId: string,
+  existingPhds?: ExistingPhdIdentity[]
 ) {
-  const { data: existing, error: existingError } = await adminClient
-    .from("theses")
-    .select("id")
-    .eq("external_url", candidate.externalUrl)
-    .maybeSingle()
+  const knownPhds = existingPhds || await loadExistingPhds(adminClient)
+  let match = findExistingPhdMatch(candidate, knownPhds)
+  let thesisId = match?.thesis.id
 
-  if (existingError) throw existingError
-
-  let thesisId = existing?.id as string | undefined
   if (!thesisId) {
     const { data: created, error: createError } = await adminClient
       .from("theses")
@@ -70,9 +103,28 @@ async function publishCandidateRow(
       .select("id")
       .single()
 
-    if (createError) throw createError
-    thesisId = created.id
+    if (createError?.code === "23505") {
+      const refreshedPhds = await loadExistingPhds(adminClient)
+      match = findExistingPhdMatch(candidate, refreshedPhds)
+      thesisId = match?.thesis.id
+    } else if (createError) {
+      throw createError
+    } else {
+      const createdThesisId = created.id as string
+      thesisId = createdThesisId
+      knownPhds.push({
+        id: createdThesisId,
+        title: candidate.title,
+        organization: candidate.organization,
+        deadline: candidate.deadline,
+        external_url: candidate.externalUrl,
+        external_id: candidate.externalId,
+        status: "approved",
+      })
+    }
   }
+
+  if (!thesisId) throw new Error("Could not publish or match the imported PhD position.")
 
   const { error: updateError } = await adminClient
     .from("phd_import_items")
@@ -80,7 +132,9 @@ async function publishCandidateRow(
       status: "published",
       thesis_id: thesisId,
       reviewed_at: new Date().toISOString(),
-      review_note: "Published by the automated university importer.",
+      review_note: match
+        ? matchReviewNote(match)
+        : "Published by the automated university importer.",
     })
     .eq("id", importItemId)
 
@@ -92,13 +146,12 @@ async function recordCandidate(
   adminClient: SupabaseClient,
   candidate: PhdImportCandidate,
   runId: string,
-  autoPublish: boolean
+  autoPublish: boolean,
+  existingPhds: ExistingPhdIdentity[]
 ) {
   const now = new Date().toISOString()
-  const row = {
-    source_id: candidate.sourceId,
+  const candidateFields = {
     run_id: runId,
-    external_id: candidate.externalId,
     external_url: candidate.externalUrl,
     fingerprint: fingerprint(candidate),
     title: candidate.title,
@@ -110,9 +163,61 @@ async function recordCandidate(
     published_at: candidate.publishedAt,
     compensation: candidate.compensation,
     source_metadata: candidate.sourceMetadata,
-    status: "pending",
-    first_seen_at: now,
     last_seen_at: now,
+  }
+  const match = findExistingPhdMatch(candidate, existingPhds)
+
+  const { data: currentItem, error: currentItemError } = await adminClient
+    .from("phd_import_items")
+    .select("id, status, thesis_id")
+    .eq("source_id", candidate.sourceId)
+    .eq("external_id", candidate.externalId)
+    .maybeSingle()
+
+  if (currentItemError) throw currentItemError
+
+  if (currentItem) {
+    const shouldLinkMatch =
+      match &&
+      (currentItem.status !== "published" || currentItem.thesis_id !== match.thesis.id)
+    const { error: seenError } = await adminClient
+      .from("phd_import_items")
+      .update({
+        ...candidateFields,
+        ...(shouldLinkMatch
+          ? {
+              status: "published",
+              thesis_id: match.thesis.id,
+              reviewed_at: now,
+              review_note: matchReviewNote(match),
+            }
+          : {}),
+      })
+      .eq("id", currentItem.id)
+
+    if (seenError) throw seenError
+    if (match) return { added: false, published: false }
+
+    if (
+      autoPublish &&
+      (currentItem.status === "pending" || !currentItem.thesis_id)
+    ) {
+      await publishCandidateRow(adminClient, candidate, currentItem.id, existingPhds)
+      return { added: false, published: true }
+    }
+
+    return { added: false, published: false }
+  }
+
+  const row = {
+    source_id: candidate.sourceId,
+    external_id: candidate.externalId,
+    ...candidateFields,
+    status: match ? "published" : "pending",
+    thesis_id: match?.thesis.id || null,
+    reviewed_at: match ? now : null,
+    review_note: match ? matchReviewNote(match) : null,
+    first_seen_at: now,
   }
 
   const { data: inserted, error: insertError } = await adminClient
@@ -122,27 +227,22 @@ async function recordCandidate(
     .single()
 
   if (insertError?.code === "23505") {
-    const { error: seenError } = await adminClient
-      .from("phd_import_items")
-      .update({ last_seen_at: now })
-      .eq("source_id", candidate.sourceId)
-      .eq("external_id", candidate.externalId)
-
-    if (seenError) throw seenError
-    return { added: false, published: false }
+    return recordCandidate(adminClient, candidate, runId, autoPublish, existingPhds)
   }
 
   if (insertError) throw insertError
+  if (match) return { added: false, published: false }
   if (!autoPublish) return { added: true, published: false }
 
-  await publishCandidateRow(adminClient, candidate, inserted.id)
+  await publishCandidateRow(adminClient, candidate, inserted.id, existingPhds)
   return { added: true, published: true }
 }
 
 async function processSource(
   adminClient: SupabaseClient,
   sourceId: string,
-  autoPublish: boolean
+  autoPublish: boolean,
+  existingPhds: ExistingPhdIdentity[]
 ): Promise<PhdImportRunResult> {
   const source = getPhdImportSources([sourceId])[0]
   if (!source) {
@@ -185,7 +285,13 @@ async function processSource(
 
     for (const candidate of scraped.candidates) {
       try {
-        const result = await recordCandidate(adminClient, candidate, run.id, autoPublish)
+        const result = await recordCandidate(
+          adminClient,
+          candidate,
+          run.id,
+          autoPublish,
+          existingPhds
+        )
         if (result.added) added += 1
         else duplicates += 1
         if (result.published) published += 1
@@ -301,7 +407,9 @@ export async function runUniversityPhdImports(
     const setting = settings.get(source.id)
     return setting && (setting.enabled || options.includeDisabled)
   })
+  if (selected.length === 0) return []
 
+  const existingPhds = await loadExistingPhds(adminClient)
   const results: PhdImportRunResult[] = new Array(selected.length)
   let nextIndex = 0
 
@@ -314,7 +422,8 @@ export async function runUniversityPhdImports(
       results[currentIndex] = await processSource(
         adminClient,
         source.id,
-        Boolean(setting?.auto_publish)
+        Boolean(setting?.auto_publish),
+        existingPhds
       )
     }
   }

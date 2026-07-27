@@ -60,9 +60,11 @@ user-supplied feed URLs are not accepted.
 - Vercel runs `/api/cron/import-phd` daily at 07:00 UTC. New records enter the
   admin review queue by default; auto-publishing is an explicit per-source
   setting.
-- Deduplication uses stable source IDs, external job IDs, fingerprints, and a
-  unique official URL. Repeated scans update `last_seen_at` instead of creating
-  duplicate PhD posts.
+- Deduplication preserves each university's public vacancy URL and checks the
+  canonical URL, normalized university plus official vacancy ID, then a strict
+  title/university/deadline fallback for legacy posts. Repeated scans update
+  `last_seen_at` and link the import ledger to an existing post instead of
+  creating a duplicate.
 - Review source health and parser errors in `Admin > University Imports`.
   University portal markup can change, so a failed source should be inspected
   before auto-publishing is enabled.
