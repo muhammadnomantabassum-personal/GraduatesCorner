@@ -17,6 +17,10 @@ import { getDeadlineBucket, getWorkMode, matchesDeadline, matchesWorkMode } from
 import { sortOpportunityResults, type OpportunitySort } from "@/lib/opportunity-sort"
 import { OpportunitySeoContent } from "@/components/seo/opportunity-seo-content"
 
+function getCountryFromLocation(location: string) {
+  const parts = location.split(",").map((part) => part.trim()).filter(Boolean)
+  return (parts.at(-1) || "Other").split(/[.;|]/)[0].trim() || "Other"
+}
 
 export default function PhDPositionsPage() {
   const { supabase } = useAuth()
@@ -138,8 +142,7 @@ export default function PhDPositionsPage() {
     const universityCounts: Record<string, number> = {}
     const locationCounts: Record<string, number> = {}
     theses.forEach((t) => {
-      const parts = t.location.split(",").map((part) => part.trim()).filter(Boolean)
-      const country = parts.at(-1) || "Other"
+      const country = getCountryFromLocation(t.location)
       countryCounts[country] = (countryCounts[country] || 0) + 1
       universityCounts[t.organization] = (universityCounts[t.organization] || 0) + 1
       locationCounts[t.location] = (locationCounts[t.location] || 0) + 1
@@ -290,12 +293,7 @@ export default function PhDPositionsPage() {
       })
       .filter((t) => {
         if (filters.country.length === 0) return true
-        const country = t.location
-          .split(",")
-          .map((part) => part.trim())
-          .filter(Boolean)
-          .at(-1)
-        return Boolean(country && filters.country.includes(country))
+        return filters.country.includes(getCountryFromLocation(t.location))
       })
       .filter((t) => {
         if (filters.university.length === 0) return true
