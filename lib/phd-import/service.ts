@@ -21,7 +21,16 @@ type ImportOptions = {
 }
 
 const SOURCE_CONCURRENCY = 3
+const BULK_PUBLISH_CONCURRENCY = 4
+const BULK_PUBLISH_BATCH_SIZE = 40
 const EXISTING_PHD_PAGE_SIZE = 1_000
+
+const IMPORT_CANDIDATE_SELECT = `
+  id, external_id, external_url, title, organization, location, subject,
+  description, deadline, published_at, compensation, source_id,
+  source_metadata, status, thesis_id,
+  source:phd_import_sources(name)
+`
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Unknown import error"
@@ -441,12 +450,7 @@ export async function publishUniversityPhdCandidate(
 ) {
   const { data, error } = await adminClient
     .from("phd_import_items")
-    .select(`
-      id, external_id, external_url, title, organization, location, subject,
-      description, deadline, published_at, compensation, source_id,
-      source_metadata, status, thesis_id,
-      source:phd_import_sources(name)
-    `)
+    .select(IMPORT_CANDIDATE_SELECT)
     .eq("id", candidateId)
     .single()
 
@@ -454,8 +458,27 @@ export async function publishUniversityPhdCandidate(
   if (data.status === "published" && data.thesis_id) return data.thesis_id
   if (data.status === "ignored") throw new Error("Ignored candidates must be restored before publishing.")
 
+  return publishCandidateRow(adminClient, importRowToCandidate(data), data.id)
+}
+
+function importRowToCandidate(data: {
+  external_id: string
+  external_url: string
+  title: string
+  organization: string
+  location: string
+  subject: string
+  description: string
+  deadline: string
+  published_at: string | null
+  compensation: PhdImportCandidate["compensation"]
+  source_id: string
+  source_metadata: Record<string, unknown> | null
+  source: { name: string } | Array<{ name: string }> | null
+}): PhdImportCandidate {
   const sourceRelation = Array.isArray(data.source) ? data.source[0] : data.source
-  const candidate: PhdImportCandidate = {
+
+  return {
     externalId: data.external_id,
     externalUrl: data.external_url,
     title: data.title,
@@ -470,8 +493,74 @@ export async function publishUniversityPhdCandidate(
     sourceName: sourceRelation?.name || data.source_id,
     sourceMetadata: data.source_metadata || {},
   }
+}
 
-  return publishCandidateRow(adminClient, candidate, data.id)
+export async function publishUniversityPhdCandidateBatch(
+  adminClient: SupabaseClient,
+  cursor?: string | null
+) {
+  let query = adminClient
+    .from("phd_import_items")
+    .select(IMPORT_CANDIDATE_SELECT)
+    .eq("status", "pending")
+    .order("id", { ascending: true })
+    .limit(BULK_PUBLISH_BATCH_SIZE + 1)
+
+  if (cursor) query = query.gt("id", cursor)
+
+  const { data, error } = await query
+  if (error) throw error
+
+  const rows = (data || []).slice(0, BULK_PUBLISH_BATCH_SIZE)
+  if (rows.length === 0) {
+    return {
+      attempted: 0,
+      published: 0,
+      failed: [] as Array<{ id: string; title: string }>,
+      nextCursor: null,
+      hasMore: false,
+    }
+  }
+
+  const existingPhds = await loadExistingPhds(adminClient)
+  const outcomes: Array<{ id: string; title: string; published: boolean }> = new Array(rows.length)
+  let nextIndex = 0
+
+  async function worker() {
+    while (nextIndex < rows.length) {
+      const currentIndex = nextIndex++
+      const row = rows[currentIndex]
+
+      try {
+        await publishCandidateRow(
+          adminClient,
+          importRowToCandidate(row),
+          row.id,
+          existingPhds
+        )
+        outcomes[currentIndex] = { id: row.id, title: row.title, published: true }
+      } catch {
+        outcomes[currentIndex] = { id: row.id, title: row.title, published: false }
+      }
+    }
+  }
+
+  await Promise.all(
+    Array.from(
+      { length: Math.min(BULK_PUBLISH_CONCURRENCY, rows.length) },
+      () => worker()
+    )
+  )
+
+  return {
+    attempted: outcomes.length,
+    published: outcomes.filter((outcome) => outcome.published).length,
+    failed: outcomes
+      .filter((outcome) => !outcome.published)
+      .map(({ id, title }) => ({ id, title })),
+    nextCursor: rows.at(-1)?.id || null,
+    hasMore: (data || []).length > BULK_PUBLISH_BATCH_SIZE,
+  }
 }
 
 export async function setUniversityPhdCandidateStatus(

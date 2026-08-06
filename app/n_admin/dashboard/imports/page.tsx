@@ -5,6 +5,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import {
   Activity,
+  CheckCheck,
   CheckCircle2,
   CircleAlert,
   Clock3,
@@ -24,15 +25,26 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 type ImportSource = {
   id: string
   name: string
   organization: string
   country: string
-  platform: "html" | "feed" | "sitemap"
+  platform: "html" | "feed" | "sitemap" | "json"
   public_url: string
   enabled: boolean
   auto_publish: boolean
@@ -82,6 +94,21 @@ type ImportPayload = {
   }
 }
 
+type BulkPublishProgress = {
+  attempted: number
+  published: number
+  total: number
+}
+
+type BulkPublishBatchResult = {
+  attempted?: number
+  published?: number
+  failed?: Array<{ id: string; title: string }>
+  nextCursor?: string | null
+  hasMore?: boolean
+  error?: string
+}
+
 const emptyPayload: ImportPayload = {
   sources: [],
   candidates: [],
@@ -129,6 +156,8 @@ export default function AdminExternalImportsPage() {
   const [loading, setLoading] = useState(true)
   const [activeAction, setActiveAction] = useState("")
   const [showIgnored, setShowIgnored] = useState(false)
+  const [bulkPublishOpen, setBulkPublishOpen] = useState(false)
+  const [bulkProgress, setBulkProgress] = useState<BulkPublishProgress | null>(null)
 
   const loadImports = useCallback(async () => {
     const response = await fetch("/api/admin/phd-imports", { cache: "no-store" })
@@ -231,6 +260,53 @@ export default function AdminExternalImportsPage() {
     await loadImports()
   }
 
+  const publishAllCandidates = async () => {
+    const total = payload.summary.pendingCandidates
+    let cursor: string | null = null
+    let attempted = 0
+    let published = 0
+    let failed = 0
+
+    setBulkPublishOpen(false)
+    setActiveAction("publish:all")
+    setBulkProgress({ attempted: 0, published: 0, total })
+
+    try {
+      do {
+        const response: Response = await fetch("/api/admin/phd-imports", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ action: "publish-batch", cursor }),
+        })
+        const result = await response.json().catch(() => null) as BulkPublishBatchResult | null
+
+        if (!response.ok) {
+          throw new Error(result?.error || "Bulk publishing could not be completed")
+        }
+
+        attempted += Number(result?.attempted || 0)
+        published += Number(result?.published || 0)
+        failed += Array.isArray(result?.failed) ? result.failed.length : 0
+        cursor = typeof result?.nextCursor === "string" ? result.nextCursor : null
+        setBulkProgress({ attempted, published, total })
+
+        if (!result?.hasMore || !cursor) break
+      } while (true)
+
+      if (failed > 0) {
+        toast.warning(`${published} positions published; ${failed} still need individual review`)
+      } else {
+        toast.success(`${published} PhD positions published successfully`)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Bulk publishing stopped unexpectedly")
+    } finally {
+      await loadImports().catch(() => toast.error("Refresh the importer to see the latest queue"))
+      setActiveAction("")
+      setBulkProgress(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-[55vh] items-center justify-center">
@@ -304,11 +380,41 @@ export default function AdminExternalImportsPage() {
                 {showIgnored ? "Restore a candidate when it should return to the publishing queue." : "Nothing is public until you approve it, unless its source has auto-publish enabled."}
               </p>
             </div>
-            <Button variant="outline" onClick={() => setShowIgnored((current) => !current)} className="h-10 gap-2">
-              {showIgnored ? <ShieldCheck className="h-4 w-4" /> : <X className="h-4 w-4" />}
-              {showIgnored ? "Show review queue" : "Show ignored"}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              {!showIgnored && payload.summary.pendingCandidates > 0 && (
+                <Button
+                  onClick={() => setBulkPublishOpen(true)}
+                  disabled={Boolean(activeAction)}
+                  className="h-10 gap-2"
+                >
+                  {activeAction === "publish:all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCheck className="h-4 w-4" />}
+                  Publish all ({payload.summary.pendingCandidates})
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => setShowIgnored((current) => !current)} disabled={Boolean(activeAction)} className="h-10 gap-2">
+                {showIgnored ? <ShieldCheck className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                {showIgnored ? "Show review queue" : "Show ignored"}
+              </Button>
+            </div>
           </div>
+
+          {bulkProgress && (
+            <div className="rounded-md border border-primary/20 bg-primary/5 p-4" role="status" aria-live="polite">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                <span className="inline-flex items-center gap-2 font-medium text-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  Publishing approved positions
+                </span>
+                <span className="text-muted-foreground">
+                  {bulkProgress.attempted} of {bulkProgress.total} reviewed
+                </span>
+              </div>
+              <Progress
+                value={bulkProgress.total > 0 ? (bulkProgress.attempted / bulkProgress.total) * 100 : 0}
+                className="mt-3 h-2"
+              />
+            </div>
+          )}
 
           {visibleCandidates.length > 0 ? (
             <div className="grid gap-4 xl:grid-cols-2">
@@ -510,6 +616,24 @@ export default function AdminExternalImportsPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={bulkPublishOpen} onOpenChange={setBulkPublishOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Publish every position in the review queue?</AlertDialogTitle>
+            <AlertDialogDescription className="leading-6">
+              This will publish all {payload.summary.pendingCandidates} pending PhD positions to the public website. Duplicate checks still run for every record, but you should only continue when the imported content is ready for visitors.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void publishAllCandidates()} className="gap-2">
+              <CheckCheck className="h-4 w-4" />
+              Publish all positions
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

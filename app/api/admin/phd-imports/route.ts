@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { createAdminClient, isAdminRequest } from "@/lib/admin-server"
 import {
   publishUniversityPhdCandidate,
+  publishUniversityPhdCandidateBatch,
   runUniversityPhdImports,
   setUniversityPhdCandidateStatus,
 } from "@/lib/phd-import/service"
@@ -21,7 +22,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Admin API is not configured." }, { status: 500 })
   }
 
-  const [sourcesResult, candidatesResult, runsResult] = await Promise.all([
+  const [
+    sourcesResult,
+    pendingCandidatesResult,
+    ignoredCandidatesResult,
+    runsResult,
+    pendingCountResult,
+    ignoredCountResult,
+  ] = await Promise.all([
     adminClient
       .from("phd_import_sources")
       .select("*")
@@ -29,7 +37,13 @@ export async function GET(request: NextRequest) {
     adminClient
       .from("phd_import_items")
       .select("*, source:phd_import_sources(name, organization)")
-      .in("status", ["pending", "ignored"])
+      .eq("status", "pending")
+      .order("first_seen_at", { ascending: false })
+      .limit(100),
+    adminClient
+      .from("phd_import_items")
+      .select("*, source:phd_import_sources(name, organization)")
+      .eq("status", "ignored")
       .order("first_seen_at", { ascending: false })
       .limit(100),
     adminClient
@@ -37,9 +51,22 @@ export async function GET(request: NextRequest) {
       .select("*, source:phd_import_sources(name)")
       .order("started_at", { ascending: false })
       .limit(40),
+    adminClient
+      .from("phd_import_items")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending"),
+    adminClient
+      .from("phd_import_items")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "ignored"),
   ])
 
-  const error = sourcesResult.error || candidatesResult.error || runsResult.error
+  const error = sourcesResult.error
+    || pendingCandidatesResult.error
+    || ignoredCandidatesResult.error
+    || runsResult.error
+    || pendingCountResult.error
+    || ignoredCountResult.error
   if (error) {
     return internalErrorResponse(
       "admin university PhD imports",
@@ -48,7 +75,10 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const candidates = candidatesResult.data || []
+  const candidates = [
+    ...(pendingCandidatesResult.data || []),
+    ...(ignoredCandidatesResult.data || []),
+  ]
   const runs = runsResult.data || []
 
   return NextResponse.json({
@@ -57,8 +87,8 @@ export async function GET(request: NextRequest) {
     runs,
     summary: {
       enabledSources: (sourcesResult.data || []).filter((source) => source.enabled).length,
-      pendingCandidates: candidates.filter((candidate) => candidate.status === "pending").length,
-      ignoredCandidates: candidates.filter((candidate) => candidate.status === "ignored").length,
+      pendingCandidates: pendingCountResult.count || 0,
+      ignoredCandidates: ignoredCountResult.count || 0,
       recentFailures: runs.filter((run) => run.status === "failed").length,
     },
   })
@@ -90,6 +120,16 @@ export async function POST(request: NextRequest) {
         includeDisabled: Boolean(sourceIds?.length),
       })
       return NextResponse.json({ results })
+    }
+
+    if (action === "publish-batch") {
+      const cursor = body?.cursor == null ? null : toNullableUuid(body.cursor)
+      if (body?.cursor != null && !cursor) {
+        return NextResponse.json({ error: "A valid batch cursor is required." }, { status: 400 })
+      }
+
+      const result = await publishUniversityPhdCandidateBatch(adminClient, cursor)
+      return NextResponse.json(result)
     }
 
     const candidateId = toNullableUuid(body?.candidateId)
