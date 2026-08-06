@@ -303,7 +303,10 @@ function extractGenericDeadline(bodyText: string, discovered: DiscoveredProgram,
 }
 
 async function parseProgramDetail(source: TraineeImportSourceDefinition, discovered: DiscoveredProgram) {
-  const response = await fetchApprovedTraineeSourceText(source, discovered.url, { maxBytes: 4 * 1024 * 1024 })
+  const response = await fetchApprovedTraineeSourceText(source, discovered.url, {
+    maxBytes: 4 * 1024 * 1024,
+    timeoutMs: source.adapter === "milkround-html" ? 60_000 : 25_000,
+  })
   const $ = load(response.text)
   const posting = parseJobPosting($)
   const postingDescription = stringValue(posting?.description)
@@ -526,7 +529,10 @@ export async function scrapeTraineeProgramSource(source: TraineeImportSourceDefi
     discovered = await discoverGraduateships(source)
   } else {
     for (const url of listingUrls(source)) {
-      const response = await fetchApprovedTraineeSourceText(source, url, { maxBytes: source.maxListingBytes })
+      const response = await fetchApprovedTraineeSourceText(source, url, {
+        maxBytes: source.maxListingBytes,
+        timeoutMs: source.adapter === "milkround-html" ? 60_000 : 25_000,
+      })
       if (source.adapter === "higherin-state") discovered.push(...discoverHigherin(source, response.text))
       if (source.adapter === "targetjobs-html") discovered.push(...discoverTargetJobs(source, response.text))
       if (source.adapter === "milkround-html") discovered.push(...discoverMilkround(source, response.text))
