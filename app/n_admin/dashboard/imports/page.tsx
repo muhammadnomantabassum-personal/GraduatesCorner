@@ -142,7 +142,7 @@ function formatDate(value: string | null, includeTime = false) {
 }
 
 function sourceHealth(source: ImportSource) {
-  if (source.scannable === false) return { label: "Permission required", className: "bg-[#FBBC04]/15 text-[#8A5A00]" }
+  if (source.scannable === false) return { label: "Feed required", className: "bg-[#FBBC04]/15 text-[#8A5A00]" }
   if (!source.enabled) return { label: "Paused", className: "bg-muted text-muted-foreground" }
   if (source.consecutive_failures > 0) {
     return { label: "Needs attention", className: "bg-[#EA4335]/10 text-[#C5221F]" }

@@ -77,7 +77,8 @@ export const TRAINEE_IMPORT_SOURCES: TraineeImportSourceDefinition[] = [
     maxJobs: 25,
     maxListingBytes: 3 * 1024 * 1024,
     crawlDelayMs: 1_000,
-    scannable: true,
+    scannable: false,
+    accessNote: "Milkround listings time out from the production Vercel network. Keep this source paused until an authorized feed or reliable server endpoint is available.",
   },
   {
     id: "graduate-programmes-directory",

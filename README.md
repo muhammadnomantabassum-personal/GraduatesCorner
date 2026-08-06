@@ -82,7 +82,7 @@ robots directives, and removal requests.
 
 The trainee importer follows the same review-first workflow at
 `Admin > Program Imports`. TraineeGuiden, Graduateships, TargetJobs, Higherin,
-and Milkround have source-specific adapters; Vercel scans enabled sources daily
+and Milkround have source-specific adapters; Vercel scans production-ready sources daily
 at 08:00 UTC. Candidates with usable future deadlines enter a private queue and
 can be published individually or through the duplicate-safe `Publish all`
 action.
@@ -98,3 +98,6 @@ action.
   reliable current-vacancy feed with deadlines. Gradcracker and EURES remain
   permission-gated because their published terms do not permit this scraping
   and republication workflow.
+- Milkround remains registered but paused because listing requests time out
+  from the production Vercel network. Enable it only after connecting a
+  reliable authorized feed or server endpoint.

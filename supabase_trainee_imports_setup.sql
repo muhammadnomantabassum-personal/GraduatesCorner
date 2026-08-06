@@ -116,7 +116,7 @@ INSERT INTO public.trainee_import_sources (
   ('graduateships', 'Graduateships graduate programmes', 'Graduateships', 'Europe', 'https://graduateships.com/job-location/eu/', 'https://graduateships.com/', 'html', TRUE),
   ('targetjobs', 'TargetJobs graduate schemes', 'TargetJobs', 'United Kingdom', 'https://targetjobs.co.uk/s/jobs/graduate-scheme', 'https://targetjobs.co.uk/', 'html', TRUE),
   ('higherin', 'Higherin graduate schemes', 'Higherin', 'United Kingdom', 'https://higherin.com/search-jobs/graduate-scheme', 'https://higherin.com/search-jobs/graduate-scheme', 'json', TRUE),
-  ('milkround', 'Milkround graduate schemes', 'Milkround', 'United Kingdom', 'https://www.milkround.com/jobs/graduate-scheme', 'https://www.milkround.com/', 'html', TRUE),
+  ('milkround', 'Milkround graduate schemes', 'Milkround', 'United Kingdom', 'https://www.milkround.com/jobs/graduate-scheme', 'https://www.milkround.com/', 'html', FALSE),
   ('graduate-programmes-directory', 'Graduate Programmes directory', 'Graduate Programmes', 'International', 'https://www.graduate-programmes.com/en/graduate-programmes-list', 'https://www.graduate-programmes.com/en/graduate-programmes-list', 'html', FALSE),
   ('gradcracker', 'Gradcracker', 'Gradcracker', 'United Kingdom', 'https://www.gradcracker.com/', 'https://www.gradcracker.com/', 'html', FALSE),
   ('eures', 'EURES job mobility portal', 'European Labour Authority', 'European Union', 'https://europa.eu/eures/portal/', 'https://europa.eu/eures/portal/', 'html', FALSE)
@@ -129,3 +129,6 @@ ON CONFLICT (id) DO UPDATE SET
   platform = EXCLUDED.platform,
   updated_at = NOW();
 
+UPDATE public.trainee_import_sources
+SET enabled = FALSE, auto_publish = FALSE, updated_at = NOW()
+WHERE id IN ('milkround', 'graduate-programmes-directory', 'gradcracker', 'eures');

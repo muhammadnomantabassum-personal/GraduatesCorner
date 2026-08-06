@@ -7,9 +7,10 @@ function assert(condition, message) {
 }
 
 assert(TRAINEE_IMPORT_SOURCES.length === 8, "Expected all eight requested trainee sources")
-assert(TRAINEE_IMPORT_SOURCES.filter((source) => source.scannable).length === 5, "Expected five approved automated sources")
+assert(TRAINEE_IMPORT_SOURCES.filter((source) => source.scannable).length === 4, "Expected four production-ready automated sources")
 assert(getTraineeImportSource("eures")?.scannable === false, "EURES must remain permission-gated")
 assert(getTraineeImportSource("gradcracker")?.scannable === false, "Gradcracker must remain permission-gated")
+assert(getTraineeImportSource("milkround")?.scannable === false, "Milkround must remain paused while production requests time out")
 
 assert(
   normalizeTraineeUrl("https://example.com/jobs/42/?utm_source=test") === "https://example.com/jobs/42",
