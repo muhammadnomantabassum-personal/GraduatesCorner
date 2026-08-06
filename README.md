@@ -77,3 +77,24 @@ user-supplied feed URLs are not accepted.
 Only import public vacancy data that the source permits you to access. Keep the
 official source link on every imported listing and honor applicable terms,
 robots directives, and removal requests.
+
+## Trainee program imports
+
+The trainee importer follows the same review-first workflow at
+`Admin > Program Imports`. TraineeGuiden, Graduateships, TargetJobs, Higherin,
+and Milkround have source-specific adapters; Vercel scans enabled sources daily
+at 08:00 UTC. Candidates with usable future deadlines enter a private queue and
+can be published individually or through the duplicate-safe `Publish all`
+action.
+
+- Apply `supabase_trainee_imports_setup.sql` in an existing environment, or use
+  the complete `supabase_setup.sql` for a fresh environment.
+- Repeated scans match canonical URLs, source vacancy IDs, and a strict
+  title/company/deadline fallback before creating a public trainee program.
+- Imported descriptions are concise attributed factual summaries. The original
+  listing remains the canonical source for full responsibilities, eligibility,
+  benefits, and application instructions.
+- Graduate Programmes is registered but disabled because it does not expose a
+  reliable current-vacancy feed with deadlines. Gradcracker and EURES remain
+  permission-gated because their published terms do not permit this scraping
+  and republication workflow.

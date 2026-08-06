@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { toast } from "sonner"
 import {
   Activity,
@@ -44,7 +45,7 @@ type ImportSource = {
   name: string
   organization: string
   country: string
-  platform: "html" | "feed" | "sitemap" | "json"
+  platform: "html" | "feed" | "sitemap" | "json" | "wordpress"
   public_url: string
   enabled: boolean
   auto_publish: boolean
@@ -52,14 +53,19 @@ type ImportSource = {
   last_success_at: string | null
   consecutive_failures: number
   last_error: string | null
+  scannable?: boolean
+  access_note?: string | null
 }
 
 type ImportCandidate = {
   id: string
   title: string
-  organization: string
+  organization?: string
+  company?: string
   location: string
-  subject: string
+  subject?: string
+  field?: string
+  duration?: string
   deadline: string
   published_at: string | null
   external_url: string
@@ -136,6 +142,7 @@ function formatDate(value: string | null, includeTime = false) {
 }
 
 function sourceHealth(source: ImportSource) {
+  if (source.scannable === false) return { label: "Permission required", className: "bg-[#FBBC04]/15 text-[#8A5A00]" }
   if (!source.enabled) return { label: "Paused", className: "bg-muted text-muted-foreground" }
   if (source.consecutive_failures > 0) {
     return { label: "Needs attention", className: "bg-[#EA4335]/10 text-[#C5221F]" }
@@ -152,6 +159,11 @@ function runStatus(run: ImportRun) {
 }
 
 export default function AdminExternalImportsPage() {
+  const pathname = usePathname()
+  const isTrainee = pathname.includes("/trainee-imports")
+  const apiPath = isTrainee ? "/api/admin/trainee-imports" : "/api/admin/phd-imports"
+  const publicPath = isTrainee ? "/n_admin/dashboard/trainee-programs" : "/n_admin/dashboard/phd-positions"
+  const opportunityLabelPlural = isTrainee ? "trainee programs" : "PhD positions"
   const [payload, setPayload] = useState<ImportPayload>(emptyPayload)
   const [loading, setLoading] = useState(true)
   const [activeAction, setActiveAction] = useState("")
@@ -160,17 +172,17 @@ export default function AdminExternalImportsPage() {
   const [bulkProgress, setBulkProgress] = useState<BulkPublishProgress | null>(null)
 
   const loadImports = useCallback(async () => {
-    const response = await fetch("/api/admin/phd-imports", { cache: "no-store" })
+    const response = await fetch(apiPath, { cache: "no-store" })
     const result = await response.json().catch(() => null)
-    if (!response.ok) throw new Error(result?.error || "Unable to load university imports")
+    if (!response.ok) throw new Error(result?.error || "Unable to load opportunity imports")
     setPayload(result)
-  }, [])
+  }, [apiPath])
 
   useEffect(() => {
     loadImports()
-      .catch(() => toast.error("Unable to load the university importer"))
+      .catch(() => toast.error(`Unable to load the ${isTrainee ? "trainee" : "university"} importer`))
       .finally(() => setLoading(false))
-  }, [loadImports])
+  }, [isTrainee, loadImports])
 
   const visibleCandidates = useMemo(
     () => payload.candidates.filter((candidate) => showIgnored ? candidate.status === "ignored" : candidate.status === "pending"),
@@ -180,7 +192,7 @@ export default function AdminExternalImportsPage() {
   const scanSources = async (sourceIds?: string[]) => {
     const actionId = sourceIds?.[0] ? `scan:${sourceIds[0]}` : "scan:all"
     setActiveAction(actionId)
-    const response = await fetch("/api/admin/phd-imports", {
+    const response = await fetch(apiPath, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ action: "scan", sourceIds }),
@@ -189,7 +201,7 @@ export default function AdminExternalImportsPage() {
     setActiveAction("")
 
     if (!response.ok) {
-      toast.error(result?.error || "University scan failed")
+      toast.error(result?.error || "Source scan failed")
       return
     }
 
@@ -201,7 +213,7 @@ export default function AdminExternalImportsPage() {
       }),
       { added: 0, found: 0, errors: 0 }
     )
-    toast.success(`Scan complete: ${totals.added} new from ${totals.found} current PhD vacancies`)
+    toast.success(`Scan complete: ${totals.added} new from ${totals.found} current ${opportunityLabelPlural}`)
     if (totals.errors) toast.warning(`${totals.errors} vacancy records need another check`)
     await loadImports()
   }
@@ -212,7 +224,7 @@ export default function AdminExternalImportsPage() {
   ) => {
     const actionId = `source:${source.id}`
     setActiveAction(actionId)
-    const response = await fetch("/api/admin/phd-imports", {
+    const response = await fetch(apiPath, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ sourceId: source.id, ...update }),
@@ -237,7 +249,7 @@ export default function AdminExternalImportsPage() {
   ) => {
     const actionId = `${action}:${candidate.id}`
     setActiveAction(actionId)
-    const response = await fetch("/api/admin/phd-imports", {
+    const response = await fetch(apiPath, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ action, candidateId: candidate.id }),
@@ -252,7 +264,7 @@ export default function AdminExternalImportsPage() {
 
     toast.success(
       action === "publish"
-        ? "PhD position published"
+        ? `${isTrainee ? "Trainee program" : "PhD position"} published`
         : action === "ignore"
           ? "Candidate moved to ignored"
           : "Candidate restored to review"
@@ -273,7 +285,7 @@ export default function AdminExternalImportsPage() {
 
     try {
       do {
-        const response: Response = await fetch("/api/admin/phd-imports", {
+        const response: Response = await fetch(apiPath, {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ action: "publish-batch", cursor }),
@@ -296,7 +308,7 @@ export default function AdminExternalImportsPage() {
       if (failed > 0) {
         toast.warning(`${published} positions published; ${failed} still need individual review`)
       } else {
-        toast.success(`${published} PhD positions published successfully`)
+        toast.success(`${published} ${opportunityLabelPlural} published successfully`)
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Bulk publishing stopped unexpectedly")
@@ -312,7 +324,7 @@ export default function AdminExternalImportsPage() {
       <div className="flex min-h-[55vh] items-center justify-center">
         <div className="text-center">
           <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-          <p className="mt-3 text-sm text-muted-foreground">Loading university source intelligence...</p>
+          <p className="mt-3 text-sm text-muted-foreground">Loading source intelligence...</p>
         </div>
       </div>
     )
@@ -324,18 +336,22 @@ export default function AdminExternalImportsPage() {
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase text-primary">
             <Satellite className="h-4 w-4" />
-            University source network
+            {isTrainee ? "Graduate opportunity network" : "University source network"}
           </div>
-          <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">PhD Import Operations</h1>
+          <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
+            {isTrainee ? "Trainee Import Operations" : "PhD Import Operations"}
+          </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Monitor approved Swedish university career portals, review newly discovered PhD positions, and control publishing from one workspace.
+            {isTrainee
+              ? "Scan approved graduate-program sources, review newly discovered trainee opportunities, and publish individually or in one controlled batch."
+              : "Monitor approved university career portals, review newly discovered PhD positions, and control publishing from one workspace."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" asChild className="h-11 gap-2">
-            <Link href="/n_admin/dashboard/phd-positions">
+            <Link href={publicPath}>
               <GraduationCap className="h-4 w-4" />
-              Published positions
+              Published {isTrainee ? "programs" : "positions"}
             </Link>
           </Button>
           <Button
@@ -350,7 +366,7 @@ export default function AdminExternalImportsPage() {
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Importer summary">
-        <MetricCard icon={University} label="Enabled sources" value={payload.summary.enabledSources} helper={`${payload.sources.length} approved portals`} tone="blue" />
+        <MetricCard icon={University} label="Enabled sources" value={payload.summary.enabledSources} helper={`${payload.sources.length} registered sources`} tone="blue" />
         <MetricCard icon={DatabaseZap} label="Review queue" value={payload.summary.pendingCandidates} helper="New, unpublished positions" tone="green" />
         <MetricCard icon={Clock3} label="Ignored" value={payload.summary.ignoredCandidates} helper="Available for restoration" tone="yellow" />
         <MetricCard icon={CircleAlert} label="Recent failures" value={payload.summary.recentFailures} helper="Across the latest 40 runs" tone="red" />
@@ -422,16 +438,16 @@ export default function AdminExternalImportsPage() {
                 <Card key={candidate.id} className="border-border/75 shadow-sm">
                   <CardContent className="flex h-full flex-col p-5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge className="bg-[#34A853]/10 text-[#188038] hover:bg-[#34A853]/10">PhD</Badge>
-                      <Badge variant="outline">{relationName(candidate.source) || candidate.organization}</Badge>
+                      <Badge className="bg-[#34A853]/10 text-[#188038] hover:bg-[#34A853]/10">{isTrainee ? "Trainee" : "PhD"}</Badge>
+                      <Badge variant="outline">{relationName(candidate.source) || candidate.organization || candidate.company}</Badge>
                       <span className="ml-auto text-xs text-muted-foreground">Found {formatDate(candidate.first_seen_at)}</span>
                     </div>
                     <h3 className="mt-4 text-base font-semibold leading-6 text-foreground">{candidate.title}</h3>
                     <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
                       <span>{candidate.location}</span>
-                      <span>{candidate.subject}</span>
+                      <span>{candidate.subject || candidate.field}</span>
                       <span>Deadline {formatDate(candidate.deadline)}</span>
-                      <span>{candidate.published_at ? `Published ${formatDate(candidate.published_at)}` : "Publication date not supplied"}</span>
+                      <span>{candidate.duration || (candidate.published_at ? `Published ${formatDate(candidate.published_at)}` : "Publication date not supplied")}</span>
                     </div>
                     <div className="mt-auto flex flex-wrap items-center gap-2 pt-5">
                       <Button variant="outline" size="sm" asChild className="h-10 gap-2">
@@ -482,7 +498,7 @@ export default function AdminExternalImportsPage() {
             <EmptyState
               icon={showIgnored ? RotateCcw : ShieldCheck}
               title={showIgnored ? "No ignored candidates" : "The review queue is clear"}
-              description={showIgnored ? "Candidates you ignore will remain available here." : "Run a source scan to check for newly published university PhD positions."}
+              description={showIgnored ? "Candidates you ignore will remain available here." : `Run a source scan to check for newly published ${opportunityLabelPlural}.`}
             />
           )}
         </TabsContent>
@@ -514,7 +530,7 @@ export default function AdminExternalImportsPage() {
                         size="icon"
                         className="h-10 w-10"
                         title={`Scan ${source.organization}`}
-                        disabled={Boolean(activeAction)}
+                        disabled={Boolean(activeAction) || source.scannable === false}
                         onClick={() => scanSources([source.id])}
                       >
                         {activeAction === `scan:${source.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
@@ -522,9 +538,9 @@ export default function AdminExternalImportsPage() {
                       </Button>
                     </div>
 
-                    {source.last_error && (
+                    {(source.access_note || source.last_error) && (
                       <div className="mt-4 rounded-md border border-[#EA4335]/20 bg-[#EA4335]/5 p-3 text-xs leading-5 text-[#A50E0E]">
-                        {source.last_error}
+                        {source.access_note || source.last_error}
                       </div>
                     )}
 
@@ -536,7 +552,7 @@ export default function AdminExternalImportsPage() {
                         </span>
                         <Switch
                           checked={source.enabled}
-                          disabled={busy}
+                          disabled={busy || source.scannable === false}
                           onCheckedChange={(enabled) => updateSource(source, { enabled })}
                           aria-label={`Enable scheduled scans for ${source.organization}`}
                         />
@@ -551,7 +567,7 @@ export default function AdminExternalImportsPage() {
                         </span>
                         <Switch
                           checked={source.auto_publish}
-                          disabled={busy || !source.enabled}
+                          disabled={busy || !source.enabled || source.scannable === false}
                           onCheckedChange={(autoPublish) => updateSource(source, { autoPublish })}
                           aria-label={`Auto-publish positions from ${source.organization}`}
                         />
@@ -563,7 +579,7 @@ export default function AdminExternalImportsPage() {
                         {source.last_success_at ? `Last successful scan ${formatDate(source.last_success_at, true)}` : "Awaiting first successful scan"}
                       </span>
                       <a href={source.public_url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center gap-1.5 font-medium text-primary hover:underline">
-                        Careers page
+                        Source page
                         <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                     </div>
@@ -596,7 +612,7 @@ export default function AdminExternalImportsPage() {
                       const status = runStatus(run)
                       return (
                         <tr key={run.id} className="hover:bg-secondary/25">
-                          <td className="px-4 py-3 font-medium text-foreground">{relationName(run.source) || "University source"}</td>
+                          <td className="px-4 py-3 font-medium text-foreground">{relationName(run.source) || "Import source"}</td>
                           <td className="px-4 py-3"><Badge className={status.className}>{status.label}</Badge></td>
                           <td className="px-4 py-3 text-muted-foreground">{formatDate(run.started_at, true)}</td>
                           <td className="px-4 py-3 text-right">{run.found_count}</td>
@@ -622,7 +638,7 @@ export default function AdminExternalImportsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Publish every position in the review queue?</AlertDialogTitle>
             <AlertDialogDescription className="leading-6">
-              This will publish all {payload.summary.pendingCandidates} pending PhD positions to the public website. Duplicate checks still run for every record, but you should only continue when the imported content is ready for visitors.
+              This will publish all {payload.summary.pendingCandidates} pending {opportunityLabelPlural} to the public website. Duplicate checks still run for every record, but you should only continue when the imported content is ready for visitors.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

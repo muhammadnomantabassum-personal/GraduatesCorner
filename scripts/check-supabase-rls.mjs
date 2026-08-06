@@ -103,7 +103,14 @@ try {
     )
   }
 
-  for (const table of ["phd_import_sources", "phd_import_runs", "phd_import_items"]) {
+  for (const table of [
+    "phd_import_sources",
+    "phd_import_runs",
+    "phd_import_items",
+    "trainee_import_sources",
+    "trainee_import_runs",
+    "trainee_import_items",
+  ]) {
     const result = await query(`${table}?select=*&limit=1`)
     record(`${table} is server-only`, result.status >= 400, `HTTP ${result.status}`)
   }

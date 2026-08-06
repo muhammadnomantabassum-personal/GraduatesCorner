@@ -61,6 +61,7 @@ const sidebarSections = [
     links: [
       { href: "/n_admin/dashboard/trainee-programs", label: "Programs", mobileLabel: "Programs", icon: Briefcase, mobileHidden: false },
       { href: "/n_admin/dashboard/trainee-programs/new", label: "Post Program", mobileLabel: "Post", icon: Plus, mobileHidden: true },
+      { href: "/n_admin/dashboard/trainee-imports", label: "Program Imports", mobileLabel: "Imports", icon: DatabaseZap, mobileHidden: false },
     ]
   },
   {
