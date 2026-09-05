@@ -43,7 +43,7 @@ rankings cannot be guaranteed; avoid purchased or automated backlinks.
 
 ## Traffic analytics
 
-Vercel Web Analytics is the platform's only website traffic service. It is loaded through `@vercel/analytics`, uses anonymized measurement without analytics cookies, and is viewed from the linked Vercel project's Analytics tab. The application does not load Google Analytics or store Google reporting credentials.
+Optional website analytics are disabled. The application does not load Vercel Analytics or Google Analytics. Re-enabling analytics requires a review of its lawful basis, provider terms, applicable consent requirements, and privacy notice.
 
 ## University PhD imports
 
@@ -101,3 +101,7 @@ action.
 - Milkround remains registered but paused because listing requests time out
   from the production Vercel network. Enable it only after connecting a
   reliable authorized feed or server endpoint.
+
+## GDPR readiness
+
+Privacy improvements and outstanding production requirements are documented in [docs/GDPR_READINESS.md](docs/GDPR_READINESS.md). Apply `supabase_privacy_upgrade.sql` to existing databases and configure the legal operator details before launch. These code changes alone do not establish GDPR compliance.

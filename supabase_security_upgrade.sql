@@ -152,8 +152,8 @@ CREATE POLICY "University import items are server-only"
 
 CREATE POLICY "Public profiles are viewable by everyone"
   ON public.profiles FOR SELECT
-  TO anon, authenticated
-  USING (true);
+  TO authenticated
+  USING (auth.uid() = id);
 
 CREATE POLICY "Users can insert their own profile"
   ON public.profiles FOR INSERT

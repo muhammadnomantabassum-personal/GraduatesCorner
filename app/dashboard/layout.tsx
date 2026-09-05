@@ -283,6 +283,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem asChild><Link href="/privacy">Your Privacy &amp; Data</Link></DropdownMenuItem>
                 <div className="px-2 py-1.5">
                   <p className="text-sm font-medium text-foreground">{user.name}</p>
                   <p className="text-xs text-muted-foreground capitalize">{user.type}</p>

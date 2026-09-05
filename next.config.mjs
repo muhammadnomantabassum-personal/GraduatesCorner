@@ -6,11 +6,11 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self' https://*.supabase.co",
-  `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ''} https://va.vercel-scripts.com`,
+  `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co https://lh3.googleusercontent.com",
   "font-src 'self' data:",
-  `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.vercel-insights.com${isDevelopment ? ' ws://localhost:* ws://127.0.0.1:*' : ''}`,
+  `connect-src 'self' https://*.supabase.co wss://*.supabase.co${isDevelopment ? ' ws://localhost:* ws://127.0.0.1:*' : ''}`,
   "worker-src 'self' blob:",
   ...(!isDevelopment ? ['upgrade-insecure-requests'] : []),
 ].join('; ')

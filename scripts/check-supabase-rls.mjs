@@ -84,7 +84,7 @@ try {
   record("profile email is denied to anon", sensitiveProfileColumn.status >= 400)
 
   const publicProfileColumns = await query("profiles?select=id,name,type,is_verified&limit=1")
-  record("public profile projection is available", publicProfileColumns.status === 200)
+  record("private profiles cannot be enumerated by anon", publicProfileColumns.status === 200 && Array.isArray(publicProfileColumns.body) && publicProfileColumns.body.length === 0)
 
   const adminUsers = await query("admin_users?select=id&limit=1")
   record(

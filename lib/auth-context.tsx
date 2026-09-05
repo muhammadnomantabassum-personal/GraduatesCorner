@@ -57,7 +57,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     type: (authUser.user_metadata?.type as UserType) || "student",
     organization: undefined,
     bio: undefined,
-    avatar: authUser.user_metadata?.avatar_url || undefined,
+    // Wait for the profile to determine whether the photo was explicitly removed.
+    avatar: undefined,
     createdAt: authUser.created_at || new Date().toISOString(),
     welcomeEmailSent: false,
     isVerified: false,
@@ -85,7 +86,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           type: p.type as UserType,
           organization: p.organization ?? undefined,
           bio: p.bio ?? undefined,
-          avatar: p.avatar || authUser.user_metadata?.avatar_url || undefined,
+          // Empty string is an explicit removal; do not restore the Google photo.
+          avatar: p.avatar === "" ? undefined : p.avatar || authUser.user_metadata?.avatar_url || undefined,
           createdAt: p.created_at,
           welcomeEmailSent: false,
           isVerified: p.is_verified ?? false,

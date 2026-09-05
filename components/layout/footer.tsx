@@ -18,6 +18,7 @@ const footerLinks = {
     { href: "/feed.xml", label: "RSS Feed" },
   ],
   legal: [
+    { href: "/privacy", label: "Your Privacy & Data" },
     { href: "/privacy-policy", label: "Privacy Policy" },
     { href: "/terms-of-service", label: "Terms of Service" },
   ],

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/lib/auth-context'
 import { WishlistProvider } from '@/lib/wishlist-context'
 import { ComparisonProvider } from '@/lib/comparison-context'
@@ -118,9 +117,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="preconnect" href="https://images.unsplash.com" />
         {supabaseOrigin ? <link rel="preconnect" href={supabaseOrigin} /> : null}
-        <link rel="dns-prefetch" href="https://images.unsplash.com" />
         {supabaseOrigin ? <link rel="dns-prefetch" href={supabaseOrigin} /> : null}
       </head>
       <body className="bg-background font-sans antialiased" suppressHydrationWarning>
@@ -157,7 +154,6 @@ export default function RootLayout({
             </ComparisonProvider>
           </WishlistProvider>
         </AuthProvider>
-        <Analytics />
       </body>
     </html>
   )

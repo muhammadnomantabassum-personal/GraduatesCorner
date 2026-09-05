@@ -1,134 +1,26 @@
+﻿import Link from "next/link"
 import { PublicLayout } from "@/components/layout/public-layout"
-import { Shield } from "lucide-react"
 
 export default function PrivacyPolicyPage() {
-  return (
-    <PublicLayout>
-      {/* Hero */}
-      <section className="border-b border-border bg-primary px-4 py-14 text-primary-foreground lg:py-18">
-        <div className="mx-auto max-w-3xl text-center">
-          <Shield className="mx-auto mb-5 h-10 w-10 text-accent" />
-          <h1 className="mb-3 text-3xl font-bold tracking-tight lg:text-4xl">Privacy Policy</h1>
-          <p className="text-[15px] text-primary-foreground/60">
-            Last updated: July 14, 2026
-          </p>
-        </div>
-      </section>
-
-      {/* Content */}
-      <section className="px-4 py-14 lg:py-18">
-        <div className="mx-auto max-w-3xl">
-          <div className="space-y-10 text-[15px] leading-[1.8] text-muted-foreground">
-            <div>
-              <h2 className="mb-3 text-lg font-semibold text-foreground">1. Introduction</h2>
-              <p>
-                Graduates Corner (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;) is
-                committed to protecting your privacy. This Privacy Policy explains how we collect,
-                use, disclose, and safeguard your information when you visit our platform, including
-                any related services, features, or content we offer.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="mb-3 text-lg font-semibold text-foreground">2. Information We Collect</h2>
-              <p className="mb-3">We may collect personal information that you voluntarily provide when you:</p>
-              <ul className="ml-5 list-disc space-y-1.5">
-                <li>Register for an account (name, email address, role)</li>
-                <li>Create or update your profile</li>
-                <li>Submit thesis listings or trainee program postings</li>
-                <li>Contact us through forms or email</li>
-                <li>Subscribe to newsletters or updates</li>
-              </ul>
-              <p className="mt-3">
-                We process limited technical data needed to operate and secure the platform.
-                Vercel Web Analytics provides anonymized usage measurements such as page activity,
-                general location, browser, and device category without analytics cookies.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="mb-3 text-lg font-semibold text-foreground">3. How We Use Your Information</h2>
-              <p className="mb-3">We use the information we collect to:</p>
-              <ul className="ml-5 list-disc space-y-1.5">
-                <li>Provide, operate, and maintain our platform</li>
-                <li>Improve, personalize, and expand our services</li>
-                <li>Communicate with you about updates, offers, and support</li>
-                <li>Process and manage account registrations</li>
-                <li>Analyze usage trends to enhance user experience</li>
-                <li>Detect, prevent, and address technical or security issues</li>
-              </ul>
-            </div>
-
-            <div>
-              <h2 className="mb-3 text-lg font-semibold text-foreground">4. Sharing Your Information</h2>
-              <p>
-                We do not sell, trade, or rent your personal information to third parties. We may
-                share data with service providers that support the platform, including Supabase for
-                authentication and database services and Vercel for hosting and privacy-friendly
-                web analytics. We may also disclose information if required by law or to protect our
-                rights.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="mb-3 text-lg font-semibold text-foreground">5. Data Security</h2>
-              <p>
-                We implement industry-standard security measures to protect your personal
-                information. However, no method of electronic transmission or storage is 100%
-                secure. While we strive to use commercially acceptable means to protect your data,
-                we cannot guarantee absolute security.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="mb-3 text-lg font-semibold text-foreground">6. Local Storage and Analytics</h2>
-              <p>
-                Essential cookies and local storage support authentication, security, and saved
-                preferences. Vercel Web Analytics measures aggregated, anonymized website activity
-                without analytics cookies. Graduates Corner does not use Google Analytics or
-                advertising trackers.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="mb-3 text-lg font-semibold text-foreground">7. Your Rights</h2>
-              <p className="mb-3">Depending on your location, you may have the right to:</p>
-              <ul className="ml-5 list-disc space-y-1.5">
-                <li>Access the personal data we hold about you</li>
-                <li>Request correction of inaccurate data</li>
-                <li>Request deletion of your personal data</li>
-                <li>Object to or restrict processing of your data</li>
-                <li>Data portability</li>
-              </ul>
-              <p className="mt-3">
-                To exercise these rights, please contact us at{" "}
-                <a href="mailto:admin@graduatescorner.com" className="font-medium text-accent underline underline-offset-2 hover:text-accent/80">
-                  admin@graduatescorner.com
-                </a>.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="mb-3 text-lg font-semibold text-foreground">8. Changes to This Policy</h2>
-              <p>
-                We may update this Privacy Policy from time to time. We will notify you of any
-                changes by posting the new policy on this page and updating the &ldquo;Last
-                updated&rdquo; date. We encourage you to review this policy periodically.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="mb-3 text-lg font-semibold text-foreground">9. Contact Us</h2>
-              <p>
-                If you have questions about this Privacy Policy, please contact us at{" "}
-                <a href="mailto:admin@graduatescorner.com" className="font-medium text-accent underline underline-offset-2 hover:text-accent/80">
-                  admin@graduatescorner.com
-                </a>.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-    </PublicLayout>
-  )
+  const sections = [
+    ["Data and purposes", "We use your name, email, role, authentication details, optional profile information, saved opportunities, and application markers to provide your requested account services (Article 6(1)(b), contract). Optional profile fields are not required to register. Listings, blogs, testimonials, and comments are reviewed for publication at your request. Published content and author names may be seen by anyone, including search engines. Avoid submitting sensitive information or information about others without permission."],
+    ["Security and correspondence", "Hosting and authentication providers process technical information such as IP addresses and request logs to deliver and secure the service. Security and abuse prevention rely on legitimate interests in protecting the platform (Article 6(1)(f)), subject to a balancing assessment. Support correspondence is used to respond to your request; legal rights requests are handled to comply with our obligations (Article 6(1)(c)). The contact form opens your email application; it does not itself submit a message to our database."],
+    ["Providers and international transfers", "We use Supabase for authentication, database, and uploaded-file storage, and Vercel for hosting. If you choose Google sign-in, we receive identity details such as name, email, and profile image from Google. Opportunity listings may come from public university and employer websites, with source links. External application sites operate under their own privacy notices. Provider processing locations, subprocessors, and transfers outside the EEA must be confirmed before production launch. Transfers require an applicable adequacy decision or appropriate safeguards, such as standard contractual clauses and any necessary supplementary measures. Contact us for details and copies of applicable safeguards."],
+    ["Cookies, browser storage, and analytics", "Optional website analytics are disabled. Authentication cookies maintain your session; temporary registration cookies expire after ten minutes and the legacy administrator session after one day. Browser storage supports requested features such as opportunity comparison and interface preferences and can be cleared in browser settings. Clearing authentication storage signs you out. Provider-managed session lifetimes depend on authentication configuration. Images may be served through Supabase, Google, or Unsplash. We do not use advertising trackers."],
+    ["Retention and deletion", "Account records are used for the duration of the account. Content may remain published until removed, including author names stored separately from the account. Deletion requests must include review of content, uploaded files, caches, and provider copies. Data may be retained where required by law or necessary for legal claims, with access restricted. Production retention periods for inactive accounts, correspondence, logs, backups, and cached images are still being finalized and must be documented before launch. Contact us for applicable periods. Removal from backups or third-party search caches is not necessarily immediate."],
+    ["Your rights", "You may request access, correction, erasure, restriction, and, where applicable, portability. You may object to processing based on legitimate interests. Where processing relies on consent, you may withdraw it without affecting earlier lawful processing. Requests normally receive a response within one month; for complex or numerous requests, up to two further months are allowed if we explain the extension within the first month. We may request proportionate identity verification and will explain any lawful refusal. Account registration is not consent to marketing."],
+    ["Recommendations and complaints", "The opportunity assistant uses listing information and filters to help discovery; it does not make admission or employment decisions. You may complain to a supervisory authority, including in the country where you live, work, or where a suspected infringement occurred. In Sweden, the authority is Integritetsskyddsmyndigheten (IMY). You do not need to contact us before complaining."],
+  ]
+  return <PublicLayout><section className="mx-auto max-w-3xl space-y-8 px-6 py-14 text-[15px] leading-relaxed">
+    <h1 className="text-3xl font-bold">Privacy notice</h1>
+    <p>Last updated: September 5, 2026. We will update this notice when processing changes and provide additional notice where required.</p>
+    <section className="space-y-3"><h2 className="text-xl font-semibold">Who is responsible</h2>
+      <p>{process.env.PRIVACY_CONTROLLER_NAME || "Graduates Corner — legal operator details pending confirmation."}</p>
+      <p>{process.env.PRIVACY_CONTROLLER_ADDRESS || "The operator’s postal address must be supplied before production launch."}</p>
+      <p>Privacy contact: <a className="underline" href="mailto:admin@graduatescorner.com">admin@graduatescorner.com</a>.</p>
+      <Link className="underline" href="/privacy">Download your account data or exercise your rights</Link>
+    </section>
+    {sections.map(([title, text]) => <section key={title} className="space-y-3"><h2 className="text-xl font-semibold">{title}</h2><p className="text-muted-foreground">{text}</p></section>)}
+    <p><a className="underline" href="https://www.imy.se/en/individuals/">Swedish supervisory authority (IMY)</a></p>
+  </section></PublicLayout>
 }

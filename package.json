@@ -9,6 +9,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "test:privacy": "node scripts/check-privacy-export.mjs && node scripts/check-privacy-management.mjs",
     "test:phd-import": "node --experimental-strip-types --no-warnings scripts/check-phd-import-dedupe.mjs",
     "test:trainee-import": "node --experimental-strip-types --no-warnings scripts/check-trainee-import.mjs",
     "security:secrets": "node scripts/check-secrets.mjs",

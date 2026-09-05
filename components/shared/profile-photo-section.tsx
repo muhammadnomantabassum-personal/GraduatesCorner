@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
+import { ownedAvatarPath } from "@/lib/avatar-storage"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Camera, Loader2, Trash2, Settings, ImagePlus } from "lucide-react"
@@ -41,8 +42,8 @@ export function ProfilePhotoSection({ size = "md", editable = true }: ProfilePho
     if (!file || !user) return
 
     // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file")
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
+      toast.error("Please upload a JPEG, PNG, WebP, or GIF image")
       return
     }
 
@@ -52,16 +53,19 @@ export function ProfilePhotoSection({ size = "md", editable = true }: ProfilePho
       return
     }
 
+    let uploadedPath: string | null = null
+    let profileSaved = false
     try {
       setUploading(true)
-      const fileExt = file.name.split(".").pop()
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`
+      const fileExt = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" }[file.type]
+      const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(fileName, file, {
-          upsert: true,
+          upsert: false,
+          cacheControl: "60",
         })
 
       if (uploadError) {
@@ -69,6 +73,7 @@ export function ProfilePhotoSection({ size = "md", editable = true }: ProfilePho
         // But usually it should be pre-configured
         throw uploadError
       }
+      uploadedPath = fileName
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
@@ -77,8 +82,21 @@ export function ProfilePhotoSection({ size = "md", editable = true }: ProfilePho
 
       // Update profile
       await updateProfile({ avatar: publicUrl })
+      profileSaved = true
+      const oldPath = ownedAvatarPath(user.avatar, process.env.NEXT_PUBLIC_SUPABASE_URL, user.id)
+      if (oldPath) {
+        const { error } = await supabase.storage.from("avatars").remove([oldPath])
+        if (error) {
+          toast.error("Photo updated, but the old file could not be deleted. Contact admin@graduatescorner.com for removal.")
+          return
+        }
+      }
       toast.success("Profile photo updated")
-    } catch (error: any) {
+    } catch {
+      if (uploadedPath && !profileSaved) {
+        const { error } = await supabase.storage.from("avatars").remove([uploadedPath])
+        if (error) toast.error("The unused upload could not be deleted. Contact admin@graduatescorner.com for removal.")
+      }
       console.error("Unable to upload the profile image.")
       toast.error("Failed to upload image")
     } finally {
@@ -88,11 +106,17 @@ export function ProfilePhotoSection({ size = "md", editable = true }: ProfilePho
   }
 
   const removePhoto = async () => {
+    if (!user) return
     try {
       setUploading(true)
+      const path = ownedAvatarPath(user.avatar, process.env.NEXT_PUBLIC_SUPABASE_URL, user.id)
+      if (path) {
+        const { error } = await supabase.storage.from("avatars").remove([path])
+        if (error) throw error
+      }
       await updateProfile({ avatar: "" }) // Set to empty string to use fallback
       toast.success("Profile photo removed")
-    } catch (error: any) {
+    } catch {
       toast.error("Failed to remove photo")
     } finally {
       setUploading(false)
@@ -134,7 +158,7 @@ export function ProfilePhotoSection({ size = "md", editable = true }: ProfilePho
                   <ImagePlus className="mr-2 h-4 w-4 transition-colors group-focus:text-black" />
                   <span>Change Photo</span>
                 </DropdownMenuItem>
-                {user?.avatar && !user.avatar.includes("googleusercontent.com") && (
+                {user?.avatar && (
                   <DropdownMenuItem
                     onClick={removePhoto}
                     className="group cursor-pointer text-destructive focus:text-destructive"

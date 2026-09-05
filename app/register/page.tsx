@@ -173,6 +173,7 @@ function RegisterForm() {
               </p>
             </div>
 
+            <p className="mb-4 text-sm text-muted-foreground">We use your name, email, and role to provide your account. Optional profile details are not required. Content you submit for publication can show your chosen author name. Read our <Link href="/privacy-policy" className="underline">privacy notice</Link> before registering, including with Google.</p>
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Role Selection */}
               <div className="space-y-2">

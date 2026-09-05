@@ -367,7 +367,7 @@ DROP POLICY IF EXISTS "Admins can view all applications" ON public.applications;
 
 -- Profiles policies
 CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles
-  FOR SELECT USING (true);
+  FOR SELECT TO authenticated USING (auth.uid() = id);
 CREATE POLICY "Users can insert their own profile" ON public.profiles
   FOR INSERT WITH CHECK (auth.uid() = id AND type IN ('student', 'university', 'company'));
 CREATE POLICY "Users can update own profile" ON public.profiles
