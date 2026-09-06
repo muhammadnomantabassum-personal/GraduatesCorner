@@ -1,4 +1,6 @@
 "use client"
+import { opportunityPath } from "@/lib/opportunity-url"
+
 
 import { useState } from "react"
 import Link from "next/link"
@@ -32,8 +34,8 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
   const MAX_VISIBLE_SUBJECTS = 2
   const visibleSubjects = showAllSubjects ? subjects : subjects.slice(0, MAX_VISIBLE_SUBJECTS)
   const hiddenSubjectCount = subjects.length - MAX_VISIBLE_SUBJECTS
-  const detailHref = isPhD ? `/phd-positions/${thesis.id}` : `/theses/${thesis.id}`
-  const descriptionPreview = htmlToPlainText(thesis.description)
+  const detailHref = opportunityPath(thesis.type, thesis.id, thesis.title, thesis.organization)
+  const descriptionPreview = htmlToPlainText(thesis.description).slice(0, 260)
   const comparisonItem = {
     id: thesis.id,
     kind: "thesis" as const,

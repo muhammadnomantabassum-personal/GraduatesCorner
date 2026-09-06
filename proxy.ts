@@ -1,7 +1,10 @@
-import { type NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
+import { canonicalOpportunityRedirect } from '@/lib/opportunity-redirect'
 
 export async function proxy(request: NextRequest) {
+  const canonical = await canonicalOpportunityRedirect(request.nextUrl.pathname)
+  if (canonical) return NextResponse.redirect(new URL(canonical, request.url), 308)
   return await updateSession(request)
 }
 

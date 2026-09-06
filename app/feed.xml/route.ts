@@ -1,3 +1,4 @@
+import { opportunityPath } from "@/lib/opportunity-url"
 import { getSeoIndexRecords } from "@/lib/seo-data"
 import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo"
 import { htmlToPlainText } from "@/lib/text"
@@ -19,14 +20,14 @@ export async function GET() {
     ...theses.map((item) => ({
       title: item.title,
       description: `${htmlToPlainText(item.description).slice(0, 320)} - ${item.organization}`,
-      url: absoluteUrl(item.type === "phd" ? `/phd-positions/${item.id}` : `/theses/${item.id}`),
+      url: absoluteUrl(opportunityPath(item.type, item.id, item.title, item.organization)),
       date: item.created_at,
       category: item.type === "phd" ? "PhD Position" : "Master's Thesis",
     })),
     ...programs.map((item) => ({
       title: item.title,
       description: `${htmlToPlainText(item.description).slice(0, 320)} - ${item.company}`,
-      url: absoluteUrl(`/trainee-programs/${item.id}`),
+      url: absoluteUrl(opportunityPath("trainee", item.id, item.title, item.company)),
       date: item.created_at,
       category: "Graduate Trainee Program",
     })),

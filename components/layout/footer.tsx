@@ -4,6 +4,7 @@ import { BrandLogo } from "@/components/shared/brand-logo"
 
 const footerLinks = {
   platform: [
+    { href: "/opportunities", label: "Browse by Country & Field" },
     { href: "/master-thesis", label: "Master's Theses" },
     { href: "/phd-positions", label: "PhD Positions" },
     { href: "/trainee-programs", label: "Trainee Programs" },

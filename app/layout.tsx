@@ -20,7 +20,7 @@ function getSupabaseOrigin() {
   }
 }
 
-const googleVerification = process.env.GOOGLE_SITE_VERIFICATION
+const googleVerification = process.env.GOOGLE_SITE_VERIFICATION || "mNIJfpZhyXcRr8KePGPJgIdK662dQUbkzl1kXQUaYqY"
 const bingVerification = process.env.BING_SITE_VERIFICATION
 
 export const metadata: Metadata = {

@@ -97,6 +97,7 @@ export function OpportunitySeoContent({ type }: { type: keyof typeof content }) 
         </div>
 
         <nav className="mt-8 flex flex-wrap gap-x-5 gap-y-2 border-t border-border/70 pt-6" aria-label="Related opportunity resources">
+          <Link href="/opportunities" className="text-sm font-semibold text-primary hover:underline">All opportunities by country and field</Link>
           {page.links.map((link) => (
             <Link key={link.href} href={link.href} className="text-sm font-semibold text-primary hover:underline">
               {link.label}

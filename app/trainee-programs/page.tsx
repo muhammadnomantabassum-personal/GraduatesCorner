@@ -35,6 +35,7 @@ export default function TraineeProgramsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [sort, setSort] = useState<OpportunitySort>("recommended")
+  const [visibleCount, setVisibleCount] = useState(24)
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState<Record<string, string[]>>({
     field: [],
@@ -482,9 +483,10 @@ export default function TraineeProgramsPage() {
                 <OpportunityGridSkeleton />
               ) : filtered.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2">
-                  {sortedResults.map((program) => (
+                  {sortedResults.slice(0, visibleCount).map((program) => (
                     <ProgramCard key={program.id} program={program} />
                   ))}
+                  {visibleCount < sortedResults.length && <Button variant="outline" onClick={() => setVisibleCount(count => count + 24)}>Show 24 more opportunities</Button>}
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card py-20 text-center">

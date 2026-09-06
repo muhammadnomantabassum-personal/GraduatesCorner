@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { htmlToPlainText } from "@/lib/text"
+import { seoCountry } from "./seo-location"
 
 export const SITE_NAME = "Graduates Corner"
 export const SITE_URL = "https://graduatescorner.com"
@@ -94,18 +95,6 @@ export function createPageMetadata({
   }
 }
 
-function parseLocation(value: string) {
-  const parts = value
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean)
-
-  return {
-    locality: parts.length > 1 ? parts.slice(0, -1).join(", ") : parts[0] || value,
-    country: parts.length > 1 ? parts[parts.length - 1] : parts[0] || value,
-  }
-}
-
 type JobSchemaInput = {
   id: string
   title: string
@@ -116,12 +105,13 @@ type JobSchemaInput = {
   createdAt: string
   path: string
   field: string
-  kind: "phd" | "trainee"
+  kind: "phd" | "trainee" | "master" | "internship"
 }
 
 export function buildJobPostingSchema(input: JobSchemaInput) {
-  const location = parseLocation(input.location)
-  const remote = /remote|online|worldwide/i.test(input.location)
+  const country = seoCountry(input.location)
+  // Unknown locations cannot satisfy Google's required jobLocation. Never invent a country.
+  if (!country || !input.title || !input.organization || !input.description || input.deadline < new Date().toISOString().slice(0,10)) return null
 
   return {
     "@context": "https://schema.org",
@@ -136,24 +126,13 @@ export function buildJobPostingSchema(input: JobSchemaInput) {
     },
     datePosted: input.createdAt,
     validThrough: `${input.deadline}T23:59:59+00:00`,
-    employmentType: input.kind === "phd" ? "FULL_TIME" : "INTERN",
+    ...(input.kind === "internship" ? { employmentType: "INTERN" } : {}),
     industry: input.field,
     hiringOrganization: {
       "@type": "Organization",
       name: input.organization,
     },
-    ...(remote
-      ? { jobLocationType: "TELECOMMUTE" }
-      : {
-          jobLocation: {
-            "@type": "Place",
-            address: {
-              "@type": "PostalAddress",
-              addressLocality: location.locality,
-              addressCountry: location.country,
-            },
-          },
-        }),
+    jobLocation: { "@type": "Place", name: input.location, address: { "@type": "PostalAddress", addressCountry: country.code } },
     url: absoluteUrl(input.path),
     directApply: false,
   }
@@ -168,8 +147,9 @@ export function buildThesisSchema(input: {
   deadline: string
   createdAt: string
   field: string
+  path?: string
 }) {
-  const path = `/theses/${input.id}`
+  const path = input.path || `/theses/${input.id}`
 
   return {
     "@context": "https://schema.org",

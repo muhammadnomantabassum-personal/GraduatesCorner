@@ -28,6 +28,7 @@ export default function PhDPositionsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [sort, setSort] = useState<OpportunitySort>("recommended")
+  const [visibleCount, setVisibleCount] = useState(24)
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState<Record<string, string[]>>({
     country: [],
@@ -498,9 +499,10 @@ export default function PhDPositionsPage() {
                 <OpportunityGridSkeleton />
               ) : filtered.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2">
-                  {sortedResults.map((thesis) => (
+                  {sortedResults.slice(0, visibleCount).map((thesis) => (
                     <ThesisCard key={thesis.id} thesis={thesis} />
                   ))}
+                  {visibleCount < sortedResults.length && <Button variant="outline" onClick={() => setVisibleCount(count => count + 24)}>Show 24 more opportunities</Button>}
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card py-20 text-center">

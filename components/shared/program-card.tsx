@@ -1,4 +1,6 @@
 "use client"
+import { opportunityPath } from "@/lib/opportunity-url"
+
 
 import { useState } from "react"
 import Link from "next/link"
@@ -30,8 +32,8 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
   const MAX_VISIBLE_FIELDS = 2
   const visibleFields = showAllFields ? fields : fields.slice(0, MAX_VISIBLE_FIELDS)
   const hiddenFieldCount = fields.length - MAX_VISIBLE_FIELDS
-  const descriptionPreview = htmlToPlainText(program.description)
-  const detailHref = `/trainee-programs/${program.id}`
+  const descriptionPreview = htmlToPlainText(program.description).slice(0, 260)
+  const detailHref = opportunityPath("trainee", program.id, program.title, program.company)
   const comparisonItem = {
     id: program.id,
     kind: "program" as const,

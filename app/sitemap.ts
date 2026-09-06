@@ -1,12 +1,16 @@
+import { opportunityPath } from "@/lib/opportunity-url"
 import type { MetadataRoute } from "next"
 import { getSeoIndexRecords } from "@/lib/seo-data"
 import { absoluteUrl } from "@/lib/seo"
+import { SEO_LANDINGS } from "@/lib/seo-landings"
+import { matchesLanding } from "@/lib/seo-catalogue"
 
 export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { theses, programs, posts } = await getSeoIndexRecords()
   const staticPages: MetadataRoute.Sitemap = [
+    { url: absoluteUrl("/opportunities"), changeFrequency: "daily", priority: 0.9 },
     { url: absoluteUrl("/"), changeFrequency: "daily", priority: 1 },
     { url: absoluteUrl("/phd-positions"), changeFrequency: "daily", priority: 0.95 },
     { url: absoluteUrl("/master-thesis"), changeFrequency: "daily", priority: 0.9 },
@@ -22,13 +26,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   const thesisPages: MetadataRoute.Sitemap = theses.map((thesis) => ({
-    url: absoluteUrl(thesis.type === "phd" ? `/phd-positions/${thesis.id}` : `/theses/${thesis.id}`),
+    url: absoluteUrl(opportunityPath(thesis.type, thesis.id, thesis.title, thesis.organization)),
     lastModified: new Date(thesis.created_at),
     changeFrequency: "weekly",
     priority: thesis.type === "phd" ? 0.85 : 0.75,
   }))
   const programPages: MetadataRoute.Sitemap = programs.map((program) => ({
-    url: absoluteUrl(`/trainee-programs/${program.id}`),
+    url: absoluteUrl(opportunityPath("trainee", program.id, program.title, program.company)),
     lastModified: new Date(program.created_at),
     changeFrequency: "weekly",
     priority: 0.75,
@@ -40,5 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.65,
   }))
 
-  return [...staticPages, ...thesisPages, ...programPages, ...blogPages]
+  const catalogue = [...theses.map(item=>({...item,kind:item.type,field:item.subject})),...programs.map(item=>({...item,kind:"trainee",organization:item.company}))]
+  const landings = SEO_LANDINGS.filter(landing=>catalogue.some(item=>matchesLanding(item,landing))).map(landing=>({url:absoluteUrl(`/opportunities/${landing.slug}`),changeFrequency:"daily" as const,priority:0.8}))
+  return [...staticPages, ...landings, ...thesisPages, ...programPages, ...blogPages]
 }

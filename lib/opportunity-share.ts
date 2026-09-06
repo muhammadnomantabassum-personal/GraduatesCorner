@@ -1,4 +1,5 @@
 import "server-only"
+import { opportunityId } from "./opportunity-url"
 
 import { createClient } from "@supabase/supabase-js"
 import { htmlToPlainText } from "@/lib/text"
@@ -97,7 +98,9 @@ function getDomainLogoUrl(value?: string | null) {
   }
 }
 
-export async function getPhdShareData(id: string): Promise<OpportunityShareData | null> {
+export async function getPhdShareData(value: string): Promise<OpportunityShareData | null> {
+  const id = opportunityId(value)
+  if (!id) return null
   const supabase = getPublicSupabaseClient()
   if (!supabase) return null
 
