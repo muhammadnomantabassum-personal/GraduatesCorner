@@ -45,6 +45,7 @@ const sidebarSections = [
     title: "Master Thesis",
     links: [
       { href: "/n_admin/dashboard/theses", label: "Master Thesis", mobileLabel: "Thesis", icon: BookOpen, mobileHidden: false },
+      { href: "/n_admin/dashboard/thesis-imports", label: "Thesis & Internship Imports", mobileLabel: "Imports", icon: DatabaseZap, mobileHidden: false },
       { href: "/n_admin/dashboard/theses/new", label: "Post Thesis", mobileLabel: "Post", icon: Plus, mobileHidden: true },
     ]
   },
@@ -62,6 +63,7 @@ const sidebarSections = [
       { href: "/n_admin/dashboard/trainee-programs", label: "Programs", mobileLabel: "Programs", icon: Briefcase, mobileHidden: false },
       { href: "/n_admin/dashboard/trainee-programs/new", label: "Post Program", mobileLabel: "Post", icon: Plus, mobileHidden: true },
       { href: "/n_admin/dashboard/trainee-imports", label: "Program Imports", mobileLabel: "Imports", icon: DatabaseZap, mobileHidden: false },
+      { href: "/n_admin/dashboard/employer-program-imports", label: "Employer Program Imports", mobileLabel: "Employers", icon: DatabaseZap, mobileHidden: false },
     ]
   },
   {

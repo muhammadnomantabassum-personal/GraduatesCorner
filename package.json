@@ -12,6 +12,7 @@
     "test:privacy": "node scripts/check-privacy-export.mjs && node scripts/check-privacy-management.mjs",
     "test:phd-import": "node --experimental-strip-types --no-warnings scripts/check-phd-import-dedupe.mjs",
     "test:trainee-import": "node --experimental-strip-types --no-warnings scripts/check-trainee-import.mjs",
+    "test:employer-import": "node scripts/check-employer-import.mjs",
     "security:secrets": "node scripts/check-secrets.mjs",
     "security:rls": "node scripts/check-supabase-rls.mjs"
   },

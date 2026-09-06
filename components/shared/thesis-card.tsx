@@ -17,6 +17,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
   const { isInWishlist, toggleWishlist } = useWishlist()
   const { isCompared, toggleComparison } = useComparison()
   const isPhD = thesis.type === "phd"
+  const typeLabel = isPhD ? "PhD Position" : thesis.opportunityKind === "internship" ? "Internship" : "Master's Thesis"
   const [showAllSubjects, setShowAllSubjects] = useState(false)
 
   const isLiked = isInWishlist(thesis.id, "thesis")
@@ -36,7 +37,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
   const comparisonItem = {
     id: thesis.id,
     kind: "thesis" as const,
-    typeLabel: isPhD ? "PhD position" : "Master's thesis",
+    typeLabel,
     title: thesis.title,
     organization: thesis.organization,
     field: thesis.subject,
@@ -62,7 +63,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
               : "bg-primary/8 text-primary ring-1 ring-primary/15"
               }`}>
               <BookOpen className="h-3 w-3" />
-              {isPhD ? "PhD Position" : "Master's Thesis"}
+              {typeLabel}
             </span>
           </div>
           {isVerified && (

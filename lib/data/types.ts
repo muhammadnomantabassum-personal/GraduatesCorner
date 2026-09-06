@@ -25,6 +25,7 @@ export interface Thesis {
   id: string
   title: string
   type: ThesisType
+  opportunityKind?: "master_thesis" | "internship"
   description: string
   subject: string
   organization: string

@@ -43,6 +43,7 @@ export default function StudentAppliedPage() {
             id: item.theses.id,
             title: item.theses.title,
             type: item.theses.type,
+    opportunityKind: item.theses.opportunity_kind,
             description: item.theses.description,
             subject: item.theses.subject,
             organization: item.theses.organization,

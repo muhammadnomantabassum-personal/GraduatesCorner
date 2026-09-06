@@ -27,6 +27,7 @@ export default function MasterThesisPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState<Record<string, string[]>>({
     field: [],
+    kind: [],
     location: [],
     compensation: [],
     deadline: [],
@@ -52,6 +53,7 @@ export default function MasterThesisPage() {
           id: t.id,
           title: t.title,
           type: t.type,
+          opportunityKind: t.opportunity_kind,
           description: t.description,
           subject: t.subject,
           organization: t.organization,
@@ -86,7 +88,7 @@ export default function MasterThesisPage() {
   }
 
   const handleClearAll = () => {
-    setFilters({ field: [], location: [], compensation: [], deadline: [], workMode: [], organizationType: [], trust: [] })
+    setFilters({ field: [], kind: [], location: [], compensation: [], deadline: [], workMode: [], organizationType: [], trust: [] })
   }
 
   const activeFilterCount = Object.values(filters).reduce(
@@ -161,6 +163,10 @@ export default function MasterThesisPage() {
     }, {})
 
     return [
+      { id: "kind", label: "Opportunity type", type: "checkbox" as const, options: [
+        { value: "master_thesis", label: "Master's thesis", count: theses.filter(item => item.opportunityKind !== "internship").length },
+        { value: "internship", label: "Internship", count: theses.filter(item => item.opportunityKind === "internship").length },
+      ] },
       {
         id: "field",
         label: "Field",
@@ -276,6 +282,7 @@ export default function MasterThesisPage() {
         if (filters.compensation.length === 0) return true
         return filters.compensation.includes(t.compensation)
       })
+      .filter((t) => !filters.kind.length || filters.kind.includes(t.opportunityKind || "master_thesis"))
       .filter((t) => matchesDeadline(t.deadline, filters.deadline))
       .filter((t) => matchesWorkMode(t.location, filters.workMode))
       .filter((t) => filters.organizationType.length === 0 || filters.organizationType.includes(t.organizationType))
@@ -317,9 +324,9 @@ export default function MasterThesisPage() {
               <BookOpen className="h-3.5 w-3.5" />
               Thesis discovery studio
             </Badge>
-            <h1 className="max-w-4xl text-balance text-4xl font-bold tracking-tight lg:text-6xl">Master&apos;s Thesis Positions</h1>
+            <h1 className="max-w-4xl text-balance text-4xl font-bold tracking-tight lg:text-6xl">Master&apos;s Theses &amp; Internships</h1>
             <p className="mt-5 max-w-2xl text-pretty text-lg leading-relaxed text-white/82">
-              Discover industry and university thesis projects with smarter filters, deadline awareness, and save-ready opportunity cards.
+              Discover industry and university master’s thesis projects and internships, with filters for the opportunity type, field, location, and deadline.
             </p>
             <div className="mt-8 flex flex-wrap gap-2">
               {popularSubjects.length > 0 ? popularSubjects.map(([subject]) => (

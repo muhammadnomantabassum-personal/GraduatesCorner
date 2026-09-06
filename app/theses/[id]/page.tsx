@@ -66,6 +66,7 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
           id: data.id,
           title: data.title,
           type: data.type,
+          opportunityKind: data.opportunity_kind,
           description: data.description,
           subject: data.subject,
           organization: data.organization,
@@ -112,6 +113,7 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
             id: t.id,
             title: t.title,
             type: t.type,
+            opportunityKind: t.opportunity_kind,
             description: t.description,
             subject: t.subject,
             organization: t.organization,
@@ -183,7 +185,7 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
 
   const backLink = thesis.type === "phd" ? "/phd-positions" : "/master-thesis"
   const backText = thesis.type === "phd" ? "Back to PhD Positions" : "Back to Master's Theses"
-  const opportunityLabel = thesis.type === "phd" ? "PhD Position" : "Master's Thesis"
+  const opportunityLabel = thesis.type === "phd" ? "PhD Position" : thesis.opportunityKind === "internship" ? "Internship" : "Master's Thesis"
   const descriptionHasHtml = isHtmlContent(thesis.description)
 
   return (
@@ -269,10 +271,10 @@ export default function ThesisDetailPage({ params }: { params: Promise<{ id: str
                       <GraduationCap className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                       <div>
                         <p className="text-sm font-medium text-foreground">
-                          {thesis.type === "phd" ? "Position Type" : "Thesis Type"}
+                          Opportunity Type
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {thesis.type === "phd" ? "PhD / Doctoral Position" : "Master's Thesis"}
+                          {thesis.type === "phd" ? "PhD / Doctoral Position" : opportunityLabel}
                         </p>
                       </div>
                     </div>

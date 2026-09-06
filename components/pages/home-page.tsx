@@ -78,6 +78,7 @@ function mapThesis(thesis: any): Thesis {
     id: thesis.id,
     title: thesis.title,
     type: thesis.type,
+    opportunityKind: thesis.opportunity_kind,
     description: thesis.description,
     subject: thesis.subject,
     organization: thesis.organization,
