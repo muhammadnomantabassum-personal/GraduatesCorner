@@ -5,7 +5,7 @@ Admin entry points:
 - `/n_admin/dashboard/thesis-imports`: master's theses and internships.
 - `/n_admin/dashboard/employer-program-imports`: graduate and trainee programs.
 
-Both use one source registry and shared scan history. A scan processes the next search term/page and routes matching titles to the right queue. Enable employers, then use **Scan enabled sources** or **Scan next page**. The daily 09:00 UTC cron processes enabled sources, oldest scan first, with three workers and a bounded runtime. Browser batches use two workers. Each source has a database lease to prevent overlapping scans.
+Both use one source registry and shared scan history. A scan processes the next search term/page and routes matching titles to the right queue. Manual scans prioritize the current section's search terms (thesis/internship or trainee/graduate). Enable employers, then use **Scan enabled sources** or **Scan next page**. The daily 09:00 UTC cron cycles all search terms for enabled sources, oldest scan first, with three workers and a bounded runtime. Browser batches use two workers. Each source has a database lease to prevent overlapping scans. Detail failures retry twice before advancing, so one broken posting cannot stall later pages indefinitely.
 
 ## Setup
 
@@ -15,7 +15,7 @@ Apply `supabase_employer_imports_setup.sql` before deploying. It adds private so
 
 The catalogue includes the supplied employers across Sweden, Norway, Finland, Netherlands and Germany, plus consulting firms and FINN. A catalogue entry is not a claim that the site can currently be crawled. The dashboard distinguishes configured endpoints from career pages needing discovery and reports blocked or changed endpoints.
 
-Implemented adapters: Workday public job search/details, SmartRecruiters public postings, Eightfold public careers search, SuccessFactors search pages, and HTML/JobPosting JSON-LD. Generic career pages can discover an explicitly linked Workday board. Ericsson currently uses Eightfold; Siemens' current site is Avature, and Klarna links to Deel. Neither is assumed to use the ATS suggested in the original list. Siemens' generic HTML discovery is not a complete Avature integration. No Teamtailor, Deel, Lever or Greenhouse adapter is claimed.
+Implemented adapters: Workday public job search/details, SmartRecruiters public postings, Eightfold public careers search, SuccessFactors search pages, Siemens Avature search/detail pages, and HTML/JobPosting JSON-LD. Generic career pages can discover an explicitly linked Workday board. Ericsson currently uses Eightfold; Siemens' current site is Avature, and Klarna links to Deel. Neither is assumed to use the ATS suggested in the original list. No Teamtailor, Deel, Lever or Greenhouse adapter is claimed.
 
 Live validation on 2026-09-06 returned matching candidates from ABB, Volvo, Scania, Sandvik, Saab, NXP, Philips, TNO, Kongsberg, Fraunhofer, SAP and Infineon. Other configured feeds can return no matches for the current term. Bosch and Heineken were blocked by their crawler rules. Several supplied career URLs redirect, are obsolete, require JavaScript, or deny automated requests. FINN is intentionally disabled; use original employer vacancies or an authorized feed. Sources requiring access or another adapter remain visibly unresolved rather than receiving fabricated listings.
 

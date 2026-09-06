@@ -1,4 +1,4 @@
-export type EmployerAdapter = "html" | "smartrecruiters" | "workday" | "eightfold" | "successfactors"
+export type EmployerAdapter = "html" | "smartrecruiters" | "workday" | "eightfold" | "successfactors" | "avature"
 export type EmployerSource = {
   id: string
   name: string
@@ -125,6 +125,8 @@ const endpoints: Record<string, Partial<EmployerSource>> = {
   scania: { adapter: "successfactors", listingUrl: "https://jobs.scania.com/search/", allowedHosts: ["scania.com"], verified: true },
   ericsson: { adapter: "eightfold", tenant: "ericsson.com", listingUrl: "https://jobs.ericsson.com/careers", verified: true },
   abb: { adapter: "workday", tenant: "abb", board: "External_Career_Page", listingUrl: "https://abb.wd3.myworkdayjobs.com/External_Career_Page", allowedHosts: ["careers.abb", "abb.wd3.myworkdayjobs.com"], verified: true },
+  equinor: { adapter: "workday", tenant: "equinor", board: "EQNR", listingUrl: "https://equinor.wd3.myworkdayjobs.com/EQNR", allowedHosts: ["equinor.com", "equinor.wd3.myworkdayjobs.com"], verified: true },
+  asml: { listingUrl: "https://www.asml.com/en/careers/find-your-job" },
   sandvik: { adapter: "workday", tenant: "sandvik", board: "sandvik-jobs", listingUrl: "https://sandvik.wd3.myworkdayjobs.com/sandvik-jobs", allowedHosts: ["home.sandvik", "sandvik.wd3.myworkdayjobs.com"], verified: true },
   storebrand: { adapter: "workday", tenant: "storebrand", board: "Storebrand_Careers", listingUrl: "https://storebrand.wd3.myworkdayjobs.com/Storebrand_Careers", allowedHosts: ["storebrand.no", "storebrand.wd3.myworkdayjobs.com"], verified: true },
   kone: { adapter: "workday", tenant: "kone", board: "Careers", listingUrl: "https://kone.wd3.myworkdayjobs.com/Careers", allowedHosts: ["kone.com", "kone.wd3.myworkdayjobs.com"], verified: true },
@@ -148,7 +150,7 @@ const endpoints: Record<string, Partial<EmployerSource>> = {
   wartsila: { adapter: "successfactors", listingUrl: "https://careers.wartsila.com/search/", verified: true },
   kongsberg: { listingUrl: "https://www.kongsberg.com/careers/vacancies/", verified: true },
   spotify: { listingUrl: "https://www.lifeatspotify.com/jobs", verified: true },
-  siemens: { listingUrl: "https://jobs.siemens.com/en_US/externaljobs/SearchJobs", verified: true },
+  siemens: { adapter: "avature", listingUrl: "https://jobs.siemens.com/en_US/externaljobs/SearchJobs", verified: true },
   dnv: { listingUrl: "https://jobs.dnv.com/job-search", allowedHosts: ["dnv.com"] },
   statkraft: { listingUrl: "https://www.statkraft.com/careers/job-opportunities/" },
   "aker-solutions": { listingUrl: "https://www.akersolutions.com/careers/job-search/" },

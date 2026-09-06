@@ -30,7 +30,7 @@ export function EmployerImportDashboard({ section }: { section: "master" | "trai
   }, [section, page, ignored])
   useEffect(() => { load().catch(error => setError(error.message)) }, [load])
   async function send(body: Record<string, unknown>) {
-    const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+    const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, section }) })
     const data = await response.json()
     if (!response.ok) throw new Error(data.error)
     return data
@@ -66,7 +66,7 @@ export function EmployerImportDashboard({ section }: { section: "master" | "trai
     </div>
     {error && <p role="alert" className="rounded border border-destructive p-4 text-destructive">{error}</p>}
     <section className="space-y-4"><div className="flex flex-wrap items-center gap-3"><h2 className="mr-auto text-xl font-semibold">Employer sources ({sources.length})</h2><Button disabled={!!busy || !sources.some(source => source.enabled)} onClick={scanEnabled}>Scan enabled sources</Button></div>
-      <p className="text-sm text-muted-foreground">One shared scan collects all three types and routes them to the appropriate review queue. Automatic publishing is off by default and only publishes listings with an explicit deadline and compensation.</p>
+      <p className="text-sm text-muted-foreground">Scans here search for {section === "trainee" ? "trainee and graduate programs" : "theses and internships"}. Both sections share duplicate protection and route matching roles to the appropriate queue. Automatic publishing is off by default and requires an explicit deadline and compensation.</p>
       <p role="status">{busy ? progress || `Working: ${busy}` : progress}</p>
       <Input aria-label="Filter employers or countries" placeholder="Filter employer, country, or ATS…" value={filter} onChange={event => setFilter(event.target.value)} />
       <div className="max-h-[540px] space-y-3 overflow-y-auto rounded-xl border p-3">{sources.filter(source => `${source.name} ${source.country} ${source.adapter}`.toLowerCase().includes(filter.toLowerCase())).map(source => <div key={source.id} className="flex flex-wrap items-center gap-4 rounded-lg border p-4">

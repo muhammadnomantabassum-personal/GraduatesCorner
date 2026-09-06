@@ -29,7 +29,7 @@ async function knownJobs(db: SupabaseClient) {
   return known
 }
 
-export async function scanEmployer(db: SupabaseClient, sourceId: string) {
+export async function scanEmployer(db: SupabaseClient, sourceId: string, section?: "master" | "trainee") {
   const source = getEmployerSource(sourceId)
   if (!source || source.note) throw new Error(source?.note || "Unknown employer source")
   const { data: token, error: lockError } = await db.rpc("claim_employer_import", { source_key: sourceId })
@@ -42,7 +42,7 @@ export async function scanEmployer(db: SupabaseClient, sourceId: string) {
     const { data: run, error: runError } = await db.from("employer_import_runs").insert({ source_id: sourceId }).select("id").single()
     if (runError) throw runError
     runId = run.id
-    const result = await scanEmployerPage(source, setting.cursor as EmployerCursor, await knownJobs(db))
+    const result = await scanEmployerPage(source, setting.cursor as EmployerCursor, await knownJobs(db), section)
     let added = 0
     let duplicates = result.duplicates
     let published = 0

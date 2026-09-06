@@ -27,7 +27,13 @@ export function classifyEmployerTitle(title: string): OpportunityKind | null {
 
 export function isoDeadline(value: unknown): string | null {
   if (typeof value !== "string") return null
-  const match = value.match(/\b(20\d{2})-(\d{2})-(\d{2})(?=T|\b)/) || value.match(/\b(\d{2})[/.](\d{2})[/.](20\d{2})\b/)
+  // SuccessFactors exposes dates such as "Tue Nov 03 23:00:00 UTC 2026".
+  const atsDate = value.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\s+(?:\d{2}:\d{2}:\d{2}\s+UTC\s+)?(20\d{2})\b/i)
+  if (atsDate) {
+    const month = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(atsDate[1].toLowerCase()) + 1
+    value = `${atsDate[3]}-${String(month).padStart(2, "0")}-${atsDate[2].padStart(2, "0")}`
+  }
+  const match = (value as string).match(/\b(20\d{2})-(\d{2})-(\d{2})(?=T|\b)/) || (value as string).match(/\b(\d{2})[/.](\d{2})[/.](20\d{2})\b/)
   if (!match) return null
   const [year, month, day] = match[1].length === 4 ? match.slice(1) : [match[3], match[2], match[1]]
   const date = `${year}-${month}-${day}`

@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   try {
     if (body?.action === "scan") {
       if (!getEmployerSource(body.sourceId)) return json({ error: "Unknown source" }, 400)
-      return json(await scanEmployer(db, body.sourceId))
+      return json(await scanEmployer(db, body.sourceId, body.section === "trainee" ? "trainee" : "master"))
     }
     if (body?.action === "settings") {
       const source = getEmployerSource(body.sourceId)

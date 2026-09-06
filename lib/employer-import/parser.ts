@@ -48,43 +48,46 @@ function htmlJobs(body: string, base: string) {
   return { jobs, nextPage: nextHref ? new URL(nextHref, base).toString() : undefined }
 }
 
-function nextCursor(cursor: EmployerCursor, more: boolean, increment = PAGE_SIZE): EmployerCursor {
-  return more ? { query: cursor.query, offset: cursor.offset + increment } : { query: (cursor.query + 1) % QUERIES.length, offset: 0 }
+function nextCursor(cursor: EmployerCursor, more: boolean, increment = PAGE_SIZE, queries = QUERIES.map((_, i) => i)): EmployerCursor {
+  return more ? { query: cursor.query, offset: cursor.offset + increment } : { query: queries[(queries.indexOf(cursor.query) + 1) % queries.length], offset: 0 }
 }
 
-export async function scanEmployerPage(source: EmployerSource, cursor: EmployerCursor, known: Set<string>): Promise<{ candidates: EmployerCandidate[]; duplicates: number; excluded: number; found: number; errors: string[]; cursor: EmployerCursor }> {
+export async function scanEmployerPage(source: EmployerSource, cursor: EmployerCursor, known: Set<string>, section?: "master" | "trainee"): Promise<{ candidates: EmployerCandidate[]; duplicates: number; excluded: number; found: number; errors: string[]; cursor: EmployerCursor }> {
+  const queries = section === "trainee" ? [2, 3] : section === "master" ? [0, 1, 4, 5, 6, 7, 8, 9] : QUERIES.map((_, i) => i)
+  if (!queries.includes(cursor.query)) cursor = { query: queries[0], offset: 0 }
+  const advance = (more: boolean, increment = PAGE_SIZE) => nextCursor(cursor, more, increment, queries)
   const read = employerFetcher(source)
   const listingUrl = source.listingUrl || source.publicUrl
   const base = new URL(listingUrl)
   const query = QUERIES[cursor.query % QUERIES.length]
   let jobs: ListingJob[] = []
   let next: EmployerCursor = { query: 0, offset: 0 }
-  let rawCount = 0
   if (source.adapter === "workday") {
     const endpoint = `${base.origin}/wday/cxs/${source.tenant}/${source.board}`
     const result = JSON.parse((await read(`${endpoint}/jobs`, { method: "POST", body: JSON.stringify({ appliedFacets: {}, limit: PAGE_SIZE, offset: cursor.offset, searchText: query }) })).text)
     if (!Array.isArray(result.jobPostings)) throw new Error("Workday search response changed")
     jobs = result.jobPostings.map((item: Json) => ({ id: String(item.bulletFields?.[0] || item.externalPath), title: text(item.title), url: `${base.origin}/${source.board}${item.externalPath}`, location: text(item.locationsText), detailUrl: `${endpoint}${item.externalPath}` }))
-    next = nextCursor(cursor, cursor.offset + jobs.length < Number(result.total))
+    next = advance(cursor.offset + jobs.length < Number(result.total))
   } else if (source.adapter === "smartrecruiters") {
     const endpoint = `https://api.smartrecruiters.com/v1/companies/${source.tenant}/postings`
     const result = JSON.parse((await read(`${endpoint}?limit=${PAGE_SIZE}&offset=${cursor.offset}&q=${encodeURIComponent(query)}`)).text)
     if (!Array.isArray(result.content)) throw new Error("SmartRecruiters search response changed")
     jobs = result.content.map((item: Json) => ({ id: String(item.id), title: text(item.name), url: `https://jobs.smartrecruiters.com/${source.tenant}/${item.id}`, detailUrl: `${endpoint}/${item.id}`, location: text(item.location?.fullLocation || [item.location?.city, item.location?.country].filter(Boolean).join(", ")), country: item.location?.country, publishedAt: item.releasedDate }))
-    next = nextCursor(cursor, cursor.offset + jobs.length < Number(result.totalFound))
+    next = advance(cursor.offset + jobs.length < Number(result.totalFound))
   } else if (source.adapter === "eightfold") {
     const endpoint = new URL("/api/pcsx/search", base)
     endpoint.search = new URLSearchParams({ domain: source.tenant!, query, start: String(cursor.offset), num: String(PAGE_SIZE), sort_by: "relevance" }).toString()
     const result = JSON.parse((await read(endpoint.toString())).text)
     if (!Array.isArray(result.data?.positions)) throw new Error("Eightfold search response changed")
     jobs = result.data.positions.map((item: Json) => ({ id: String(item.displayJobId || item.id), title: text(item.name), url: new URL(item.positionUrl || `/careers/job/${item.id}`, base).toString(), location: (item.locations || []).join("; "), publishedAt: item.postedTs ? new Date(item.postedTs * 1000).toISOString() : undefined }))
-    next = nextCursor(cursor, jobs.length > 0 && cursor.offset + jobs.length < Number(result.data.count ?? result.data.totalCount ?? (cursor.offset + jobs.length + 1)), jobs.length || PAGE_SIZE)
+    next = advance(jobs.length > 0 && cursor.offset + jobs.length < Number(result.data.count ?? result.data.totalCount ?? (cursor.offset + jobs.length + 1)), jobs.length || PAGE_SIZE)
   } else {
     const url = new URL(cursor.pageUrl || listingUrl)
     if (source.adapter === "successfactors") {
       url.pathname = "/search/"
       url.search = new URLSearchParams({ q: query, startrow: String(cursor.offset) }).toString()
     }
+    if (source.adapter === "avature") url.search = new URLSearchParams({ search: query, jobOffset: String(cursor.offset), jobRecordsPerPage: String(PAGE_SIZE) }).toString()
     const result = await read(url.toString())
     if (source.adapter === "html" && !source.verified) {
       // Discover only public Workday links actually supplied by the official career page.
@@ -97,25 +100,27 @@ export async function scanEmployerPage(source: EmployerSource, cursor: EmployerC
         const target = new URL(workday, result.finalUrl)
         const parts = target.pathname.split("/").filter(Boolean)
         if (/^[a-z]{2}-[a-z]{2}$/i.test(parts[0])) parts.shift()
-        if (parts[0] && /^[\w-]+$/.test(parts[0])) return scanEmployerPage({ ...source, adapter: "workday", tenant: target.hostname.split(".")[0], board: parts[0], listingUrl: `${target.origin}/${parts[0]}`, allowedHosts: [...source.allowedHosts, target.hostname] }, cursor, known)
+        if (parts[0] && /^[\w-]+$/.test(parts[0])) return scanEmployerPage({ ...source, adapter: "workday", tenant: target.hostname.split(".")[0], board: parts[0], listingUrl: `${target.origin}/${parts[0]}`, allowedHosts: [...source.allowedHosts, target.hostname] }, cursor, known, section)
       }
     }
     const parsed = htmlJobs(result.text, result.finalUrl)
-    rawCount = parsed.jobs.length
-    jobs = source.adapter === "successfactors" ? parsed.jobs : parsed.jobs.slice(cursor.offset, cursor.offset + PAGE_SIZE)
+    jobs = source.adapter === "successfactors" || source.adapter === "avature" ? parsed.jobs : parsed.jobs.slice(cursor.offset, cursor.offset + PAGE_SIZE)
     if (source.adapter === "successfactors") {
       // SuccessFactors usually has 25 rows; use the real table count, not matches.
       const $listing = load(result.text)
       const rowCount = new Set($listing("a.jobTitle-link").map((_, node) => $listing(node).attr("href")).get()).size
-      next = nextCursor(cursor, rowCount >= 25, rowCount || 25)
+      next = advance(rowCount >= 25, rowCount || 25)
+    } else if (source.adapter === "avature") {
+      const $listing = load(result.text)
+      const rowCount = new Set($listing("a[href*='/JobDetail/']").map((_, node) => $listing(node).attr("href")).get()).size
+      next = advance(rowCount >= PAGE_SIZE)
     } else if (parsed.jobs.length > cursor.offset + PAGE_SIZE) next = { ...cursor, offset: cursor.offset + PAGE_SIZE }
     else next = { query: 0, offset: 0, ...(parsed.nextPage ? { pageUrl: parsed.nextPage } : {}) }
     if (!parsed.jobs.length && !source.verified) throw new Error("No structured vacancy feed found at this career page; a direct job-search endpoint needs configuration")
   }
-  rawCount ||= jobs.length
   const unique = new Map<string, ListingJob>()
   for (const job of jobs) {
-    try { if (job.title && job.url) unique.set(canonicalJobUrl(job.url), job) } catch { /* Malformed provider entry. */ }
+    try { if (job.title && job.url && !unique.get(canonicalJobUrl(job.url))?.description) unique.set(canonicalJobUrl(job.url), job) } catch { /* Malformed provider entry. */ }
   }
   const candidates: EmployerCandidate[] = []
   const errors: string[] = []
@@ -151,8 +156,14 @@ export async function scanEmployerPage(source: EmployerSource, cursor: EmployerC
         $("script,style,nav,header,footer,form").remove()
         description = parsed?.description || $("[itemprop='description'],.jobdescription,.job-description,.jobDescription,article,main").first().text()
         deadline = parsed?.deadline || $("[itemprop='validThrough']").attr("content")
-        location = parsed?.location || location
-        publishedAt = parsed?.publishedAt || publishedAt
+        location = parsed?.location || $("[itemprop='streetAddress']").attr("content") || text($(".jobGeoLocation").first().text()) || location
+        publishedAt = parsed?.publishedAt || $("[itemprop='datePosted']").attr("content") || publishedAt
+        if (source.adapter === "avature") {
+          location = text($(".tf_locations .article__content__view__field__value").text()) || location
+          const descriptions = $(".article__content__view__field").filter((_, node) => !$(node).find(".article__content__view__field__label").length)
+            .map((_, node) => text($(node).find(".article__content__view__field__value").text())).get().sort((a, b) => b.length - a.length)
+          description = descriptions[0] || description
+        }
       }
       const clean = text(description)
       if (EXPIRED.test(clean)) { excluded++; continue }
@@ -164,7 +175,9 @@ export async function scanEmployerPage(source: EmployerSource, cursor: EmployerC
       if (date && date < new Date().toISOString().slice(0, 10)) { excluded++; continue }
       const compensation = /\bunpaid\b/i.test(clean) ? "unpaid" : /\bstipend\b/i.test(clean) ? "stipend" : /\bpaid (?:internship|placement|position)|\bsalary\s*[:€£]|\bremuneration\s*:/i.test(clean) ? "paid" : null
       candidates.push({ externalId: job.id.length <= 200 ? job.id : createHash("sha256").update(url).digest("hex"), url, title: job.title.slice(0, 300), kind, organization: source.name, location: location.slice(0, 500), description: clean.slice(0, 20_000), field: inferTraineeFields(job.title, clean).join(", "), deadline: date, compensation, duration: inferDuration(clean), publishedAt: isoDeadline(publishedAt) })
-    } catch (error) { errors.push(error instanceof Error ? error.message : "Vacancy detail request failed") }
+    } catch (error) { errors.push(`${job.title.slice(0, 80)}: ${error instanceof Error ? error.message : "Vacancy detail request failed"}`) }
   }
-  return { candidates, duplicates, excluded, found: rawCount, errors, cursor: errors.length ? cursor : next }
+  // Retry a partially read page twice, then advance; a permanently broken detail must not
+  // prevent discovery of every later page. It will be tried again on the next search cycle.
+  return { candidates, duplicates, excluded, found: unique.size, errors, cursor: errors.length && (cursor.retry || 0) < 2 ? { ...cursor, retry: (cursor.retry || 0) + 1 } : next }
 }
