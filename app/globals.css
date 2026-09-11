@@ -3,6 +3,33 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.discovery-hero {
+  background: radial-gradient(ellipse at 85% 20%, color-mix(in oklch, var(--primary) 9%, transparent), transparent 55%), var(--background);
+}
+body:has([aria-label="Opportunity comparison"]) .opportunity-assistant-trigger { bottom: 108px; }
+.opportunity-card { transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease; }
+.discovery-icon-button { display: inline-flex; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; border-radius: 10px; transition: background-color 160ms ease; }
+.discovery-icon-button:hover { background-color: var(--muted); }
+.discovery-icon-button:focus-visible, .discovery-hero input:focus-visible, .discovery-hero select:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .opportunity-card:hover { transform: translateY(-3px); border-color: color-mix(in oklch, var(--primary) 35%, var(--border)); box-shadow: 0 14px 32px -22px color-mix(in oklch, var(--primary) 45%, transparent); }
+}
+@media (min-width: 768px) {
+  .discovery-list .opportunity-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 24px; }
+  .discovery-list .opportunity-card > * { grid-column: 1; }
+  .discovery-list .opportunity-card > :first-child { grid-column: 1 / -1; margin-bottom: 12px; }
+  .discovery-list .opportunity-card > :last-child { grid-column: 2; grid-row: 2 / 6; flex-direction: column; justify-content: flex-end; border-top: 0; }
+}
+@media (max-width: 767px) {
+  body:has(.listing-mobile-actions) .opportunity-assistant-trigger { bottom: 100px; }
+  body:has([aria-label="Opportunity comparison"]) .opportunity-assistant-trigger { bottom: 108px; }
+  body:has(.listing-mobile-actions) [aria-label="Opportunity comparison"] { bottom: 100px; }
+  body:has(.listing-mobile-actions):has([aria-label="Opportunity comparison"]) .opportunity-assistant-trigger { bottom: 190px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .opportunity-card, .discovery-icon-button { transition: none; }
+}
+
 :root {
   --background: oklch(0.986 0.006 238);
   --foreground: oklch(0.21 0.028 255);

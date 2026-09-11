@@ -301,7 +301,7 @@ function CheckboxRow({
 }) {
   return (
     <label
-      className={`group flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-[6px] transition-colors hover:bg-muted/40 ${indent ? "py-[5px]" : ""
+      className={`group flex min-h-11 cursor-pointer items-center gap-2.5 rounded-lg px-2 py-[6px] transition-colors hover:bg-muted/40 focus-within:ring-2 focus-within:ring-primary ${indent ? "py-[5px]" : ""
         }`}
     >
       {/* Custom checkbox */}

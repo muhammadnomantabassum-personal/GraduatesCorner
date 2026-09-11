@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge"
 import { ThesisCard } from "@/components/shared/thesis-card"
 import { ProgramCard } from "@/components/shared/program-card"
 import type { Thesis, TraineeProgram } from "@/lib/data/types"
+import { sortOpportunityResults, type OpportunitySort } from "@/lib/opportunity-sort"
+import { OpportunitySortSelect } from "@/components/shared/opportunity-sort-select"
 import {
   ArrowRight,
   BookOpen,
@@ -27,6 +29,7 @@ export default function StudentWishlistPage() {
   const [wishlistTheses, setWishlistTheses] = useState<Thesis[]>([])
   const [wishlistPrograms, setWishlistPrograms] = useState<TraineeProgram[]>([])
   const [loading, setLoading] = useState(true)
+  const [sort, setSort] = useState<OpportunitySort>("deadline")
 
   useEffect(() => {
     const fetchWishlistData = async () => {
@@ -112,7 +115,7 @@ export default function StudentWishlistPage() {
   const nextDeadline = useMemo(() => {
     const allDates = [...wishlistTheses, ...wishlistPrograms]
       .map((item) => new Date(item.deadline))
-      .filter((date) => !Number.isNaN(date.getTime()))
+      .filter((date) => !Number.isNaN(date.getTime()) && date.getTime() >= new Date().setHours(0, 0, 0, 0))
       .sort((a, b) => a.getTime() - b.getTime())
 
     return allDates[0]
@@ -134,6 +137,7 @@ export default function StudentWishlistPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <OpportunitySortSelect value={sort} onChange={setSort} />
             <Link href="/master-thesis">
               <Button variant="outline" className="gap-2 bg-white/80">
                 <BookOpen className="h-4 w-4" />
@@ -177,7 +181,7 @@ export default function StudentWishlistPage() {
                 href="/master-thesis"
               />
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {wishlistTheses.map((thesis) => (
+                {sortOpportunityResults(wishlistTheses, sort).map((thesis) => (
                   <ThesisCard key={thesis.id} thesis={thesis} />
                 ))}
               </div>
@@ -193,7 +197,7 @@ export default function StudentWishlistPage() {
                 href="/trainee-programs"
               />
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {wishlistPrograms.map((program) => (
+                {sortOpportunityResults(wishlistPrograms, sort).map((program) => (
                   <ProgramCard key={program.id} program={program} />
                 ))}
               </div>

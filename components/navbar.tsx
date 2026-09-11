@@ -26,7 +26,7 @@ import {
 const navItems = [
   { href: "/", label: "Home" },
   { href: "/phd-positions", label: "PhD Positions" },
-  { href: "/master-thesis", label: "Master's Theses" },
+  { href: "/master-thesis", label: "Theses & Internships" },
   { href: "/trainee-programs", label: "Trainee Programs" },
   { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
@@ -35,7 +35,7 @@ const navItems = [
 const mobileNavItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/phd-positions", label: "PhD Positions", icon: GraduationCap },
-  { href: "/master-thesis", label: "Master's Theses", icon: BookOpen },
+  { href: "/master-thesis", label: "Theses & Internships", icon: BookOpen },
   { href: "/trainee-programs", label: "Trainee Programs", icon: Briefcase },
   { href: "/blog", label: "Blog", icon: Newspaper },
   { href: "/about", label: "About", icon: Info },

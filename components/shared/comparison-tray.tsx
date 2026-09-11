@@ -24,7 +24,6 @@ const rows = [
   { label: "Deadline", key: "deadline" },
   { label: "Duration", key: "duration" },
   { label: "Verified", key: "verified" },
-  { label: "Signal score", key: "signalScore" },
 ] as const
 
 export function ComparisonTray() {
@@ -159,7 +158,6 @@ function ComparisonValue({ item, field }: { item: import("@/lib/comparison-conte
       <span className="inline-flex items-center gap-1.5 font-semibold text-[#137333]"><Check className="h-4 w-4" /> Verified</span>
     ) : "Not verified"
   }
-  if (field === "signalScore") return `${item.signalScore}%`
   if (field === "deadline") {
     const date = new Date(item.deadline)
     return Number.isNaN(date.getTime()) ? item.deadline : date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })

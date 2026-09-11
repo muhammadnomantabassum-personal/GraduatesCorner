@@ -154,7 +154,7 @@ export function OpportunityAssistant({ surface = "public" }: { surface?: Assista
     <Sheet>
       <SheetTrigger asChild>
         <Button
-          className="fixed bottom-5 right-5 z-[60] h-12 rounded-full border border-white/50 bg-[#202124] px-4 text-white shadow-[0_20px_60px_rgba(32,33,36,0.26)] hover:bg-[#303134]"
+          className="opportunity-assistant-trigger fixed bottom-5 right-5 z-[60] h-12 rounded-full border border-border bg-card px-4 text-foreground shadow-md hover:bg-muted"
           aria-label="Open opportunity assistant"
         >
           <Sparkles className="h-4 w-4 text-[#FBBC05]" />
