@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Calendar, Building2, GraduationCap, BookOpen, Heart, Tags, ArrowUpRight, ShieldCheck, Gauge, Sparkles, Laptop, WalletCards, GitCompareArrows } from "lucide-react"
 import type { Thesis } from "@/lib/data/types"
 import { useWishlist } from "@/lib/wishlist-context"
-import { VerifiedBadge } from "@/components/shared/verified-badge"
 import { htmlToPlainText } from "@/lib/text"
 import { getSignalToneClass, getThesisIntelligence } from "@/lib/opportunity-intelligence"
 import { getWorkMode } from "@/lib/opportunity-filters"
@@ -57,6 +56,10 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
       }`}>
       <div className={`h-1.5 w-full ${isPhD ? "bg-[#34a853]" : "bg-primary"}`} />
       <CardHeader className="pb-2">
+        <div className="mb-2 flex min-w-0 items-start gap-2 border-b border-border/60 pb-3 text-primary">
+          {thesis.organizationType === "university" ? <GraduationCap className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" /> : <Building2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />}
+          <p className="min-w-0 break-words text-base font-semibold leading-snug">{thesis.organization}</p>
+        </div>
         <div className="mb-1 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             {/* Type badge */}
@@ -122,18 +125,6 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
           </div>
         </div>
         <div className="flex flex-col gap-2.5">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {thesis.organizationType === "university" ? (
-              <GraduationCap className="h-4 w-4 shrink-0 text-primary" />
-            ) : (
-              <Building2 className="h-4 w-4 shrink-0 text-primary" />
-            )}
-            <span className="truncate">{thesis.organization}</span>
-            {isVerified && <VerifiedBadge compact badge={thesis.verificationBadge} />}
-            {thesis.postedBy === "admin" && (
-              <span className="shrink-0 text-[11px] text-muted-foreground/50">- by Graduates Corner</span>
-            )}
-          </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4 shrink-0 text-primary" />
             <span>{thesis.location}</span>

@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Calendar, Building2, Clock, Heart, Tags, ArrowUpRight, ShieldCheck, Gauge, Sparkles, Laptop, WalletCards, GitCompareArrows } from "lucide-react"
 import type { TraineeProgram } from "@/lib/data/types"
 import { useWishlist } from "@/lib/wishlist-context"
-import { VerifiedBadge } from "@/components/shared/verified-badge"
 import { htmlToPlainText } from "@/lib/text"
 import { getProgramIntelligence, getSignalToneClass } from "@/lib/opportunity-intelligence"
 import { getWorkMode } from "@/lib/opportunity-filters"
@@ -55,6 +54,10 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
     <Card className="premium-border group relative flex min-h-[410px] flex-col overflow-hidden border-border/70 bg-card/94 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_55px_rgba(66,133,244,0.14)]">
       <div className="h-1.5 w-full bg-[#fbbc05]" />
       <CardHeader className="pb-2">
+        <div className="mb-2 flex min-w-0 items-start gap-2 border-b border-border/60 pb-3 text-primary">
+          <Building2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+          <p className="min-w-0 break-words text-base font-semibold leading-snug">{program.company}</p>
+        </div>
         <div className="mb-1 flex items-center justify-between gap-3">
           <Badge className="bg-accent text-accent-foreground hover:bg-accent/90">
             Trainee Program
@@ -112,14 +115,6 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
           </div>
         </div>
         <div className="flex flex-col gap-2.5">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Building2 className="h-4 w-4 shrink-0 text-primary" />
-            <span className="truncate">{program.company}</span>
-            {isVerified && <VerifiedBadge compact badge={program.verificationBadge} />}
-            {program.postedBy === "admin" && (
-              <span className="shrink-0 text-[11px] text-muted-foreground/50">- by Graduates Corner</span>
-            )}
-          </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4 shrink-0 text-primary" />
             <span>{program.location}</span>
