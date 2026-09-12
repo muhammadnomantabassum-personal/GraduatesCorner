@@ -1,10 +1,9 @@
 "use client"
 
-import { Suspense, useEffect, useState } from "react"
+import { Suspense, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { DiscoveryHero } from "@/components/shared/discovery-hero"
 import { PublicLayout } from "@/components/layout/public-layout"
 import { ThesisCard } from "@/components/shared/thesis-card"
 import { ProgramCard } from "@/components/shared/program-card"
@@ -35,6 +34,7 @@ import {
 type OpportunityTrack = "phd" | "master" | "programs"
 
 const quickFilters = [
+  { href: "/master-thesis?kind=internship", label: "Internships", icon: Briefcase },
   { href: "/master-thesis", label: "Master's thesis", icon: BookOpen },
   { href: "/phd-positions", label: "PhD positions", icon: GraduationCap },
   { href: "/trainee-programs", label: "Graduate programs", icon: Briefcase },
@@ -121,11 +121,17 @@ function mapProgram(program: any): TraineeProgram {
 function HomePageContent() {
   const router = useRouter()
   const { supabase, user } = useAuth()
+  const searchRef = useRef<HTMLDivElement>(null)
 
   const [showRoleModal, setShowRoleModal] = useState(false)
   const [theses, setTheses] = useState<Thesis[]>([])
   const [programs, setPrograms] = useState<TraineeProgram[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [showResults, setShowResults] = useState(false)
+  const [activeResultIndex, setActiveResultIndex] = useState(-1)
   const [activeTrack, setActiveTrack] = useState<OpportunityTrack>("phd")
   const [platformCounts, setPlatformCounts] = useState({ phd: 0, master: 0, programs: 0 })
 
@@ -194,6 +200,131 @@ function HomePageContent() {
     fetchData()
   }, [supabase])
 
+  useEffect(() => {
+    const query = searchQuery.trim()
+    const controller = new AbortController()
+
+    if (query.length < 2) {
+      setSearchResults([])
+      setShowResults(false)
+      setActiveResultIndex(-1)
+      setIsSearching(false)
+      return () => controller.abort()
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsSearching(true)
+      try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
+          signal: controller.signal,
+        })
+        if (!response.ok) throw new Error("Search request failed")
+
+        const data = await response.json()
+        const results = data.results || []
+        setSearchResults(results)
+        setActiveResultIndex(results.length > 0 ? 0 : -1)
+        setShowResults(true)
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return
+        console.error("Homepage search failed.")
+        setSearchResults([])
+        setActiveResultIndex(-1)
+        setShowResults(true)
+      } finally {
+        if (!controller.signal.aborted) setIsSearching(false)
+      }
+    }, 250)
+
+    return () => {
+      clearTimeout(delayDebounceFn)
+      controller.abort()
+    }
+  }, [searchQuery])
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowResults(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const getResultIcon = (category: string) => {
+    switch (category) {
+      case "thesis":
+        return <BookOpen className="h-4 w-4" />
+      case "phd":
+        return <GraduationCap className="h-4 w-4" />
+      case "program":
+        return <Briefcase className="h-4 w-4" />
+      case "blog":
+        return <FileText className="h-4 w-4" />
+      default:
+        return <Search className="h-4 w-4" />
+    }
+  }
+
+  const getResultLink = (result: any) => {
+    switch (result.category) {
+      case "thesis":
+        return `/theses/${result.id}`
+      case "phd":
+        return `/phd-positions/${result.id}`
+      case "program":
+        return `/trainee-programs/${result.id}`
+      case "blog":
+        return `/blog/${result.slug || result.id}`
+      default:
+        return "#"
+    }
+  }
+
+  const navigateToResult = (result: any) => {
+    router.push(getResultLink(result))
+    setShowResults(false)
+  }
+
+  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Escape") {
+      setShowResults(false)
+      return
+    }
+
+    if (!showResults || searchResults.length === 0) return
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault()
+      setActiveResultIndex((current) => (current + 1) % searchResults.length)
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault()
+      setActiveResultIndex((current) =>
+        current <= 0 ? searchResults.length - 1 : current - 1,
+      )
+    }
+
+    if (event.key === "Enter" && activeResultIndex >= 0) {
+      event.preventDefault()
+      navigateToResult(searchResults[activeResultIndex])
+    }
+  }
+
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const selectedResult = searchResults[activeResultIndex] || searchResults[0]
+    if (selectedResult) {
+      navigateToResult(selectedResult)
+      return
+    }
+
+    if (searchQuery.trim().length >= 2) setShowResults(true)
+  }
+
   const stats = [
     { label: "PhD positions", value: platformCounts.phd, icon: GraduationCap, href: "/phd-positions" },
     { label: "Master's theses", value: platformCounts.master, icon: BookOpen, href: "/master-thesis" },
@@ -211,7 +342,171 @@ function HomePageContent() {
 
   return (
     <PublicLayout>
-      <DiscoveryHero />
+      <section className="relative min-h-[570px] overflow-hidden px-4 pb-20 pt-14 text-primary-foreground sm:min-h-[600px] lg:pt-20">
+        <Image
+          src="https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?q=80&w=2400&auto=format&fit=crop"
+          alt=""
+          fill
+          priority
+          quality={75}
+          sizes="100vw"
+          className="object-cover object-[58%_center] sm:object-center"
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(7,31,68,0.96)_0%,rgba(20,66,135,0.90)_48%,rgba(16,58,103,0.48)_78%,rgba(8,35,60,0.35)_100%)]" />
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-[linear-gradient(180deg,transparent_0%,var(--background)_100%)]" />
+
+        <div className="relative mx-auto flex w-full min-w-0 max-w-7xl flex-col justify-center">
+          <div className="w-full min-w-0 max-w-3xl">
+            <Badge className="mb-5 gap-2 border border-primary-foreground/20 bg-primary-foreground/12 px-3 py-1.5 text-primary-foreground shadow-sm backdrop-blur hover:bg-primary-foreground/18">
+              <Sparkles className="h-3.5 w-3.5" />
+              Academic and early-career opportunities
+            </Badge>
+            <h1 className="max-w-full text-balance break-words text-4xl font-bold leading-[1.08] text-primary-foreground sm:text-6xl sm:leading-[1.04] lg:max-w-4xl lg:text-7xl">
+              Graduates Corner
+            </h1>
+            <p className="mt-5 max-w-2xl text-pretty text-lg leading-relaxed text-primary-foreground/82 lg:text-xl">
+              Find credible master&apos;s theses, PhD positions, and graduate programs from universities and companies worldwide.
+            </p>
+
+            <div className="relative mt-7 w-full min-w-0 max-w-2xl" ref={searchRef}>
+              <form
+                onSubmit={handleSearchSubmit}
+                role="search"
+                className="relative flex min-w-0 flex-col gap-2 rounded-xl border border-primary-foreground/20 bg-primary-foreground/14 p-2 shadow-[0_24px_80px_rgba(4,20,46,0.28)] backdrop-blur-xl sm:flex-row"
+              >
+                <div className="flex min-h-14 min-w-0 flex-1 items-center gap-2 rounded-xl bg-card px-3 shadow-inner sm:gap-3 sm:px-4">
+                  <Search className="h-5 w-5 shrink-0 text-primary" />
+                  <input
+                    type="text"
+                    placeholder="Search field, university, company, or country"
+                    aria-label="Search opportunities and guides"
+                    role="combobox"
+                    aria-autocomplete="list"
+                    aria-controls="home-search-results"
+                    aria-expanded={showResults}
+                    aria-activedescendant={
+                      activeResultIndex >= 0 ? `home-search-result-${activeResultIndex}` : undefined
+                    }
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    onKeyDown={handleSearchKeyDown}
+                    onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
+                    className="min-w-0 flex-1 bg-transparent text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery("")
+                        setShowResults(false)
+                      }}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-muted active:bg-muted/80"
+                      aria-label="Clear search"
+                    >
+                      <X className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  )}
+                </div>
+                <Button type="submit" className="min-h-14 shrink-0 gap-2 rounded-xl px-6 font-semibold shadow-[0_14px_32px_rgba(66,133,244,0.24)] active:scale-[0.98]">
+                  {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                  Find opportunities
+                </Button>
+              </form>
+
+              <p className="sr-only" aria-live="polite">
+                {isSearching
+                  ? "Searching opportunities"
+                  : showResults
+                    ? `${searchResults.length} search results available`
+                    : ""}
+              </p>
+
+              {showResults && (
+                <div
+                  id="home-search-results"
+                  role="listbox"
+                  aria-label="Opportunity search results"
+                  className="absolute left-0 right-0 z-50 mt-2 max-h-[400px] overflow-y-auto rounded-xl border border-border bg-card p-2 text-foreground shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 lg:right-auto lg:w-[42rem]"
+                >
+                  {searchResults.length > 0 ? (
+                    <div className="flex flex-col gap-1">
+                      <div className="px-3 py-2 text-[10px] font-bold uppercase text-muted-foreground">
+                        Search results
+                      </div>
+                      {searchResults.map((result, index) => (
+                        <Link
+                          key={`${result.category}-${result.id}`}
+                          id={`home-search-result-${index}`}
+                          role="option"
+                          aria-selected={activeResultIndex === index}
+                          href={getResultLink(result)}
+                          className={`group flex min-h-12 items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ${
+                            activeResultIndex === index ? "bg-secondary" : "hover:bg-secondary"
+                          }`}
+                          onMouseEnter={() => setActiveResultIndex(index)}
+                          onClick={() => setShowResults(false)}
+                        >
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            {getResultIcon(result.category)}
+                          </div>
+                          <div className="min-w-0 flex-1 text-left">
+                            <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary">
+                              {result.title}
+                            </p>
+                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                              <span className="capitalize">{result.category}</span>
+                              <span aria-hidden="true">-</span>
+                              <span className="truncate">{result.meta}</span>
+                            </div>
+                          </div>
+                          <ArrowRight className="h-3.5 w-3.5 text-primary opacity-0 transition-opacity group-hover:opacity-100" />
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-10 text-center">
+                      <Search className="mb-3 h-8 w-8 text-muted-foreground/40" />
+                      <p className="text-sm font-medium text-foreground">
+                        No results found for &quot;{searchQuery}&quot;
+                      </p>
+                      <p className="text-xs text-muted-foreground">Try a field, company, university, or country.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center gap-2.5">
+              {quickFilters.map((item) => (
+                <Link key={item.href} href={item.href}>
+                  <Button
+                    variant="outline"
+                    className="min-h-11 gap-2 rounded-xl border-primary-foreground/25 bg-primary-foreground/8 text-primary-foreground backdrop-blur transition-all hover:border-primary-foreground/40 hover:bg-primary-foreground/16 hover:text-primary-foreground active:scale-[0.98]"
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </Button>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-8 grid max-w-3xl gap-3 border-t border-primary-foreground/18 pt-5 text-sm text-primary-foreground/78 sm:grid-cols-3">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-[#76d58f]" />
+              Verified organizations
+            </div>
+            <div className="flex items-center gap-2">
+              <CalendarClock className="h-4 w-4 text-[#ffd76a]" />
+              Deadline-aware discovery
+            </div>
+            <div className="flex items-center gap-2">
+              <Globe2 className="h-4 w-4 text-[#8ab4f8]" />
+              International coverage
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="border-y border-border/70 bg-card/80 px-4" aria-label="Available opportunities">
         <div className="mx-auto grid max-w-7xl grid-cols-3 divide-x divide-border/70">
