@@ -200,7 +200,7 @@ export function buildArticleSchema(input: {
       name: SITE_NAME,
       logo: {
         "@type": "ImageObject",
-        url: absoluteUrl("/logo.png"),
+        url: absoluteUrl("/gc-logo-512.png"),
       },
     },
   }

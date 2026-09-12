@@ -72,15 +72,15 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
+        url: '/gc-icon-32.png',
         media: '(prefers-color-scheme: light)',
       },
       {
-        url: '/icon-dark-32x32.png',
+        url: '/gc-icon-32.png',
         media: '(prefers-color-scheme: dark)',
       },
     ],
-    apple: '/apple-icon.png',
+    apple: '/gc-apple-180.png',
   },
 
   openGraph: {
@@ -129,7 +129,7 @@ export default function RootLayout({
               '@id': `${SITE_URL}/#organization`,
               name: SITE_NAME,
               url: SITE_URL,
-              logo: absoluteUrl('/logo.png'),
+              logo: absoluteUrl('/gc-logo-512.png'),
               email: 'admin@graduatescorner.com',
               sameAs: SOCIAL_PROFILES,
             },

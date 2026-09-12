@@ -41,7 +41,7 @@ export default function PressPage() {
             <div>
               <BrandLogo size="lg" />
               <div className="mt-6 flex flex-wrap gap-2">
-                <a href="/logo.png" download>
+                <a href="/gc-logo-512.png" download>
                   <Button variant="outline" className="gap-2">
                     <Download className="h-4 w-4" />
                     Logo

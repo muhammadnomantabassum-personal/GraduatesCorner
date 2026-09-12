@@ -8,11 +8,11 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     display: "standalone",
     background_color: "#f7faff",
-    theme_color: "#1a73e8",
+    theme_color: "#102B46",
     icons: [
-      { src: "/icon-light-32x32.png", sizes: "32x32", type: "image/png" },
-      { src: "/apple-icon.png", sizes: "180x180", type: "image/png" },
-      { src: "/logo.png", sizes: "512x512", type: "image/png" },
+      { src: "/gc-icon-32.png", sizes: "32x32", type: "image/png" },
+      { src: "/gc-apple-180.png", sizes: "180x180", type: "image/png" },
+      { src: "/gc-logo-512.png", sizes: "512x512", type: "image/png" },
     ],
   }
 }

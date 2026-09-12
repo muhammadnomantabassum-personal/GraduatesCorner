@@ -3,6 +3,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.filter-sidebar { scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: var(--primary) var(--muted); }
+.filter-sidebar::-webkit-scrollbar { width: 7px; }
+.filter-sidebar::-webkit-scrollbar-track { background: var(--muted); border-radius: 8px; }
+.filter-sidebar::-webkit-scrollbar-thumb { background: var(--primary); border: 1px solid var(--muted); border-radius: 8px; }
+
 .discovery-hero {
   background: radial-gradient(ellipse at 85% 20%, color-mix(in oklch, var(--primary) 9%, transparent), transparent 55%), var(--background);
 }

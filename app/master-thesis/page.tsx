@@ -464,7 +464,7 @@ export default function MasterThesisPage() {
             <aside
               className="hidden w-full shrink-0 lg:block lg:w-[280px]"
             >
-              <div className="lg:sticky lg:top-24">
+              <div className="filter-sidebar overflow-y-auto overscroll-contain pr-1 lg:sticky lg:top-44 lg:max-h-[calc(100dvh-12rem)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" tabIndex={0} role="region" aria-label="Scrollable filters">
                 <FilterPanel
                   sections={filterSections}
                   selected={filters}
