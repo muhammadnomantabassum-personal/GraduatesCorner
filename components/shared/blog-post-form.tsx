@@ -32,6 +32,7 @@ export const studentBlogCategories = [
   "Student Stories",
   "Success Stories",
   "Research",
+  "Scholarships",
   "Study Abroad",
 ]
 
@@ -43,6 +44,8 @@ export const universityBlogCategories = [
   "University News",
   "Student Stories",
   "Success Stories",
+  "Scholarships",
+  "Study Abroad",
 ]
 
 export const companyBlogCategories = [
@@ -53,6 +56,8 @@ export const companyBlogCategories = [
   "Company News",
   "Student Stories",
   "Success Stories",
+  "Scholarships",
+  "Study Abroad",
 ]
 
 export const adminBlogCategories = [
@@ -65,6 +70,8 @@ export const adminBlogCategories = [
   "Student Stories",
   "Success Stories",
   "Platform Updates",
+  "Scholarships",
+  "Study Abroad",
 ]
 
 type BlogFormMode = "create" | "edit"
