@@ -17,4 +17,5 @@ export type EmployerCandidate = {
 export type ListingJob = {
   id: string; url: string; title: string; location?: string; detailUrl?: string; description?: string
   deadline?: string; publishedAt?: string; country?: string
+  organization?: string
 }

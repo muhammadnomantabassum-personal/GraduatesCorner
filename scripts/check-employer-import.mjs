@@ -8,6 +8,27 @@ const { robotsAllows } = load("lib/employer-import/fetch.ts")
 const { EMPLOYER_SOURCES } = load("lib/employer-import/catalogue.ts")
 assert.equal(new Set(EMPLOYER_SOURCES.map(source => source.id)).size, EMPLOYER_SOURCES.length)
 assert.ok(EMPLOYER_SOURCES.length >= 95)
+const { VERIFIED_THESIS_SOURCES } = load("lib/employer-import/thesis-sources.ts")
+for (const source of VERIFIED_THESIS_SOURCES) {
+  assert.equal(EMPLOYER_SOURCES.filter(item => item.id === source.id).length, 1)
+  assert.equal(source.verified, true)
+  assert.ok(source.allowedHosts.some(host => new URL(source.listingUrl).hostname === host || new URL(source.listingUrl).hostname.endsWith(`.${host}`)))
+}
+assert.ok(VERIFIED_THESIS_SOURCES.some(source => source.country === "Denmark"))
+const { htmlJobs } = load("lib/employer-import/parser.ts")
+const cards = htmlJobs(`
+  <a href="/departments/student-thesis">Students and Internships</a>
+  <a href="/locations/examensarbeten">Examensarbete</a>
+  <a href="/weblog/internship-guide">Internship guide</a>
+  <a href="/vacatures?type=traineeship">View traineeship vacancies</a>
+  <article><h3>Master Thesis Energy</h3><div><a href="/vacancies/master-energy">Read more</a></div></article>
+  <table><tr><td class="views-field-title">Master Thesis Quantum</td><td><a href="https://ats.talentadore.com/apply/quantum/abc">See more</a></td></tr></table>
+  <script type="application/ld+json">{"@type":"JobPosting","title":"Internship AI","url":"/jobs/123","hiringOrganization":{"name":"Actual employer"}}</script>
+`, "https://career.example.com/").jobs
+assert.equal(cards.length, 3, "Navigation links, guides, and search pages are not vacancies")
+assert.ok(cards.some(job => job.title === "Master Thesis Energy"))
+assert.ok(cards.some(job => job.title === "Master Thesis Quantum"))
+assert.equal(cards.find(job => job.title === "Internship AI").organization, "Actual employer")
 assert.equal(canonicalJobUrl("https://jobs.example.com/job/42/?utm_source=x&jobId=42#apply"), "https://jobs.example.com/job/42?jobId=42")
 assert.equal(canonicalJobUrl("https://abb.wd3.myworkdayjobs.com/en-US/Board/job/City/Title_JR1/apply?source=careers"), "https://abb.wd3.myworkdayjobs.com/Board/job/City/Title_JR1")
 assert.equal(canonicalJobUrl("https://www.smartrecruiters.com/BoschGroup/123-thesis-title"), "https://jobs.smartrecruiters.com/BoschGroup/123")
@@ -36,6 +57,18 @@ if (requested) {
     } catch (error) { console.log(JSON.stringify({ source: id, error: error.message })) }
   }
 } else {
+  const danishLoad = typescriptLoader({
+    "node:dns/promises": { lookup: async () => [{ address: "8.8.8.8", family: 4 }] },
+    fetch: async url => new Response(String(url).endsWith("robots.txt") ? "User-agent: *\nAllow: /" : `<script type="application/ld+json">${JSON.stringify({
+      "@type": "JobPosting", title: "Master Thesis Sustainable Energy", url: "https://fixture.example/jobs/denmark",
+      description: "A master's thesis research position in sustainable energy systems, working alongside our engineering team on practical models and experiments.",
+      jobLocation: { address: { addressLocality: "Copenhagen", addressCountry: "DK" } },
+      hiringOrganization: { name: "Danish engineering employer" },
+    })}</script>`),
+  })
+  const danish = await danishLoad("lib/employer-import/parser.ts").scanEmployerPage({ id: "denmark", name: "Source board", country: "Denmark", publicUrl: "https://fixture.example/jobs", adapter: "html", verified: true, allowedHosts: ["fixture.example"] }, { query: 0, offset: 0 }, new Set(), "master")
+  assert.equal(danish.candidates.length, 1, "Danish positions must not be excluded")
+  assert.equal(danish.candidates[0].organization, "Danish engineering employer", "Keep the employer supplied by a job board")
   const calls = []
   const searches = []
   const mockLoad = typescriptLoader({

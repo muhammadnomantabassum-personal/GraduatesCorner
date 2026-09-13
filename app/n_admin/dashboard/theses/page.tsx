@@ -118,12 +118,17 @@ export default function AdminThesesPage() {
             Approve, reject, or remove master thesis postings
           </p>
         </div>
+        <div className="flex flex-wrap gap-2">
+        <Link href="/n_admin/dashboard/thesis-imports">
+          <Button variant="outline">Import from sources</Button>
+        </Link>
         <Link href="/n_admin/dashboard/theses/new">
           <Button className="gap-1.5">
             <Plus className="h-4 w-4" />
             Post Master Thesis
           </Button>
         </Link>
+        </div>
       </div>
 
       {/* Tab Switcher */}

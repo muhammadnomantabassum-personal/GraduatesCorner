@@ -8,7 +8,7 @@ import type { EmployerSource } from "./catalogue"
 import type { EmployerCandidate, EmployerCursor, ListingJob } from "./types"
 
 const QUERIES = ["thesis", "intern", "trainee", "graduate programme", "Abschlussarbeit", "Praktikum", "examensarbete", "masteroppgave", "diplomityö", "afstudeer"]
-const COUNTRIES = /\b(sweden|sverige|norway|norge|finland|suomi|netherlands|nederland|germany|deutschland|se|no|fi|nl|de)\b/i
+const COUNTRIES = /\b(sweden|sverige|norway|norge|finland|suomi|denmark|danmark|netherlands|nederland|germany|deutschland|se|no|fi|dk|nl|de)\b/i
 const EXPIRED = /\b(no longer available|no longer accepting|applications? (?:are )?closed|vacancy (?:has )?expired|position (?:has been|is) filled)\b/i
 const PAGE_SIZE = 20
 type Json = Record<string, any> // External ATS payloads are validated field by field below.
@@ -22,25 +22,38 @@ export function jobPostings(value: unknown): Json[] {
   return [...jobPostings(item["@graph"]), ...jobPostings(item.itemListElement), ...jobPostings(item.item)]
 }
 
-function htmlJobs(body: string, base: string) {
+export function htmlJobs(body: string, base: string) {
   const $ = load(body)
   const jobs: ListingJob[] = []
   $("script[type='application/ld+json']").each((_, node) => {
     try {
       for (const item of jobPostings(JSON.parse($(node).text()))) {
         const url = new URL(item.url || base, base).toString()
-        jobs.push({ id: String(item.identifier?.value || url), url, title: text(item.title), description: item.description, deadline: item.validThrough, publishedAt: item.datePosted,
+        jobs.push({ id: String(item.identifier?.value || url), url, title: text(item.title), organization: text(item.hiringOrganization?.name), description: item.description, deadline: item.validThrough, publishedAt: item.datePosted,
           location: [item.jobLocation].flat().map(loc => [loc?.address?.addressLocality, loc?.address?.addressCountry?.name || loc?.address?.addressCountry].filter(v => typeof v === "string").join(", ")).join("; ") })
       }
     } catch { /* A malformed unrelated JSON-LD block must not abort the page. */ }
   })
   $("a[href]").each((_, node) => {
-    const title = text($(node).text())
     const href = $(node).attr("href")!
-    if (!classifyEmployerTitle(title) || !/job|career|vacan|position|stellen|requisition|\/apply\//i.test(href)) return
     try {
       const url = new URL(href, base).toString()
+      // Match vacancy paths, never words in a hostname or a careers guide URL.
+      if (!/\/(?:jobs?|jobdetail|vacanc(?:y|ies)|vacatures?|positions?|stellen(?:angebote)?|requisition|apply)\/[^/?#]+/i.test(new URL(url).pathname)) return
       if (canonicalJobUrl(url) === canonicalJobUrl(base)) return
+      let title = text($(node).text())
+      const row = $(node).closest("tr")
+      if (!classifyEmployerTitle(title) && row.length) title = text(row.find(".views-field-title,[itemprop='title']").first().text())
+      if (!classifyEmployerTitle(title)) {
+        // Some vacancy cards use an empty overlay link or a "Read more" button.
+        let container = $(node).parent()
+        for (let depth = 0; depth < 5; depth++, container = container.parent()) {
+          const headings = container.find("h2,h3,h4")
+          if (headings.length === 1) { title = text(headings.first().text()); break }
+          if (headings.length > 1) break
+        }
+      }
+      if (!classifyEmployerTitle(title)) return
       jobs.push({ id: url, url, title })
     } catch { /* Ignore non-web links. */ }
   })
@@ -136,6 +149,7 @@ export async function scanEmployerPage(source: EmployerSource, cursor: EmployerC
       let deadline = job.deadline
       let location = job.location || ""
       let publishedAt = job.publishedAt
+      let organization = job.organization || source.name
       if (source.adapter === "workday") {
         const detail = JSON.parse((await read(job.detailUrl!)).text).jobPostingInfo
         if (!detail?.jobDescription) throw new Error("Workday detail is missing the description")
@@ -152,6 +166,7 @@ export async function scanEmployerPage(source: EmployerSource, cursor: EmployerC
       } else if (!description) {
         const detail = await read(url)
         const parsed = htmlJobs(detail.text, detail.finalUrl).jobs.find(item => item.description)
+        organization = parsed?.organization || organization
         const $ = load(detail.text)
         $("script,style,nav,header,footer,form").remove()
         description = parsed?.description || $("[itemprop='description'],.jobdescription,.job-description,.jobDescription,article,main").first().text()
@@ -174,7 +189,7 @@ export async function scanEmployerPage(source: EmployerSource, cursor: EmployerC
       const date = isoDeadline(deadline) || isoDeadline(clean.match(/(?:deadline|closing date|sista ansokningsdag|sista ansökningsdag|bewerbungsfrist)\s*:?\s*(.{0,45})/i)?.[1])
       if (date && date < new Date().toISOString().slice(0, 10)) { excluded++; continue }
       const compensation = /\bunpaid\b/i.test(clean) ? "unpaid" : /\bstipend\b/i.test(clean) ? "stipend" : /\bpaid (?:internship|placement|position)|\bsalary\s*[:€£]|\bremuneration\s*:/i.test(clean) ? "paid" : null
-      candidates.push({ externalId: job.id.length <= 200 ? job.id : createHash("sha256").update(url).digest("hex"), url, title: job.title.slice(0, 300), kind, organization: source.name, location: location.slice(0, 500), description: clean.slice(0, 20_000), field: inferTraineeFields(job.title, clean).join(", "), deadline: date, compensation, duration: inferDuration(clean), publishedAt: isoDeadline(publishedAt) })
+      candidates.push({ externalId: job.id.length <= 200 ? job.id : createHash("sha256").update(url).digest("hex"), url, title: job.title.slice(0, 300), kind, organization, location: location.slice(0, 500), description: clean.slice(0, 20_000), field: inferTraineeFields(job.title, clean).join(", "), deadline: date, compensation, duration: inferDuration(clean), publishedAt: isoDeadline(publishedAt) })
     } catch (error) { errors.push(`${job.title.slice(0, 80)}: ${error instanceof Error ? error.message : "Vacancy detail request failed"}`) }
   }
   // Retry a partially read page twice, then advance; a permanently broken detail must not

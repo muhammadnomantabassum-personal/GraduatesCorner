@@ -41,8 +41,8 @@ export function EmployerImportDashboard({ section }: { section: "master" | "trai
     catch (error) { toast.error(error instanceof Error ? error.message : "Operation failed") }
     finally { setBusy("") }
   }
-  async function scanEnabled() {
-    const selected = sources.filter(source => source.enabled && !source.note)
+  async function scanSources(verifiedOnly = false) {
+    const selected = sources.filter(source => (verifiedOnly ? source.verified : source.enabled) && !source.note)
     setBusy("all")
     let completed = 0
     let index = 0
@@ -51,7 +51,7 @@ export function EmployerImportDashboard({ section }: { section: "master" | "trai
       await Promise.all(Array.from({ length: Math.min(2, selected.length) }, async () => {
         while (index < selected.length) {
           const source = selected[index++]
-          try { await send({ action: "scan", sourceId: source.id }) } catch { failures++ }
+          try { const result = await send({ action: "scan", sourceId: source.id }); if (result.status === "partial") failures++ } catch { failures++ }
           completed++; setProgress(`Scanned ${completed}/${selected.length} sources${failures ? `; ${failures} need attention` : ""}`)
         }
       }))
@@ -65,7 +65,7 @@ export function EmployerImportDashboard({ section }: { section: "master" | "trai
       <div className="flex flex-wrap gap-4 text-sm underline"><Link href={section === "master" ? "/n_admin/dashboard/employer-program-imports" : "/n_admin/dashboard/thesis-imports"}>Switch to {section === "master" ? "trainee" : "thesis & internship"} review</Link><Link href={section === "master" ? "/master-thesis" : "/trainee-programs"}>View public listings</Link><Link href="/n_admin/dashboard/trainee-imports">Existing trainee directory imports</Link></div>
     </div>
     {error && <p role="alert" className="rounded border border-destructive p-4 text-destructive">{error}</p>}
-    <section className="space-y-4"><div className="flex flex-wrap items-center gap-3"><h2 className="mr-auto text-xl font-semibold">Employer sources ({sources.length})</h2><Button disabled={!!busy || !sources.some(source => source.enabled)} onClick={scanEnabled}>Scan enabled sources</Button></div>
+    <section className="space-y-4"><div className="flex flex-wrap items-center gap-3"><h2 className="mr-auto text-xl font-semibold">Sources ({sources.length})</h2><Button disabled={!!busy || !sources.some(source => source.verified && !source.note)} onClick={() => scanSources(true)}>Import from verified sources</Button><Button variant="outline" disabled={!!busy || !sources.some(source => source.enabled && !source.note)} onClick={() => scanSources()}>Scan enabled sources</Button></div>
       <p className="text-sm text-muted-foreground">Scans here search for {section === "trainee" ? "trainee and graduate programs" : "theses and internships"}. Both sections share duplicate protection and route matching roles to the appropriate queue. Automatic publishing is off by default and requires an explicit deadline and compensation.</p>
       <p role="status">{busy ? progress || `Working: ${busy}` : progress}</p>
       <Input aria-label="Filter employers or countries" placeholder="Filter employer, country, or ATS…" value={filter} onChange={event => setFilter(event.target.value)} />

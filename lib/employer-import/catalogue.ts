@@ -1,3 +1,5 @@
+import { VERIFIED_THESIS_SOURCES } from "./thesis-sources"
+
 export type EmployerAdapter = "html" | "smartrecruiters" | "workday" | "eightfold" | "successfactors" | "avature"
 export type EmployerSource = {
   id: string
@@ -163,10 +165,15 @@ const endpoints: Record<string, Partial<EmployerSource>> = {
   klarna: { note: "Official careers page now links to jobs.deel.com; a Deel adapter is needed, rather than Lever." },
 }
 
-export const EMPLOYER_SOURCES: EmployerSource[] = rows.map(([id, name, country, publicUrl]) => ({
+const existingSources: EmployerSource[] = rows.map(([id, name, country, publicUrl]) => ({
   id, name, country, publicUrl, adapter: "html",
   allowedHosts: [new URL(publicUrl).hostname.replace(/^www\./, "")],
   ...endpoints[id],
 }))
+
+export const EMPLOYER_SOURCES: EmployerSource[] = [
+  ...existingSources.map(source => VERIFIED_THESIS_SOURCES.find(update => update.id === source.id) || source),
+  ...VERIFIED_THESIS_SOURCES.filter(source => !existingSources.some(existing => existing.id === source.id)),
+]
 
 export function getEmployerSource(id: string) { return EMPLOYER_SOURCES.find(source => source.id === id) }
