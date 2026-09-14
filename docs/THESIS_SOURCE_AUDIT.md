@@ -1,5 +1,7 @@
 # Thesis source audit — 2026-09-13
 
+Follow-up: Klarna now uses its public Deel board at https://jobs.deel.com/klarna. Live tests read 20 structured vacancy pages and advanced to the next page successfully. FINN was removed from the active catalogue because its crawler notice requires written permission for recurring automated collection. Historical imported records are preserved.
+
 Checked all 236 supplied URL entries using public HTTP requests, followed published vacancy-board links, and tested configured feeds with the actual importer without writing to the database. A successful homepage response alone does not count as a usable feed.
 
 Added 17 sources and updated 2 existing endpoints. Empty supported ATS searches are retained so future vacancies can be discovered. Broken, parked, blocked, unparseable, and informational-only sources were not added. Existing unrelated sources and admin preferences are preserved.

@@ -35,6 +35,11 @@ BEGIN
   EXCEPTION WHEN raise_exception THEN
     IF SQLERRM LIKE 'TEST:%' THEN RAISE; END IF;
   END;
+  UPDATE public.employer_import_items SET deadline=CURRENT_DATE+30 WHERE id=candidate;
+  target := public.publish_employer_candidate(candidate);
+  IF NOT EXISTS(SELECT 1 FROM public.theses WHERE id=target AND compensation='not_specified') THEN RAISE EXCEPTION 'Unknown compensation was not preserved'; END IF;
+  INSERT INTO public.employer_import_items(source_id,external_id,canonical_url,title,kind,organization,location,description,field)
+  VALUES('__employer_test_fixture','ignored','https://example.com/employer-test/ignored','Ignored fixture','internship','Test fixture','Sweden','Fixture','Engineering') RETURNING id INTO candidate;
   UPDATE public.employer_import_items SET status='ignored',deadline=CURRENT_DATE+30,compensation='paid' WHERE id=candidate;
   BEGIN
     PERFORM public.publish_employer_candidate(candidate);

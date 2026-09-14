@@ -1,6 +1,6 @@
 import { VERIFIED_THESIS_SOURCES } from "./thesis-sources"
 
-export type EmployerAdapter = "html" | "smartrecruiters" | "workday" | "eightfold" | "successfactors" | "avature"
+export type EmployerAdapter = "html" | "smartrecruiters" | "workday" | "eightfold" | "successfactors" | "avature" | "deel"
 export type EmployerSource = {
   id: string
   name: string
@@ -49,7 +49,6 @@ const rows: [string, string, string, string][] = [
   ["equinor", "Equinor", "Norway", "https://www.equinor.com/careers/join-equinor/students"],
   ["dnv", "DNV", "Norway", "https://www.dnv.com/careers/"],
   ["kongsberg", "Kongsberg Gruppen", "Norway", "https://www.kongsberg.com/no/career/"],
-  ["finn", "FINN job board", "Norway", "https://www.finn.no/job/fulltime/search.html?q=masteroppgave"],
   ["telenor", "Telenor", "Norway", "https://www.telenor.com/careers/"],
   ["statkraft", "Statkraft", "Norway", "https://www.statkraft.com/careers/"],
   ["hydro", "Norsk Hydro", "Norway", "https://www.hydro.com/careers/"],
@@ -161,8 +160,7 @@ const endpoints: Record<string, Partial<EmployerSource>> = {
   "dsm-firmenich": { adapter: "eightfold", tenant: "dsm.com", listingUrl: "https://jobs.dsm-firmenich.com/careers", verified: true },
   infineon: { adapter: "eightfold", tenant: "infineon.com", listingUrl: "https://jobs.infineon.com/careers", verified: true },
   bcg: { adapter: "eightfold", tenant: "bcg.com", listingUrl: "https://bcg.eightfold.ai/careers", allowedHosts: ["bcg.com", "bcg.eightfold.ai"] },
-  finn: { note: "Third-party job board: use the employer's original vacancy or an authorized FINN feed to avoid duplicate and licensed-content imports." },
-  klarna: { note: "Official careers page now links to jobs.deel.com; a Deel adapter is needed, rather than Lever." },
+  klarna: { adapter: "deel", listingUrl: "https://jobs.deel.com/klarna", allowedHosts: ["jobs.deel.com"], verified: true },
 }
 
 const existingSources: EmployerSource[] = rows.map(([id, name, country, publicUrl]) => ({

@@ -91,7 +91,7 @@ export function ThesisCard({ thesis }: { thesis: Thesis }) {
         </p>
         <div className="grid grid-cols-2 gap-2">
           <QuickSignal icon={Calendar} label={deadlineLabel} tone={deadlineTone} />
-          <QuickSignal icon={WalletCards} label={thesis.compensation} tone="bg-[#34A853]/10 text-[#137333] ring-1 ring-[#34A853]/15 dark:text-[#7bd88f]" />
+          <QuickSignal icon={WalletCards} label={thesis.compensation === "not_specified" ? "Pay not specified" : thesis.compensation} tone="bg-[#34A853]/10 text-[#137333] ring-1 ring-[#34A853]/15 dark:text-[#7bd88f]" />
           <QuickSignal icon={Laptop} label={workMode} tone="bg-[#4285F4]/10 text-[#1A73E8] ring-1 ring-[#4285F4]/15 dark:text-[#8ab4f8]" />
           <QuickSignal
             icon={ShieldCheck}

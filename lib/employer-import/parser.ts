@@ -3,6 +3,7 @@ import { load } from "cheerio"
 import { createHash } from "node:crypto"
 import { employerFetcher } from "./fetch"
 import { canonicalJobUrl, classifyEmployerTitle, isoDeadline } from "./identity"
+import { extractEmployerDeadline, parseEmployerDate } from "./deadline"
 import { inferDuration, inferTraineeFields } from "../trainee-import/classify"
 import type { EmployerSource } from "./catalogue"
 import type { EmployerCandidate, EmployerCursor, ListingJob } from "./types"
@@ -30,6 +31,7 @@ export function htmlJobs(body: string, base: string) {
       for (const item of jobPostings(JSON.parse($(node).text()))) {
         const url = new URL(item.url || base, base).toString()
         jobs.push({ id: String(item.identifier?.value || url), url, title: text(item.title), organization: text(item.hiringOrganization?.name), description: item.description, deadline: item.validThrough, publishedAt: item.datePosted,
+          compensation: Number(item.baseSalary?.value?.value || item.baseSalary?.value?.minValue || item.baseSalary?.value) > 0 ? "paid" : undefined,
           location: [item.jobLocation].flat().map(loc => [loc?.address?.addressLocality, loc?.address?.addressCountry?.name || loc?.address?.addressCountry].filter(v => typeof v === "string").join(", ")).join("; ") })
       }
     } catch { /* A malformed unrelated JSON-LD block must not abort the page. */ }
@@ -75,7 +77,28 @@ export async function scanEmployerPage(source: EmployerSource, cursor: EmployerC
   const query = QUERIES[cursor.query % QUERIES.length]
   let jobs: ListingJob[] = []
   let next: EmployerCursor = { query: 0, offset: 0 }
-  if (source.adapter === "workday") {
+  if (source.adapter === "deel") {
+    const page = await read(listingUrl)
+    const $ = load(page.text)
+    const urls: string[] = []
+    $("script[type='application/ld+json']").each((_, node) => {
+      try {
+        const data = JSON.parse($(node).text())
+        if (data["@type"] === "ItemList") for (const item of data.itemListElement || []) {
+          const target = new URL(item.url, listingUrl)
+          if (target.origin === base.origin && target.pathname.startsWith(`${base.pathname.replace(/\/$/, "")}/job-details/`) && target.pathname.endsWith("/overview")) urls.push(target.href)
+        }
+      } catch { /* Ignore unrelated or malformed structured data. */ }
+    })
+    const uniqueUrls = [...new Set(urls)]
+    for (const url of uniqueUrls.slice(cursor.offset, cursor.offset + PAGE_SIZE)) {
+      const detail = await read(url)
+      const job = htmlJobs(detail.text, detail.finalUrl).jobs.find(item => item.description)
+      if (job) jobs.push({ ...job, url, detailFetched: true })
+      else throw new Error("Deel vacancy structured data unavailable")
+    }
+    next = { query: 0, offset: cursor.offset + PAGE_SIZE < uniqueUrls.length ? cursor.offset + PAGE_SIZE : 0 }
+  } else if (source.adapter === "workday") {
     const endpoint = `${base.origin}/wday/cxs/${source.tenant}/${source.board}`
     const result = JSON.parse((await read(`${endpoint}/jobs`, { method: "POST", body: JSON.stringify({ appliedFacets: {}, limit: PAGE_SIZE, offset: cursor.offset, searchText: query }) })).text)
     if (!Array.isArray(result.jobPostings)) throw new Error("Workday search response changed")
@@ -145,54 +168,71 @@ export async function scanEmployerPage(source: EmployerSource, cursor: EmployerC
     if (known.has(url) || known.has(`${source.id}:${job.id}`)) { duplicates++; continue }
     if (job.country && !COUNTRIES.test(job.country)) { excluded++; continue }
     try {
-      let description = job.description || ""
-      let deadline = job.deadline
-      let location = job.location || ""
-      let publishedAt = job.publishedAt
-      let organization = job.organization || source.name
-      if (source.adapter === "workday") {
-        const detail = JSON.parse((await read(job.detailUrl!)).text).jobPostingInfo
-        if (!detail?.jobDescription) throw new Error("Workday detail is missing the description")
-        if (detail.canApply === false || detail.posted === false) { excluded++; continue }
-        description = detail.jobDescription
-        deadline = detail.endDate
-        publishedAt = detail.startDate
-        const country = text(detail.country?.descriptor || detail.jobRequisitionLocation?.country?.alpha2Code)
-        location = [detail.location, ...(detail.additionalLocations || []).map((item: unknown) => typeof item === "string" ? item : text((item as Json)?.descriptor)), country].filter(Boolean).join("; ")
-      } else if (source.adapter === "smartrecruiters") {
-        const detail = JSON.parse((await read(job.detailUrl!)).text)
-        description = Object.values(detail.jobAd?.sections || {}).map((section: any) => section.text || "").join("\n")
-        deadline = detail.validThrough
-      } else if (!description) {
-        const detail = await read(url)
-        const parsed = htmlJobs(detail.text, detail.finalUrl).jobs.find(item => item.description)
-        organization = parsed?.organization || organization
-        const $ = load(detail.text)
-        $("script,style,nav,header,footer,form").remove()
-        description = parsed?.description || $("[itemprop='description'],.jobdescription,.job-description,.jobDescription,article,main").first().text()
-        deadline = parsed?.deadline || $("[itemprop='validThrough']").attr("content")
-        location = parsed?.location || $("[itemprop='streetAddress']").attr("content") || text($(".jobGeoLocation").first().text()) || location
-        publishedAt = parsed?.publishedAt || $("[itemprop='datePosted']").attr("content") || publishedAt
-        if (source.adapter === "avature") {
-          location = text($(".tf_locations .article__content__view__field__value").text()) || location
-          const descriptions = $(".article__content__view__field").filter((_, node) => !$(node).find(".article__content__view__field__label").length)
-            .map((_, node) => text($(node).find(".article__content__view__field__value").text())).get().sort((a, b) => b.length - a.length)
-          description = descriptions[0] || description
-        }
-      }
-      const clean = text(description)
-      if (EXPIRED.test(clean)) { excluded++; continue }
-      if (clean.length < 100) throw new Error("Vacancy description unavailable; page may require a different adapter")
-      if (location && !COUNTRIES.test(location)) { excluded++; continue }
-      // Do not manufacture a country when a multinational listing has no location.
-      if (!location) location = "Location not specified — verify on employer site"
-      const date = isoDeadline(deadline) || isoDeadline(clean.match(/(?:deadline|closing date|sista ansokningsdag|sista ansökningsdag|bewerbungsfrist)\s*:?\s*(.{0,45})/i)?.[1])
-      if (date && date < new Date().toISOString().slice(0, 10)) { excluded++; continue }
-      const compensation = /\bunpaid\b/i.test(clean) ? "unpaid" : /\bstipend\b/i.test(clean) ? "stipend" : /\bpaid (?:internship|placement|position)|\bsalary\s*[:€£]|\bremuneration\s*:/i.test(clean) ? "paid" : null
-      candidates.push({ externalId: job.id.length <= 200 ? job.id : createHash("sha256").update(url).digest("hex"), url, title: job.title.slice(0, 300), kind, organization, location: location.slice(0, 500), description: clean.slice(0, 20_000), field: inferTraineeFields(job.title, clean).join(", "), deadline: date, compensation, duration: inferDuration(clean), publishedAt: isoDeadline(publishedAt) })
+      const candidate = await readEmployerCandidate(source, job, read)
+      if (candidate) candidates.push(candidate)
+      else excluded++
     } catch (error) { errors.push(`${job.title.slice(0, 80)}: ${error instanceof Error ? error.message : "Vacancy detail request failed"}`) }
   }
   // Retry a partially read page twice, then advance; a permanently broken detail must not
   // prevent discovery of every later page. It will be tried again on the next search cycle.
   return { candidates, duplicates, excluded, found: unique.size, errors, cursor: errors.length && (cursor.retry || 0) < 2 ? { ...cursor, retry: (cursor.retry || 0) + 1 } : next }
+}
+
+export async function readEmployerCandidate(source: EmployerSource, job: ListingJob, read = employerFetcher(source)): Promise<EmployerCandidate | null> {
+  const kind = classifyEmployerTitle(job.title)
+  if (!kind) return null
+  const url = canonicalJobUrl(job.url)
+  let description = job.description || ""
+  let deadline = job.deadline
+  let location = job.location || ""
+  let publishedAt = job.publishedAt
+  let organization = job.organization || source.name
+  let compensation = job.compensation || null
+  let pageDeadline: string | null = null
+  if (source.adapter === "workday") {
+    const base = new URL(source.listingUrl!)
+    const path = new URL(job.url).pathname.replace(/^\/[a-z]{2}-[a-z]{2}\//i, "/")
+    if (!path.startsWith(`/${source.board}/job/`)) throw new Error("Unexpected Workday vacancy URL")
+    const detailUrl = job.detailUrl || `${base.origin}/wday/cxs/${source.tenant}/${source.board}${path.slice(source.board!.length + 1)}`
+    const detail = JSON.parse((await read(detailUrl)).text).jobPostingInfo
+    if (!detail?.jobDescription) throw new Error("Workday detail is missing the description")
+    if (detail.canApply === false || detail.posted === false) return null
+    description = detail.jobDescription
+    deadline = detail.endDate || detail.applicationDeadline || detail.validThrough
+    publishedAt = detail.startDate
+    const country = text(detail.country?.descriptor || detail.jobRequisitionLocation?.country?.alpha2Code)
+    location = [detail.location, ...(detail.additionalLocations || []).map((item: unknown) => typeof item === "string" ? item : text((item as Json)?.descriptor)), country].filter(Boolean).join("; ")
+  } else if (source.adapter === "smartrecruiters") {
+    const detail = JSON.parse((await read(job.detailUrl || `https://api.smartrecruiters.com/v1/companies/${source.tenant}/postings/${encodeURIComponent(job.id)}`)).text)
+    description = Object.values(detail.jobAd?.sections || {}).map((section: any) => section.text || "").join("\n")
+    deadline = detail.validThrough
+  } else if (!description || (!job.detailFetched && !parseEmployerDate(deadline))) {
+    const detail = await read(url)
+    const parsed = htmlJobs(detail.text, detail.finalUrl).jobs.find(item => item.description)
+    organization = parsed?.organization || organization
+    compensation = parsed?.compensation || compensation
+    const $ = load(detail.text)
+    $("script,style,nav,header,footer,form").remove()
+    description = parsed?.description || $("[itemprop='description'],.jobdescription,.job-description,.jobDescription,article,main").first().text() || description
+    deadline = parsed?.deadline || $("[itemprop='validThrough']").attr("content") || $("[itemprop='validThrough']").attr("datetime") || deadline
+    pageDeadline = extractEmployerDeadline($("body").text())
+    location = parsed?.location || $("[itemprop='streetAddress']").attr("content") || text($(".jobGeoLocation").first().text()) || location
+    publishedAt = parsed?.publishedAt || $("[itemprop='datePosted']").attr("content") || publishedAt
+    if (source.adapter === "avature") {
+      location = text($(".tf_locations .article__content__view__field__value").text()) || location
+      const descriptions = $(".article__content__view__field").filter((_, node) => !$(node).find(".article__content__view__field__label").length)
+        .map((_, node) => text($(node).find(".article__content__view__field__value").text())).get().sort((a, b) => b.length - a.length)
+      description = descriptions[0] || description
+    }
+  }
+  const clean = text(description)
+  if (EXPIRED.test(clean)) return null
+  if (clean.length < 100) throw new Error("Vacancy description unavailable; page may require a different adapter")
+  if (location && !COUNTRIES.test(location)) return null
+  // Do not manufacture a country when a multinational listing has no location.
+  if (!location) location = "Location not specified — verify on employer site"
+  const date = parseEmployerDate(deadline) || pageDeadline || extractEmployerDeadline(clean)
+  if (date && date < new Date().toISOString().slice(0, 10)) return null
+  compensation = /\bunpaid\b/i.test(clean) ? "unpaid" : /\bstipend\b/i.test(clean) ? "stipend" : /\bpaid (?:internship|placement|position)|\bsalary\s*[:€£]|\bremuneration\s*:/i.test(clean) ? "paid" : compensation
+  return { externalId: job.id.length <= 200 ? job.id : createHash("sha256").update(url).digest("hex"), url, title: job.title.slice(0, 300), kind, organization, location: location.slice(0, 500), description: clean.slice(0, 20_000), field: inferTraineeFields(job.title, clean).join(", "), deadline: date, compensation, duration: inferDuration(clean), publishedAt: isoDeadline(publishedAt) }
 }

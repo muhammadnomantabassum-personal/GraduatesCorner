@@ -19,7 +19,7 @@ export interface User {
 
 export type ThesisType = "master" | "phd"
 export type ApprovalStatus = "approved" | "pending" | "rejected"
-export type Compensation = "paid" | "unpaid" | "stipend"
+export type Compensation = "paid" | "unpaid" | "stipend" | "not_specified"
 
 export interface Thesis {
   id: string

@@ -14,7 +14,7 @@ export type SeoThesis = {
   organization: string
   organization_type: "university" | "company"
   location: string
-  compensation: "paid" | "unpaid" | "stipend"
+  compensation: "paid" | "unpaid" | "stipend" | "not_specified"
   deadline: string
   external_url: string | null
   created_at: string
@@ -29,7 +29,7 @@ export type SeoProgram = {
   field: string
   location: string
   duration: string
-  compensation: "paid" | "unpaid" | "stipend"
+  compensation: "paid" | "unpaid" | "stipend" | "not_specified"
   deadline: string
   external_url: string | null
   created_at: string

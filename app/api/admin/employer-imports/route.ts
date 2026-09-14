@@ -1,8 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createAdminClient, isAdminRequest } from "@/lib/admin-server"
 import { EMPLOYER_SOURCES, getEmployerSource } from "@/lib/employer-import/catalogue"
-import { scanEmployer, syncEmployerSources } from "@/lib/employer-import/service"
-import { isoDeadline } from "@/lib/employer-import/identity"
+import { processEmployerImportBatch, publishEmployerImport, refreshEmployerImport, scanEmployer, syncEmployerSources } from "@/lib/employer-import/service"
 import { toNullableUuid } from "@/lib/uuid"
 
 export const maxDuration = 120
@@ -51,6 +50,11 @@ export async function POST(request: NextRequest) {
       if (error) throw new Error("Unable to update source")
       return json({ ok: true })
     }
+    if (body?.action === "refresh-batch" || body?.action === "publish-batch") {
+      const cursor = body.cursor == null ? null : toNullableUuid(body.cursor)
+      if (body.cursor != null && !cursor) return json({ error: "Invalid batch cursor" }, 400)
+      return json(await processEmployerImportBatch(db, body.section === "trainee" ? "trainee" : "master", cursor, body.action === "publish-batch"))
+    }
     const id = toNullableUuid(body?.candidateId)
     if (!id) return json({ error: "A valid candidate ID is required" }, 400)
     if (body.action === "ignore" || body.action === "restore") {
@@ -59,15 +63,9 @@ export async function POST(request: NextRequest) {
       return json({ ok: true })
     }
     if (body.action === "publish") {
-      if (body.confirmed !== true) return json({ error: "Confirm the vacancy details against the employer's listing first" }, 400)
-      const deadline = isoDeadline(body.deadline)
-      if (!deadline || deadline < new Date().toISOString().slice(0, 10) || !["paid", "unpaid", "stipend"].includes(body.compensation)) return json({ error: "A current confirmed deadline and compensation are required. Leave incomplete listings in review." }, 400)
-      const { error: editError } = await db.from("employer_import_items").update({ deadline, compensation: body.compensation }).eq("id", id).eq("status", "pending")
-      if (editError) throw new Error("Unable to save reviewed details")
-      const { data, error } = await db.rpc("publish_employer_candidate", { candidate_id: id })
-      if (error) throw new Error("Unable to publish. The vacancy may have already been reviewed or may lack required details.")
-      return json({ targetId: data })
+      return json({ targetId: await publishEmployerImport(db, id) })
     }
+    if (body.action === "refresh") return json(await refreshEmployerImport(db, id))
     return json({ error: "Unknown importer action" }, 400)
   } catch (error) { return json({ error: error instanceof Error ? error.message : "Employer import failed" }, 409) }
 }

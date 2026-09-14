@@ -22,6 +22,7 @@ export function EmployerImportDashboard({ section }: { section: "master" | "trai
   const [error, setError] = useState("")
   const [filter, setFilter] = useState("")
   const [progress, setProgress] = useState("")
+  const [skipped, setSkipped] = useState<Array<{ id: string; title: string; reason: string }>>([])
   const load = useCallback(async () => {
     const response = await fetch(`${endpoint}?section=${section}&page=${page}&status=${ignored ? "ignored" : "pending"}`, { cache: "no-store" })
     const data = await response.json()
@@ -59,6 +60,25 @@ export function EmployerImportDashboard({ section }: { section: "master" | "trai
     } catch (error) { setError(error instanceof Error ? error.message : "Unable to refresh") }
     finally { setBusy("") }
   }
+  async function processPending(publish: boolean) {
+    setBusy(publish ? "Publishing pending positions" : "Fetching deadlines")
+    setSkipped([]); setProgress("Fetching current vacancy details…")
+    let cursor: string | null = null
+    let attempted = 0; let published = 0; let skippedCount = 0
+    try {
+      while (true) {
+        const result = await send({ action: publish ? "publish-batch" : "refresh-batch", cursor })
+        attempted += result.attempted; published += result.published; skippedCount += result.skipped.length
+        setSkipped(previous => [...previous, ...result.skipped])
+        setProgress(`Checked ${attempted} positions${publish ? `; ${published} published` : ""}; ${skippedCount} skipped`)
+        if (!result.hasMore) break
+        if (!result.nextCursor || result.nextCursor === cursor) throw new Error("Import batch did not advance")
+        cursor = result.nextCursor
+      }
+      await load()
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Batch failed") }
+    finally { setBusy("") }
+  }
   return <div className="mx-auto max-w-7xl space-y-8">
     <div className="space-y-3"><h1 className="text-3xl font-bold">{section === "master" ? "Thesis & Internship Imports" : "Employer Trainee Imports"}</h1>
       <p className="max-w-3xl text-muted-foreground">Scan company career feeds, review new positions, and publish them to {section === "master" ? "Master’s Thesis & Internships" : "Trainee Programs"}. Previously imported and ignored positions are remembered. Each scan continues the next search page; repeat scans cover more pages and search terms.</p>
@@ -66,7 +86,7 @@ export function EmployerImportDashboard({ section }: { section: "master" | "trai
     </div>
     {error && <p role="alert" className="rounded border border-destructive p-4 text-destructive">{error}</p>}
     <section className="space-y-4"><div className="flex flex-wrap items-center gap-3"><h2 className="mr-auto text-xl font-semibold">Sources ({sources.length})</h2><Button disabled={!!busy || !sources.some(source => source.verified && !source.note)} onClick={() => scanSources(true)}>Import from verified sources</Button><Button variant="outline" disabled={!!busy || !sources.some(source => source.enabled && !source.note)} onClick={() => scanSources()}>Scan enabled sources</Button></div>
-      <p className="text-sm text-muted-foreground">Scans here search for {section === "trainee" ? "trainee and graduate programs" : "theses and internships"}. Both sections share duplicate protection and route matching roles to the appropriate queue. Automatic publishing is off by default and requires an explicit deadline and compensation.</p>
+      <p className="text-sm text-muted-foreground">Scans here search for {section === "trainee" ? "trainee and graduate programs" : "theses and internships"}. Deadlines are fetched from the source. Automatic publishing requires a current deadline; unspecified compensation stays unspecified.</p>
       <p role="status">{busy ? progress || `Working: ${busy}` : progress}</p>
       <Input aria-label="Filter employers or countries" placeholder="Filter employer, country, or ATS…" value={filter} onChange={event => setFilter(event.target.value)} />
       <div className="max-h-[540px] space-y-3 overflow-y-auto rounded-xl border p-3">{sources.filter(source => `${source.name} ${source.country} ${source.adapter}`.toLowerCase().includes(filter.toLowerCase())).map(source => <div key={source.id} className="flex flex-wrap items-center gap-4 rounded-lg border p-4">
@@ -77,7 +97,9 @@ export function EmployerImportDashboard({ section }: { section: "master" | "trai
       </div>)}</div>
     </section>
     <section className="space-y-4"><div className="flex flex-wrap items-center gap-4"><h2 className="text-xl font-semibold">{ignored ? "Ignored" : "Review queue"} ({total})</h2><Button variant="outline" disabled={!!busy} onClick={() => { setIgnored(!ignored); setPage(0) }}>{ignored ? "Show pending" : "Show ignored"}</Button></div>
-      <p className="text-sm text-muted-foreground">Verify the original vacancy is still open. Missing dates and pay details remain blank; do not invent them. Only publish after confirming those details with the employer.</p>
+      <p className="text-sm text-muted-foreground">Fetch deadlines for existing imports, or publish all pending positions in one action. The importer checks each original listing automatically and skips expired positions, unavailable sources, and positions without a published deadline.</p>
+      {!ignored && <div className="flex flex-wrap gap-3"><Button disabled={!!busy || !total} onClick={() => processPending(true)}>Fetch deadlines &amp; publish all</Button><Button variant="outline" disabled={!!busy || !total} onClick={() => processPending(false)}>Fetch deadlines only</Button></div>}
+      {skipped.length > 0 && <details><summary className="cursor-pointer text-sm">Skipped positions ({skipped.length})</summary><ul className="mt-2 space-y-1 text-sm">{skipped.map(item => <li key={item.id}>{item.title}: {item.reason}</li>)}</ul></details>}
       {candidates.map(candidate => <CandidateReview key={candidate.id} candidate={candidate} disabled={!!busy} onAction={body => action(body, candidate.title)} />)}
       {!candidates.length && <p className="rounded border p-6 text-muted-foreground">No positions in this queue. Scan a source or continue its next page.</p>}
       <div className="flex items-center gap-3"><Button variant="outline" disabled={page === 0 || !!busy} onClick={() => setPage(page - 1)}>Previous</Button><span>Page {page + 1}</span><Button variant="outline" disabled={(page + 1) * 30 >= total || !!busy} onClick={() => setPage(page + 1)}>Next</Button></div>
@@ -87,15 +109,11 @@ export function EmployerImportDashboard({ section }: { section: "master" | "trai
 }
 
 function CandidateReview({ candidate, disabled, onAction }: { candidate: Candidate; disabled: boolean; onAction: (body: Record<string, unknown>) => void }) {
-  const [deadline, setDeadline] = useState(candidate.deadline || "")
-  const [compensation, setCompensation] = useState(candidate.compensation || "")
-  const [confirmed, setConfirmed] = useState(false)
   return <article className="space-y-3 rounded-xl border bg-card p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><span className="text-xs uppercase text-muted-foreground">{candidate.kind.replaceAll("_", " ")}</span><h3 className="font-semibold">{candidate.title}</h3><p className="text-sm">{candidate.organization} · {candidate.location}</p></div><a className="text-sm underline" href={candidate.canonical_url} target="_blank" rel="noopener noreferrer">Original vacancy ↗</a></div>
     <details><summary className="cursor-pointer text-sm">Read imported description</summary><p className="mt-3 whitespace-pre-line text-sm leading-relaxed">{candidate.description}</p></details>
     {candidate.status === "ignored" ? <Button disabled={disabled} variant="outline" onClick={() => onAction({ action: "restore", candidateId: candidate.id })}>Restore to review</Button> : <>
-      <div className="flex flex-wrap gap-4"><label className="text-sm">Confirmed deadline<Input type="date" value={deadline} disabled={disabled} onChange={event => { setDeadline(event.target.value); setConfirmed(false) }} /></label><label className="text-sm">Confirmed compensation<select className="block h-10 rounded border bg-background px-3" value={compensation} disabled={disabled} onChange={event => { setCompensation(event.target.value); setConfirmed(false) }}><option value="">Not specified — verify</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option><option value="stipend">Stipend</option></select></label></div>
-      <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={confirmed} disabled={disabled} onChange={event => setConfirmed(event.target.checked)} />I verified the vacancy is open and these details match the employer’s listing.</label>
-      <div className="flex gap-2"><Button disabled={disabled || !confirmed || !deadline || !compensation} onClick={() => onAction({ action: "publish", candidateId: candidate.id, deadline, compensation, confirmed })}>Publish</Button><Button variant="outline" disabled={disabled} onClick={() => onAction({ action: "ignore", candidateId: candidate.id })}>Ignore</Button></div>
+      <div className="flex flex-wrap gap-4 text-sm"><span>Deadline: {candidate.deadline || "Not provided by source"}</span><span>Compensation: {candidate.compensation || "Not specified"}</span></div>
+      <div className="flex flex-wrap gap-2"><Button disabled={disabled} onClick={() => onAction({ action: "publish", candidateId: candidate.id })}>Fetch details &amp; publish</Button><Button variant="outline" disabled={disabled} onClick={() => onAction({ action: "refresh", candidateId: candidate.id })}>Refresh deadline</Button><Button variant="outline" disabled={disabled} onClick={() => onAction({ action: "ignore", candidateId: candidate.id })}>Ignore</Button></div>
     </>}
   </article>
 }
