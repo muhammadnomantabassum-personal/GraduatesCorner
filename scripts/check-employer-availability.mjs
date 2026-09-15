@@ -23,6 +23,8 @@ assert.equal(inferDeadlineType(null, "Applications accepted until filled."), "un
 assert.equal(inferDeadlineType(null, "Work continuously with rolling stock."), "not_specified")
 assert.equal(inferDeadlineType("2099-01-01", "Applications are reviewed continuously."), "fixed")
 assert.equal((await readPage(`<main><h1>${job.title}</h1>${description}<a href="/apply/123">Apply now</a></main>`)).activeConfirmed, true)
+assert.equal((await readPage(`<main><h1>${job.title}</h1>${description}<a href="/apply/123">Apply now »</a></main>`)).activeConfirmed, true)
+assert.equal((await readEmployerCandidate({ ...source, adapter: "avature" }, job, async () => ({ text: `<main><h1>Job details</h1><h3 class="section__header__text__title">${job.title}</h3>${description}<a href="/apply/123">Apply</a></main>`, finalUrl: job.url }))).activeConfirmed, true)
 assert.equal((await readPage(`<main><h1>Careers</h1>${description}<a href="/apply/123">Apply now</a></main>`)).activeConfirmed, false)
 assert.equal((await readPage(`<main><h1>${job.title}</h1>${description}<button disabled>Apply now</button></main>`)).activeConfirmed, false)
 assert.equal((await readPage(structured(), "https://fixture.example/careers")).activeConfirmed, false, "Redirected career pages must not prove activity")

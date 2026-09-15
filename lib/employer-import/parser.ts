@@ -218,11 +218,14 @@ export async function readEmployerCandidate(source: EmployerSource, job: Listing
     compensation = parsed?.compensation || compensation
     const $ = load(detail.text)
     const sameVacancy = canonicalJobUrl(detail.finalUrl) === url
-    const heading = text($("h1,[itemprop='title']").first().text()).toLowerCase()
-    const matchingTitle = heading === text(job.title).toLowerCase()
+    // Some ATSs put the title in a dedicated field and add metadata to search-card text.
+    const expectedTitle = text(job.title).split(/\s+werklocatie\s*:/i)[0].toLowerCase()
+    const titleSelector = source.adapter === "avature" ? ".section__header__text__title,h1,[itemprop='title']" : "h1,[itemprop='title']"
+    const matchingTitle = $(titleSelector).toArray().some(node => text($(node).text()).toLowerCase() === expectedTitle)
     const canApply = $("a[href],button:not([disabled]),input[type='submit']:not([disabled])").toArray().some(node => {
       const control = $(node)
-      return control.attr("aria-disabled") !== "true" && /^(?:apply(?: now| for (?:this|the) (?:job|position))?|ansök(?: nu)?|bewerben(?: sie sich)?|søk(?: nå)?|solliciteer(?: direct)?)$/i.test(text(control.text() || control.attr("value"))) && !/^(?:#|javascript:)/i.test(control.attr("href") || "valid")
+      const label = text(control.text() || control.attr("value")).replace(/[\u00bb\u203a\u2192\u2197!]+$/u, "").trim()
+      return control.attr("aria-disabled") !== "true" && /^(?:apply(?: now| for (?:this|the) (?:job|position))?|ansök(?: nu)?|bewerben(?: sie sich)?|søk(?: nå)?|solliciteer(?: direct)?)$/i.test(label) && !/^(?:#|javascript:)/i.test(control.attr("href") || "valid")
     })
     activeConfirmed = sameVacancy && Boolean(parsed || (matchingTitle && canApply))
     $("script,style,nav,header,footer,form").remove()
