@@ -68,7 +68,7 @@ export default function StudentWishlistPage() {
             organizationType: item.theses.organization_type,
             location: item.theses.location,
             compensation: item.theses.compensation,
-            deadline: item.theses.deadline,
+            deadline: item.theses.deadline, deadlineType: item.theses.deadline_type, sourceCheckedAt: item.theses.source_checked_at,
             postedBy: item.theses.posted_by,
             postedByUserId: item.theses.posted_by_user_id,
             externalUrl: item.theses.external_url,
@@ -89,7 +89,7 @@ export default function StudentWishlistPage() {
             location: item.trainee_programs.location,
             duration: item.trainee_programs.duration,
             compensation: item.trainee_programs.compensation,
-            deadline: item.trainee_programs.deadline,
+            deadline: item.trainee_programs.deadline, deadlineType: item.trainee_programs.deadline_type, sourceCheckedAt: item.trainee_programs.source_checked_at,
             postedBy: item.trainee_programs.posted_by,
             postedByUserId: item.trainee_programs.posted_by_user_id,
             externalUrl: item.trainee_programs.external_url,
@@ -114,7 +114,7 @@ export default function StudentWishlistPage() {
   const masterCount = wishlistTheses.filter((item) => item.type === "master").length
   const nextDeadline = useMemo(() => {
     const allDates = [...wishlistTheses, ...wishlistPrograms]
-      .map((item) => new Date(item.deadline))
+      .flatMap((item) => item.deadline ? [new Date(item.deadline)] : [])
       .filter((date) => !Number.isNaN(date.getTime()) && date.getTime() >= new Date().setHours(0, 0, 0, 0))
       .sort((a, b) => a.getTime() - b.getTime())
 

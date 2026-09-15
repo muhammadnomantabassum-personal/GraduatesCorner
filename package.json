@@ -12,7 +12,7 @@
     "test:privacy": "node scripts/check-privacy-export.mjs && node scripts/check-privacy-management.mjs",
     "test:phd-import": "node --experimental-strip-types --no-warnings scripts/check-phd-import-dedupe.mjs",
     "test:trainee-import": "node --experimental-strip-types --no-warnings scripts/check-trainee-import.mjs",
-    "test:employer-import": "node scripts/check-employer-import.mjs && node scripts/check-employer-metadata.mjs",
+    "test:employer-import": "node scripts/check-employer-import.mjs && node scripts/check-employer-metadata.mjs && node scripts/check-employer-availability.mjs",
     "test:seo": "node scripts/check-seo.mjs",
     "test:discovery": "node scripts/check-discovery.mjs",
     "test:seo-render": "node scripts/check-seo-render.mjs",

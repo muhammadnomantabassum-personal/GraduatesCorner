@@ -1,4 +1,5 @@
 "use client"
+import { deadlineLabel as formatDeadline } from "@/lib/opportunity-deadline"
 import { opportunityPath } from "@/lib/opportunity-url"
 
 
@@ -42,7 +43,7 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
     field: program.field,
     location: program.location,
     compensation: program.compensation,
-    deadline: program.deadline,
+    deadline: program.deadline, deadlineType: program.deadlineType, sourceCheckedAt: program.sourceCheckedAt,
     duration: program.duration,
     workMode,
     verified: Boolean(isVerified),
@@ -125,7 +126,8 @@ export function ProgramCard({ program }: { program: TraineeProgram }) {
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4 shrink-0 text-primary" />
-            <span>Deadline: {new Date(program.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+            {program.sourceCheckedAt && <span>Last checked {new Date(program.sourceCheckedAt).toLocaleDateString("en-GB")}</span>}
+            <span>{formatDeadline(program.deadline, program.deadlineType)}</span>
           </div>
           <div className="flex items-start gap-2 text-sm">
             <Tags className="mt-0.5 h-4 w-4 shrink-0 text-primary" />

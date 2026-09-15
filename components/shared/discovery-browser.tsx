@@ -53,7 +53,7 @@ export function DiscoveryBrowser({ track }: { track: DiscoveryTrack }) {
       try {
         const records: ReturnType<typeof mapDiscoveryRecord>[] = []
         for (let from = 0; ; from += 1000) {
-          let request = supabase.from(track === "trainee" ? "trainee_programs" : "theses").select("*").eq("status", "approved").gte("deadline", new Date().toISOString().slice(0, 10)).order("id").range(from, from + 999)
+          let request = supabase.from(track === "trainee" ? "trainee_programs" : "theses").select("*").eq("status", "approved").eq("source_status", "active").or(`deadline.is.null,deadline.gte.${new Date().toISOString().slice(0, 10)}`).order("id").range(from, from + 999)
           if (track !== "trainee") request = request.eq("type", track)
           const { data, error } = await request
           if (error) throw error
@@ -79,7 +79,7 @@ export function DiscoveryBrowser({ track }: { track: DiscoveryTrack }) {
       { id: "location", label: "Country", type: "location", options: counts(items.map(item => seoCountry(item.location)?.name || item.location)), maxVisible: 6 },
       { id: "field", label: "Field of interest", type: "checkbox", options: counts(items.flatMap(item => (item.subject || item.field || "").split(",").map(value => value.trim()))), maxVisible: 5 },
       { id: "compensation", label: "Funding", type: "checkbox", options: [{ value: "paid", label: "Paid" }, { value: "stipend", label: "Stipend offered" }, { value: "unpaid", label: "Unpaid" }] },
-      { id: "deadline", label: "Application deadline", type: "checkbox", options: [{ value: "7days", label: "Within 7 days" }, { value: "30days", label: "Within 30 days" }, { value: "later", label: "More time to apply" }] },
+      { id: "deadline", label: "Application deadline", type: "checkbox", options: [{ value: "7days", label: "Within 7 days" }, { value: "30days", label: "Within 30 days" }, { value: "later", label: "More time to apply" }, { value: "no_deadline", label: "No deadline specified" }] },
       { id: "workMode", label: "Work arrangement", type: "checkbox", options: counts(items.map(item => getWorkMode(item.location))) },
       ...(track !== "trainee" ? [{ id: "organizationType", label: "Organization", type: "checkbox" as const, options: [{ value: "university", label: "University" }, { value: "company", label: "Company" }] }] : []),
     ]
@@ -95,7 +95,7 @@ export function DiscoveryBrowser({ track }: { track: DiscoveryTrack }) {
       if (filters.compensation.length && !filters.compensation.includes(item.compensation)) return false
       if (filters.organizationType.length && !filters.organizationType.includes(item.organizationType)) return false
       const days = getDaysUntil(item.deadline)
-      const deadlineMatches = !filters.deadline.length || filters.deadline.some(value => value === "7days" ? days >= 0 && days <= 7 : value === "30days" ? days >= 0 && days <= 30 : value === "later" ? days > 30 : false)
+      const deadlineMatches = !filters.deadline.length || filters.deadline.some(value => value === "7days" ? days >= 0 && days <= 7 : value === "30days" ? days >= 0 && days <= 30 : value === "later" ? days > 30 : value === "no_deadline" ? !item.deadline : false)
       return deadlineMatches && matchesWorkMode(item.location, filters.workMode)
     }), query.sort)
   }, [items, deferredSearch, filters, query.sort])

@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     const { data, error } = await db.from("employer_import_sources").select("id")
       .eq("enabled", true).order("last_checked_at", { ascending: true, nullsFirst: true }).order("id").limit(200)
     if (error) throw error
-    const selected = (data || []).filter(row => !getEmployerSource(row.id)?.note)
+    const selected = (data || []).filter(row => getEmployerSource(row.id) && !getEmployerSource(row.id)!.note)
     const results: { source: string; status: string }[] = []
     let index = 0
     await Promise.all(Array.from({ length: Math.min(3, selected.length) }, async () => {

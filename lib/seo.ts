@@ -101,7 +101,7 @@ type JobSchemaInput = {
   description: string
   organization: string
   location: string
-  deadline: string
+  deadline: string | null
   createdAt: string
   path: string
   field: string
@@ -111,7 +111,7 @@ type JobSchemaInput = {
 export function buildJobPostingSchema(input: JobSchemaInput) {
   const country = seoCountry(input.location)
   // Unknown locations cannot satisfy Google's required jobLocation. Never invent a country.
-  if (!country || !input.title || !input.organization || !input.description || input.deadline < new Date().toISOString().slice(0,10)) return null
+  if (!country || !input.title || !input.organization || !input.description || (input.deadline && input.deadline < new Date().toISOString().slice(0,10))) return null
 
   return {
     "@context": "https://schema.org",
@@ -125,7 +125,7 @@ export function buildJobPostingSchema(input: JobSchemaInput) {
       value: input.id,
     },
     datePosted: input.createdAt,
-    validThrough: `${input.deadline}T23:59:59+00:00`,
+    ...(input.deadline ? { validThrough: `${input.deadline}T23:59:59+00:00` } : {}),
     ...(input.kind === "internship" ? { employmentType: "INTERN" } : {}),
     industry: input.field,
     hiringOrganization: {
@@ -144,7 +144,7 @@ export function buildThesisSchema(input: {
   description: string
   organization: string
   location: string
-  deadline: string
+  deadline: string | null
   createdAt: string
   field: string
   path?: string
@@ -162,7 +162,7 @@ export function buildThesisSchema(input: {
       name: input.organization,
     },
     occupationalCategory: input.field,
-    applicationDeadline: input.deadline,
+    ...(input.deadline ? { applicationDeadline: input.deadline } : {}),
     dateCreated: input.createdAt,
     url: absoluteUrl(path),
     educationalProgramMode: /remote|online/i.test(input.location) ? "online" : "onsite",

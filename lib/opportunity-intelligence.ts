@@ -1,3 +1,4 @@
+import { deadlineLabel } from "./opportunity-deadline"
 import type { Thesis, TraineeProgram } from "@/lib/data/types"
 
 export type OpportunitySignalTone = "blue" | "green" | "yellow" | "red" | "neutral"
@@ -38,7 +39,8 @@ function isVerified(item: Pick<Thesis, "organizationVerified" | "postedBy"> | Pi
   return Boolean(item.organizationVerified) || item.postedBy === "admin"
 }
 
-function deadlineSignal(deadline: string) {
+function deadlineSignal(deadline: string | null, type?: string) {
+  if (!deadline) return { days: Number.POSITIVE_INFINITY, label: deadlineLabel(deadline, type), tone: "bg-muted text-muted-foreground", score: 0, signal: { label: "Apply early", tone: "neutral" as const } }
   const days = daysUntil(deadline)
 
   if (days < 0) {
@@ -131,7 +133,7 @@ export function getSignalToneClass(tone: OpportunitySignalTone) {
 }
 
 export function getThesisIntelligence(thesis: Thesis): OpportunityIntelligence {
-  const deadline = deadlineSignal(thesis.deadline)
+  const deadline = deadlineSignal(thesis.deadline, thesis.deadlineType)
   const signals: OpportunitySignal[] = [deadline.signal]
   let score = 54 + deadline.score
 
@@ -175,7 +177,7 @@ export function getThesisIntelligence(thesis: Thesis): OpportunityIntelligence {
 }
 
 export function getProgramIntelligence(program: TraineeProgram): OpportunityIntelligence {
-  const deadline = deadlineSignal(program.deadline)
+  const deadline = deadlineSignal(program.deadline, program.deadlineType)
   const signals: OpportunitySignal[] = [deadline.signal]
   let score = 55 + deadline.score
 

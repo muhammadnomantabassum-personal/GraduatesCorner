@@ -15,7 +15,9 @@ export type SeoThesis = {
   organization_type: "university" | "company"
   location: string
   compensation: "paid" | "unpaid" | "stipend" | "not_specified"
-  deadline: string
+  deadline: string | null
+  deadline_type?: string
+  source_checked_at?: string | null
   external_url: string | null
   created_at: string
   source_published_at?: string | null
@@ -30,7 +32,9 @@ export type SeoProgram = {
   location: string
   duration: string
   compensation: "paid" | "unpaid" | "stipend" | "not_specified"
-  deadline: string
+  deadline: string | null
+  deadline_type?: string
+  source_checked_at?: string | null
   external_url: string | null
   created_at: string
   source_published_at?: string | null
@@ -91,7 +95,7 @@ export const getSeoThesis = cache(async (value: string, type?: "master" | "phd")
 
   let query = client
     .from("theses")
-    .select("id, title, type, opportunity_kind, description, subject, organization, organization_type, location, compensation, deadline, external_url, created_at, source_published_at")
+    .select("id, title, type, opportunity_kind, description, subject, organization, organization_type, location, compensation, deadline, deadline_type, source_checked_at, external_url, created_at, source_published_at")
     .eq("id", id)
     .eq("status", "approved")
 
@@ -110,7 +114,7 @@ export const getSeoProgram = cache(async (value: string) => {
 
   const { data, error } = await client
     .from("trainee_programs")
-    .select("id, title, company, description, field, location, duration, compensation, deadline, external_url, created_at, source_published_at")
+    .select("id, title, company, description, field, location, duration, compensation, deadline, deadline_type, source_checked_at, external_url, created_at, source_published_at")
     .eq("id", id)
     .eq("status", "approved")
     .maybeSingle()
@@ -137,7 +141,7 @@ export const getRelatedOpportunities = cache(async (id:string,kind:"master"|"phd
   const client=getPublicClient()
   if(!client) return []
   let query=client.from(kind==="trainee"?"trainee_programs":"theses").select(kind==="trainee"?"id,title,company":"id,title,organization")
-    .eq("status","approved").gte("deadline",new Date().toISOString().slice(0,10)).neq("id",id).order("created_at",{ascending:false}).order("id").limit(3)
+    .eq("status","approved").eq("source_status","active").or(`deadline.is.null,deadline.gte.${new Date().toISOString().slice(0,10)}`).neq("id",id).order("created_at",{ascending:false}).order("id").limit(3)
   if(kind!=="trainee") query=query.eq("type",kind)
   const {data,error}=await query
   if(error) throw new Error("Unable to load related opportunities")
@@ -153,18 +157,18 @@ export const getSeoIndexRecords = cache(async () => {
     collectPages<any>((from, to) =>
       client
         .from("theses")
-        .select("id, type, opportunity_kind, title, description, subject, organization, organization_type, location, compensation, external_url, created_at, source_published_at, deadline")
+        .select("id, type, opportunity_kind, title, description, subject, organization, organization_type, location, compensation, external_url, created_at, source_published_at, deadline, deadline_type, source_checked_at")
         .eq("status", "approved")
-        .gte("deadline", today)
+        .eq("source_status", "active").or(`deadline.is.null,deadline.gte.${today}`)
         .order("id")
         .range(from, to)
     ),
     collectPages<any>((from, to) =>
       client
         .from("trainee_programs")
-        .select("id, title, description, company, field, location, duration, compensation, external_url, created_at, source_published_at, deadline")
+        .select("id, title, description, company, field, location, duration, compensation, external_url, created_at, source_published_at, deadline, deadline_type, source_checked_at")
         .eq("status", "approved")
-        .gte("deadline", today)
+        .eq("source_status", "active").or(`deadline.is.null,deadline.gte.${today}`)
         .order("id")
         .range(from, to)
     ),

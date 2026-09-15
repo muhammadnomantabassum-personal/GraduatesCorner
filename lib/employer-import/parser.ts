@@ -4,6 +4,7 @@ import { createHash } from "node:crypto"
 import { employerFetcher } from "./fetch"
 import { canonicalJobUrl, classifyEmployerTitle, isoDeadline } from "./identity"
 import { extractEmployerDeadline, parseEmployerDate } from "./deadline"
+import { inferDeadlineType } from "../opportunity-deadline"
 import { inferDuration, inferTraineeFields } from "../trainee-import/classify"
 import type { EmployerSource } from "./catalogue"
 import type { EmployerCandidate, EmployerCursor, ListingJob } from "./types"
@@ -189,6 +190,7 @@ export async function readEmployerCandidate(source: EmployerSource, job: Listing
   let organization = job.organization || source.name
   let compensation = job.compensation || null
   let pageDeadline: string | null = null
+  let activeConfirmed = Boolean(job.detailFetched && job.description)
   if (source.adapter === "workday") {
     const base = new URL(source.listingUrl!)
     const path = new URL(job.url).pathname.replace(/^\/[a-z]{2}-[a-z]{2}\//i, "/")
@@ -197,6 +199,7 @@ export async function readEmployerCandidate(source: EmployerSource, job: Listing
     const detail = JSON.parse((await read(detailUrl)).text).jobPostingInfo
     if (!detail?.jobDescription) throw new Error("Workday detail is missing the description")
     if (detail.canApply === false || detail.posted === false) return null
+    activeConfirmed = true
     description = detail.jobDescription
     deadline = detail.endDate || detail.applicationDeadline || detail.validThrough
     publishedAt = detail.startDate
@@ -206,13 +209,24 @@ export async function readEmployerCandidate(source: EmployerSource, job: Listing
     const detail = JSON.parse((await read(job.detailUrl || `https://api.smartrecruiters.com/v1/companies/${source.tenant}/postings/${encodeURIComponent(job.id)}`)).text)
     description = Object.values(detail.jobAd?.sections || {}).map((section: any) => section.text || "").join("\n")
     deadline = detail.validThrough
-  } else if (!description || (!job.detailFetched && !parseEmployerDate(deadline))) {
+    if (detail.status && /^(closed|archived|inactive)$/i.test(detail.status)) return null
+    activeConfirmed = Boolean(description && detail.id)
+  } else if (!job.detailFetched) {
     const detail = await read(url)
-    const parsed = htmlJobs(detail.text, detail.finalUrl).jobs.find(item => item.description)
+    const parsed = htmlJobs(detail.text, detail.finalUrl).jobs.find(item => item.description && canonicalJobUrl(item.url) === url)
     organization = parsed?.organization || organization
     compensation = parsed?.compensation || compensation
     const $ = load(detail.text)
+    const sameVacancy = canonicalJobUrl(detail.finalUrl) === url
+    const heading = text($("h1,[itemprop='title']").first().text()).toLowerCase()
+    const matchingTitle = heading === text(job.title).toLowerCase()
+    const canApply = $("a[href],button:not([disabled]),input[type='submit']:not([disabled])").toArray().some(node => {
+      const control = $(node)
+      return control.attr("aria-disabled") !== "true" && /^(?:apply(?: now| for (?:this|the) (?:job|position))?|ansök(?: nu)?|bewerben(?: sie sich)?|søk(?: nå)?|solliciteer(?: direct)?)$/i.test(text(control.text() || control.attr("value"))) && !/^(?:#|javascript:)/i.test(control.attr("href") || "valid")
+    })
+    activeConfirmed = sameVacancy && Boolean(parsed || (matchingTitle && canApply))
     $("script,style,nav,header,footer,form").remove()
+    if (EXPIRED.test($("body").text())) return null
     description = parsed?.description || $("[itemprop='description'],.jobdescription,.job-description,.jobDescription,article,main").first().text() || description
     deadline = parsed?.deadline || $("[itemprop='validThrough']").attr("content") || $("[itemprop='validThrough']").attr("datetime") || deadline
     pageDeadline = extractEmployerDeadline($("body").text())
@@ -234,5 +248,5 @@ export async function readEmployerCandidate(source: EmployerSource, job: Listing
   const date = parseEmployerDate(deadline) || pageDeadline || extractEmployerDeadline(clean)
   if (date && date < new Date().toISOString().slice(0, 10)) return null
   compensation = /\bunpaid\b/i.test(clean) ? "unpaid" : /\bstipend\b/i.test(clean) ? "stipend" : /\bpaid (?:internship|placement|position)|\bsalary\s*[:€£]|\bremuneration\s*:/i.test(clean) ? "paid" : compensation
-  return { externalId: job.id.length <= 200 ? job.id : createHash("sha256").update(url).digest("hex"), url, title: job.title.slice(0, 300), kind, organization, location: location.slice(0, 500), description: clean.slice(0, 20_000), field: inferTraineeFields(job.title, clean).join(", "), deadline: date, compensation, duration: inferDuration(clean), publishedAt: isoDeadline(publishedAt) }
+  return { externalId: job.id.length <= 200 ? job.id : createHash("sha256").update(url).digest("hex"), url, title: job.title.slice(0, 300), kind, organization, location: location.slice(0, 500), description: clean.slice(0, 20_000), field: inferTraineeFields(job.title, clean).join(", "), deadline: date, deadlineType: inferDeadlineType(date, clean), activeConfirmed, compensation, duration: inferDuration(clean), publishedAt: isoDeadline(publishedAt) }
 }

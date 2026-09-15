@@ -27,20 +27,24 @@ const db = {
     }
     return q
   },
-  async rpc(name, { candidate_id }) { assert.equal(name, "publish_employer_candidate"); const row = rows.find(row => row.id === candidate_id); row.status = "published"; published.push(candidate_id); return { data: candidate_id, error: null } },
+  async rpc(name, { candidate_id, outcome, metadata }) {
+    const current = rows.find(row => row.id === candidate_id)
+    if (name === "claim_employer_availability") return { data: [{ ...current, check_token: "test-lease" }], error: null }
+    if (name === "finish_employer_availability") { Object.assign(current, metadata, { availability_state: outcome }); return { error: null } }
+    assert.equal(name, "publish_employer_candidate"); const row = rows.find(row => row.id === candidate_id); row.status = "published"; published.push(candidate_id); return { data: candidate_id, error: null } },
 }
 const mocked = typescriptLoader({ "./parser": { readEmployerCandidate: async (_, job) => {
   if (job.id === "failed") throw new Error("Source unavailable")
   if (job.id === "closed") return null
-  return { deadline: job.id === "missing" ? null : "2099-01-01", compensation: null, description: "Current source description", organization: "Volvo", location: "Sweden" }
+  return { activeConfirmed: true, deadlineType: job.id === "missing" ? "not_specified" : "fixed", deadline: job.id === "missing" ? null : "2099-01-01", compensation: null, description: "Current source description", organization: "Volvo", location: "Sweden" }
 } } })
 const { processEmployerImportBatch } = mocked("lib/employer-import/service.ts")
 const first = await processEmployerImportBatch(db, "master", null, true)
-assert.equal(first.attempted, 4); assert.equal(first.published, 1); assert.equal(first.skipped.length, 3); assert.equal(first.nextCursor, "4"); assert.equal(first.hasMore, true)
+assert.equal(first.attempted, 4); assert.equal(first.published, 2); assert.equal(first.skipped.length, 2); assert.equal(first.nextCursor, "4"); assert.equal(first.hasMore, true)
 assert.equal(rows[1].deadline, null, "A missing deadline must clear stale stored dates")
-assert.equal(rows[2].deadline, null, "A closed position must not keep its stale deadline")
+assert.equal(rows[2].availability_state, "closed", "A closed position cannot be published")
 const second = await processEmployerImportBatch(db, "master", first.nextCursor, true)
 assert.equal(second.published, 2); assert.equal(second.hasMore, false)
-assert.deepEqual(published, ["1", "5", "6"])
+assert.deepEqual(published, ["1", "2", "5", "6"])
 assert.equal(rows[0].compensation, null, "Unspecified pay must not be invented")
 console.log("PASS multilingual deadlines, invalid dates, no invented dates/pay, refreshed metadata, closed jobs, partial failures, and publication-safe batch pagination")

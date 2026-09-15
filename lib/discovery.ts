@@ -8,6 +8,7 @@ export const discoveryTracks = [
 ] as const
 export function mapDiscoveryRecord(row: any): Thesis & TraineeProgram {
   return { ...row, opportunityKind: row.opportunity_kind, organizationType: row.organization_type,
+    deadlineType: row.deadline_type, sourceCheckedAt: row.source_checked_at, sourceStatus: row.source_status,
     createdAt: row.created_at, postedBy: row.posted_by, postedByUserId: row.posted_by_user_id,
     externalUrl: row.external_url, organizationVerified: Boolean(row.profiles?.is_verified),
     verificationBadge: row.profiles?.verification_badge }

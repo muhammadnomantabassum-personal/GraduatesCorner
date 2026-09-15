@@ -57,7 +57,7 @@ export default function TraineeProgramsPage() {
       const { data, error } = await supabase
         .from('trainee_programs')
         .select('*, profiles:posted_by_user_id (is_verified, verification_badge)')
-        .eq('status', 'approved').gte('deadline', new Date().toISOString().slice(0, 10))
+        .eq('status', 'approved').eq("source_status", "active").or(`deadline.is.null,deadline.gte.${new Date().toISOString().slice(0, 10)}`)
 
       if (error) {
         console.error('Unable to load trainee programs.')
@@ -71,7 +71,7 @@ export default function TraineeProgramsPage() {
           location: p.location,
           duration: p.duration,
           compensation: p.compensation,
-          deadline: p.deadline,
+          deadline: p.deadline, deadlineType: p.deadline_type, sourceCheckedAt: p.source_checked_at, sourceStatus: p.source_status,
           postedBy: p.posted_by,
           postedByUserId: p.posted_by_user_id,
           externalUrl: p.external_url,
@@ -224,6 +224,7 @@ export default function TraineeProgramsPage() {
           { value: "7days", label: "Due in 7 days", count: deadlineCounts["7days"] || 0 },
           { value: "30days", label: "Due in 30 days", count: deadlineCounts["30days"] || 0 },
           { value: "later", label: "Later", count: deadlineCounts["later"] || 0 },
+          { value: "no_deadline", label: "No deadline specified", count: deadlineCounts["no_deadline"] || 0 },
         ],
       },
       {

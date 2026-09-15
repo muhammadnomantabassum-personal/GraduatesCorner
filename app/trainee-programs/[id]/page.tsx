@@ -1,3 +1,4 @@
+import { deadlineLabel, isDeadlineOpen } from "@/lib/opportunity-deadline"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { OpportunityDetail } from "@/components/seo/opportunity-detail"
@@ -13,7 +14,7 @@ export async function generateMetadata({params}: {params: Promise<{id:string}>})
   if (!record) return createPageMetadata({title:"Opportunity not found",description:"This opportunity is not available.",path:"/trainee-programs",noIndex:true})
   const organization = record.company
   const label = "Graduate trainee program"
-  return createPageMetadata({title:record.title + " | " + organization,description:label + " at " + organization + " in " + record.location + ". " + record.title + ". Deadline: " + record.deadline + ". " + record.description,path:opportunityPath("trainee",record.id,record.title,organization),noIndex:record.deadline < new Date().toISOString().slice(0,10)})
+  return createPageMetadata({title:record.title + " | " + organization,description:label + " at " + organization + " in " + record.location + ". " + record.title + ". Deadline: " + deadlineLabel(record.deadline, record.deadline_type) + ". " + record.description,path:opportunityPath("trainee",record.id,record.title,organization),noIndex:!isDeadlineOpen(record.deadline)})
 }
 export default async function Page({params}: {params: Promise<{id:string}>}) {
   const {id} = await params

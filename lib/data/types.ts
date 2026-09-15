@@ -32,7 +32,10 @@ export interface Thesis {
   organizationType: "university" | "company"
   location: string
   compensation: Compensation
-  deadline: string
+  deadline: string | null
+  deadlineType?: import("../opportunity-deadline").DeadlineType
+  sourceCheckedAt?: string | null
+  sourceStatus?: "active" | "closed" | "unavailable"
   postedBy: "university" | "company" | "admin"
   postedByUserId: string | null
   externalUrl: string
@@ -54,7 +57,10 @@ export interface TraineeProgram {
   location: string
   duration: string
   compensation: Compensation
-  deadline: string
+  deadline: string | null
+  deadlineType?: import("../opportunity-deadline").DeadlineType
+  sourceCheckedAt?: string | null
+  sourceStatus?: "active" | "closed" | "unavailable"
   postedBy: "company" | "admin"
   postedByUserId: string | null
   externalUrl: string

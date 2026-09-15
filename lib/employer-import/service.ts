@@ -52,11 +52,14 @@ export async function scanEmployer(db: SupabaseClient, sourceId: string, section
         title: candidate.title, kind: candidate.kind, organization: candidate.organization,
         location: candidate.location, description: candidate.description, field: candidate.field,
         deadline: candidate.deadline, compensation: candidate.compensation, duration: candidate.duration, published_at: candidate.publishedAt,
+        deadline_type: candidate.deadlineType, availability_state: candidate.activeConfirmed ? "active" : "unknown",
+        availability_checked_at: candidate.activeConfirmed ? new Date().toISOString() : null,
+        next_check_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
       }).select("id").single()
       if (insertError?.code === "23505") { duplicates++; continue }
       if (insertError) throw insertError
       added++
-      if (setting.auto_publish && candidate.deadline) {
+      if (setting.auto_publish && candidate.activeConfirmed) {
         const { error: publishError } = await db.rpc("publish_employer_candidate", { candidate_id: data.id })
         if (publishError) result.errors.push("Candidate saved for review because automatic publication failed")
         else published++
@@ -78,17 +81,55 @@ export async function scanEmployer(db: SupabaseClient, sourceId: string, section
   }
 }
 
+/** Each check holds a database lease so cron and admin actions cannot overwrite each other. */
+async function checkClaimedEmployerImport(db: SupabaseClient, row: Record<string, any>) {
+  let candidate: Awaited<ReturnType<typeof readEmployerCandidate>> = null
+  let outcome: "active" | "closed" | "failed" = "failed"
+  let reason = "Unable to confirm that the original vacancy is active"
+  try {
+    const source = getEmployerSource(row.source_id)
+    if (!source || source.note) throw new Error("Source is no longer available")
+    candidate = await readEmployerCandidate(source, { id: row.external_id, url: row.canonical_url, title: row.title })
+    if (!candidate) { outcome = "closed"; reason = "Position is closed or no longer matches" }
+    else if (candidate.activeConfirmed) { outcome = "active"; reason = "Original vacancy confirmed active" }
+  } catch (error) {
+    reason = error instanceof Error ? error.message : "Source unavailable"
+    // A missing robots file is handled separately by the guarded fetcher. Only vacancy 404/410 closes a job.
+    if (/status (404|410)\b/.test(reason)) outcome = "closed"
+  }
+  const metadata = candidate && outcome === "active" ? {
+    deadline: candidate.deadline, deadline_type: candidate.deadlineType, compensation: candidate.compensation,
+    description: candidate.description, location: candidate.location, organization: candidate.organization,
+  } : {}
+  const { error } = await db.rpc("finish_employer_availability", { candidate_id: row.id, token: row.check_token, outcome, metadata, detail: reason })
+  if (error) throw new Error("Unable to save vacancy availability")
+  return { ready: outcome === "active", reason, row: { ...row, ...metadata } }
+}
+
 export async function refreshEmployerImport(db: SupabaseClient, candidateId: string) {
   const { data: row, error } = await db.from("employer_import_items").select("*").eq("id", candidateId).single()
   if (error || !row) throw new Error("Candidate not found")
   if (row.status !== "pending") return { ready: false, reason: "Position is no longer pending", row }
-  const source = getEmployerSource(row.source_id)
-  if (!source || source.note) return { ready: false, reason: "Source is no longer available", row }
-  const candidate = await readEmployerCandidate(source, { id: row.external_id, url: row.canonical_url, title: row.title })
-  const updates = candidate ? { deadline: candidate.deadline, compensation: candidate.compensation, description: candidate.description, location: candidate.location, organization: candidate.organization } : { deadline: null }
-  const { error: updateError } = await db.from("employer_import_items").update(updates).eq("id", candidateId).eq("status", "pending")
-  if (updateError) throw new Error("Unable to save source details")
-  return { ready: Boolean(candidate?.deadline), reason: candidate ? "Source does not publish a deadline" : "Position is closed or no longer matches", row: { ...row, ...updates } }
+  const { data, error: lockError } = await db.rpc("claim_employer_availability", { candidate_id: candidateId })
+  if (lockError) throw new Error("Availability checks need the database update")
+  if (!data?.[0]) throw new Error("This vacancy is already being checked. Try again shortly.")
+  return checkClaimedEmployerImport(db, data[0])
+}
+
+export async function recheckEmployerAvailability(db: SupabaseClient, budgetMs = 200_000) {
+  const started = Date.now()
+  const results = { checked: 0, active: 0, unavailable: 0 }
+  await Promise.all(Array.from({ length: 3 }, async () => {
+    while (Date.now() - started < budgetMs) {
+      const { data, error } = await db.rpc("claim_employer_availability", {})
+      if (error) throw error
+      if (!data?.[0]) break
+      const result = await checkClaimedEmployerImport(db, data[0])
+      results.checked++
+      if (result.ready) results.active++; else results.unavailable++
+    }
+  }))
+  return results
 }
 
 export async function publishEmployerImport(db: SupabaseClient, candidateId: string) {
@@ -101,7 +142,7 @@ export async function publishEmployerImport(db: SupabaseClient, candidateId: str
 }
 
 export async function processEmployerImportBatch(db: SupabaseClient, section: "master" | "trainee", cursor: string | null, publish: boolean) {
-  // Keyset pagination moves past missing dates and failed sources, even when publishing removes rows.
+  // Keyset pagination moves past closed vacancies and failed sources, even when publishing removes rows.
   let query = db.from("employer_import_items").select("id,title").eq("status", "pending").in("kind", section === "master" ? ["master_thesis", "internship"] : ["trainee"]).order("id").limit(5)
   if (cursor) query = query.gt("id", cursor)
   const { data, error } = await query

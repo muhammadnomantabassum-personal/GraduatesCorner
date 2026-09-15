@@ -1,4 +1,5 @@
 "use client"
+import { deadlineLabel } from "@/lib/opportunity-deadline"
 
 import Link from "next/link"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
@@ -159,8 +160,7 @@ function ComparisonValue({ item, field }: { item: import("@/lib/comparison-conte
     ) : "Not verified"
   }
   if (field === "deadline") {
-    const date = new Date(item.deadline)
-    return Number.isNaN(date.getTime()) ? item.deadline : date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+    return deadlineLabel(item.deadline, item.deadlineType)
   }
 
   const value = item[field]

@@ -2,14 +2,15 @@ export type OpportunitySort = "recommended" | "deadline" | "newest" | "funded"
 
 type SortableOpportunity = {
   compensation: string
-  deadline: string
+  deadline: string | null
   createdAt: string
   isFeatured?: boolean
   organizationVerified?: boolean
   postedBy?: string
 }
 
-function timestamp(value: string) {
+function timestamp(value: string | null) {
+  if (!value) return Number.POSITIVE_INFINITY
   const result = new Date(value).getTime()
   return Number.isNaN(result) ? Number.POSITIVE_INFINITY : result
 }
@@ -24,7 +25,7 @@ function recommendationScore(item: SortableOpportunity) {
     (item.isFeatured ? 40 : 0) +
     (verified ? 24 : 0) +
     (funded ? 18 : 0) +
-    (daysRemaining >= 0 && daysRemaining <= 45 ? 12 : daysRemaining > 45 ? 6 : 0)
+    (daysRemaining >= 0 && daysRemaining <= 45 ? 12 : Number.isFinite(daysRemaining) && daysRemaining > 45 ? 6 : 0)
   )
 }
 

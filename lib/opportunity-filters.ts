@@ -1,16 +1,18 @@
 const DAY_MS = 86_400_000
 
-export function getDaysUntil(deadline: string) {
+export function getDaysUntil(deadline: string | null) {
+  if (!deadline) return Number.NaN
   const date = new Date(deadline)
-  if (Number.isNaN(date.getTime())) return 9999
+  if (Number.isNaN(date.getTime())) return Number.NaN
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   return Math.ceil((date.getTime() - today.getTime()) / DAY_MS)
 }
 
-export function getDeadlineBucket(deadline: string) {
+export function getDeadlineBucket(deadline: string | null) {
   const days = getDaysUntil(deadline)
+  if (!Number.isFinite(days)) return "no_deadline"
   if (days < 0) return "expired"
   if (days <= 3) return "3days"
   if (days <= 7) return "7days"
@@ -25,7 +27,7 @@ export function getWorkMode(location: string) {
   return "on-site"
 }
 
-export function matchesDeadline(deadline: string, buckets: string[]) {
+export function matchesDeadline(deadline: string | null, buckets: string[]) {
   if (buckets.length === 0) return true
   return buckets.includes(getDeadlineBucket(deadline))
 }

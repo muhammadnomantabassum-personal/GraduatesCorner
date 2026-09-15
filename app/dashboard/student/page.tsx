@@ -1,4 +1,5 @@
 "use client"
+import { deadlineLabel as formatDeadline } from "@/lib/opportunity-deadline"
 
 import { useEffect, useMemo, useState, type ElementType } from "react"
 import Link from "next/link"
@@ -369,7 +370,7 @@ export default function StudentDashboard() {
                 </div>
                 <p className="line-clamp-2 text-xs font-semibold leading-relaxed text-foreground">{item.title}</p>
                 <p className="mt-2 text-[10px] text-muted-foreground">
-                  {new Date(item.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                  {formatDeadline(item.deadline)}
                 </p>
               </Link>
             ))}

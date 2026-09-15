@@ -1,4 +1,5 @@
 "use client"
+import { deadlineLabel as formatDeadline } from "@/lib/opportunity-deadline"
 
 import { useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
@@ -207,11 +208,7 @@ export default function CompanyPhDPositionsPage() {
                         </span>
                         <span className="flex items-center gap-1.5">
                           <Calendar className="h-3.5 w-3.5 text-primary/70" />
-                          Deadline: {new Date(thesis.deadline).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
+                          Deadline: {formatDeadline(thesis.deadline)}
                         </span>
                       </div>
                     </div>

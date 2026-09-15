@@ -47,7 +47,7 @@ export default function MasterThesisPage() {
       const { data, error } = await supabase
         .from('theses')
         .select('*, profiles:posted_by_user_id (is_verified, verification_badge)')
-        .eq('status', 'approved').gte('deadline', new Date().toISOString().slice(0, 10))
+        .eq('status', 'approved').eq("source_status", "active").or(`deadline.is.null,deadline.gte.${new Date().toISOString().slice(0, 10)}`)
         .eq('type', 'master')
 
       if (error) {
@@ -65,7 +65,7 @@ export default function MasterThesisPage() {
           organizationType: t.organization_type,
           location: t.location,
           compensation: t.compensation,
-          deadline: t.deadline,
+          deadline: t.deadline, deadlineType: t.deadline_type, sourceCheckedAt: t.source_checked_at, sourceStatus: t.source_status,
           postedBy: t.posted_by,
           postedByUserId: t.posted_by_user_id,
           externalUrl: t.external_url,
@@ -219,6 +219,7 @@ export default function MasterThesisPage() {
           { value: "7days", label: "Due in 7 days", count: deadlineCounts["7days"] || 0 },
           { value: "30days", label: "Due in 30 days", count: deadlineCounts["30days"] || 0 },
           { value: "later", label: "Later", count: deadlineCounts["later"] || 0 },
+          { value: "no_deadline", label: "No deadline specified", count: deadlineCounts["no_deadline"] || 0 },
         ],
       },
       {

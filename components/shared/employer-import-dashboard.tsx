@@ -1,4 +1,5 @@
 "use client"
+import { deadlineLabel } from "@/lib/opportunity-deadline"
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -7,7 +8,7 @@ import { toast } from "sonner"
 import type { EmployerSource } from "@/lib/employer-import/catalogue"
 
 type Source = EmployerSource & { enabled: boolean; auto_publish: boolean; cursor: { query: number; offset: number }; last_error: string | null; last_checked_at: string | null }
-type Candidate = { id: string; title: string; kind: string; canonical_url: string; organization: string; location: string; description: string; deadline: string | null; compensation: string | null; status: string }
+type Candidate = { id: string; title: string; kind: string; canonical_url: string; organization: string; location: string; description: string; deadline: string | null; deadline_type: string; availability_state: string; availability_checked_at: string | null; availability_error: string | null; compensation: string | null; status: string }
 type Run = { id: string; source_id: string; status: string; found: number; added: number; duplicates: number; excluded: number; error_message: string | null }
 const endpoint = "/api/admin/employer-imports"
 
@@ -86,19 +87,19 @@ export function EmployerImportDashboard({ section }: { section: "master" | "trai
     </div>
     {error && <p role="alert" className="rounded border border-destructive p-4 text-destructive">{error}</p>}
     <section className="space-y-4"><div className="flex flex-wrap items-center gap-3"><h2 className="mr-auto text-xl font-semibold">Sources ({sources.length})</h2><Button disabled={!!busy || !sources.some(source => source.verified && !source.note)} onClick={() => scanSources(true)}>Import from verified sources</Button><Button variant="outline" disabled={!!busy || !sources.some(source => source.enabled && !source.note)} onClick={() => scanSources()}>Scan enabled sources</Button></div>
-      <p className="text-sm text-muted-foreground">Scans here search for {section === "trainee" ? "trainee and graduate programs" : "theses and internships"}. Deadlines are fetched from the source. Automatic publishing requires a current deadline; unspecified compensation stays unspecified.</p>
+      <p className="text-sm text-muted-foreground">Scans here search for {section === "trainee" ? "trainee and graduate programs" : "theses and internships"}. Deadlines are fetched from the source. Automatic publishing requires a confirmed active vacancy. Missing deadlines and compensation stay unspecified.</p>
       <p role="status">{busy ? progress || `Working: ${busy}` : progress}</p>
       <Input aria-label="Filter employers or countries" placeholder="Filter employer, country, or ATS…" value={filter} onChange={event => setFilter(event.target.value)} />
       <div className="max-h-[540px] space-y-3 overflow-y-auto rounded-xl border p-3">{sources.filter(source => `${source.name} ${source.country} ${source.adapter}`.toLowerCase().includes(filter.toLowerCase())).map(source => <div key={source.id} className="flex flex-wrap items-center gap-4 rounded-lg border p-4">
         <div className="min-w-48 flex-1"><a className="font-semibold underline" href={source.publicUrl} target="_blank" rel="noopener noreferrer">{source.name}</a><p className="text-sm text-muted-foreground">{source.country} · {source.adapter} · {source.verified ? "Endpoint configured" : "Discovery / needs verification"}</p><p className="text-xs">Search {source.cursor?.query + 1 || 1}, offset {source.cursor?.offset || 0}</p>{(source.note || source.last_error) && <p className="mt-1 max-w-lg text-sm text-amber-700">{source.note || source.last_error}</p>}</div>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={source.enabled} disabled={!!busy || !!source.note} onChange={event => action({ action: "settings", sourceId: source.id, enabled: event.target.checked }, source.name)} />Enabled</label>
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={source.auto_publish} disabled={!!busy || !!source.note} onChange={event => action({ action: "settings", sourceId: source.id, autoPublish: event.target.checked }, source.name)} />Auto-publish complete listings</label>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={source.auto_publish} disabled={!!busy || !!source.note} onChange={event => action({ action: "settings", sourceId: source.id, autoPublish: event.target.checked }, source.name)} />Auto-publish active listings</label>
         <Button variant="outline" disabled={!!busy || !!source.note} onClick={() => action({ action: "scan", sourceId: source.id }, source.name)}>Scan next page</Button>
       </div>)}</div>
     </section>
     <section className="space-y-4"><div className="flex flex-wrap items-center gap-4"><h2 className="text-xl font-semibold">{ignored ? "Ignored" : "Review queue"} ({total})</h2><Button variant="outline" disabled={!!busy} onClick={() => { setIgnored(!ignored); setPage(0) }}>{ignored ? "Show pending" : "Show ignored"}</Button></div>
-      <p className="text-sm text-muted-foreground">Fetch deadlines for existing imports, or publish all pending positions in one action. The importer checks each original listing automatically and skips expired positions, unavailable sources, and positions without a published deadline.</p>
-      {!ignored && <div className="flex flex-wrap gap-3"><Button disabled={!!busy || !total} onClick={() => processPending(true)}>Fetch deadlines &amp; publish all</Button><Button variant="outline" disabled={!!busy || !total} onClick={() => processPending(false)}>Fetch deadlines only</Button></div>}
+      <p className="text-sm text-muted-foreground">Fetch deadlines for existing imports, or publish all pending positions in one action. Active positions without a stated deadline can be published. Sources are rechecked automatically when their 48-hour check is due; closed positions are archived, and three failed checks temporarily hide a listing.</p>
+      {!ignored && <div className="flex flex-wrap gap-3"><Button disabled={!!busy || !total} onClick={() => processPending(true)}>Check sources &amp; publish all</Button><Button variant="outline" disabled={!!busy || !total} onClick={() => processPending(false)}>Refresh availability &amp; deadlines</Button></div>}
       {skipped.length > 0 && <details><summary className="cursor-pointer text-sm">Skipped positions ({skipped.length})</summary><ul className="mt-2 space-y-1 text-sm">{skipped.map(item => <li key={item.id}>{item.title}: {item.reason}</li>)}</ul></details>}
       {candidates.map(candidate => <CandidateReview key={candidate.id} candidate={candidate} disabled={!!busy} onAction={body => action(body, candidate.title)} />)}
       {!candidates.length && <p className="rounded border p-6 text-muted-foreground">No positions in this queue. Scan a source or continue its next page.</p>}
@@ -112,8 +113,9 @@ function CandidateReview({ candidate, disabled, onAction }: { candidate: Candida
   return <article className="space-y-3 rounded-xl border bg-card p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><span className="text-xs uppercase text-muted-foreground">{candidate.kind.replaceAll("_", " ")}</span><h3 className="font-semibold">{candidate.title}</h3><p className="text-sm">{candidate.organization} · {candidate.location}</p></div><a className="text-sm underline" href={candidate.canonical_url} target="_blank" rel="noopener noreferrer">Original vacancy ↗</a></div>
     <details><summary className="cursor-pointer text-sm">Read imported description</summary><p className="mt-3 whitespace-pre-line text-sm leading-relaxed">{candidate.description}</p></details>
     {candidate.status === "ignored" ? <Button disabled={disabled} variant="outline" onClick={() => onAction({ action: "restore", candidateId: candidate.id })}>Restore to review</Button> : <>
-      <div className="flex flex-wrap gap-4 text-sm"><span>Deadline: {candidate.deadline || "Not provided by source"}</span><span>Compensation: {candidate.compensation || "Not specified"}</span></div>
-      <div className="flex flex-wrap gap-2"><Button disabled={disabled} onClick={() => onAction({ action: "publish", candidateId: candidate.id })}>Fetch details &amp; publish</Button><Button variant="outline" disabled={disabled} onClick={() => onAction({ action: "refresh", candidateId: candidate.id })}>Refresh deadline</Button><Button variant="outline" disabled={disabled} onClick={() => onAction({ action: "ignore", candidateId: candidate.id })}>Ignore</Button></div>
+      <div className="flex flex-wrap gap-4 text-sm"><span>Deadline: {deadlineLabel(candidate.deadline, candidate.deadline_type)}</span><span>Compensation: {candidate.compensation || "Not specified"}</span></div>
+      <p className="text-xs text-muted-foreground">Source: {candidate.availability_state || "Not checked"}{candidate.availability_checked_at && ` ? Last checked ${new Date(candidate.availability_checked_at).toLocaleString("en-GB")}`}{candidate.availability_error && ` ? ${candidate.availability_error}`}</p>
+      <div className="flex flex-wrap gap-2"><Button disabled={disabled} onClick={() => onAction({ action: "publish", candidateId: candidate.id })}>Fetch details &amp; publish</Button><Button variant="outline" disabled={disabled} onClick={() => onAction({ action: "refresh", candidateId: candidate.id })}>Refresh source details</Button><Button variant="outline" disabled={disabled} onClick={() => onAction({ action: "ignore", candidateId: candidate.id })}>Ignore</Button></div>
     </>}
   </article>
 }

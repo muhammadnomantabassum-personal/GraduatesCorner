@@ -12,6 +12,7 @@ BEGIN
   FOREACH label IN ARRAY ARRAY['master_thesis','internship','trainee'] LOOP
     INSERT INTO public.employer_import_items(source_id,external_id,canonical_url,title,kind,organization,location,description,field,deadline,compensation)
     VALUES('__employer_test_fixture',label,'https://example.com/employer-test/'||label,'Importer transaction test',label,'Test fixture','Sweden','Transaction-only fixture','Engineering',CURRENT_DATE+30,'paid') RETURNING id INTO candidate;
+    UPDATE public.employer_import_items SET availability_state='active',availability_checked_at=now() WHERE id=candidate;
     target := public.publish_employer_candidate(candidate);
     repeated := public.publish_employer_candidate(candidate);
     IF target IS NULL OR target<>repeated THEN RAISE EXCEPTION 'Repeat publication is not idempotent'; END IF;
@@ -35,7 +36,7 @@ BEGIN
   EXCEPTION WHEN raise_exception THEN
     IF SQLERRM LIKE 'TEST:%' THEN RAISE; END IF;
   END;
-  UPDATE public.employer_import_items SET deadline=CURRENT_DATE+30 WHERE id=candidate;
+  UPDATE public.employer_import_items SET deadline=CURRENT_DATE+30,availability_state='active',availability_checked_at=now() WHERE id=candidate;
   target := public.publish_employer_candidate(candidate);
   IF NOT EXISTS(SELECT 1 FROM public.theses WHERE id=target AND compensation='not_specified') THEN RAISE EXCEPTION 'Unknown compensation was not preserved'; END IF;
   INSERT INTO public.employer_import_items(source_id,external_id,canonical_url,title,kind,organization,location,description,field)

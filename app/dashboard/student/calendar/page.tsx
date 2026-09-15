@@ -68,7 +68,7 @@ export default function StudentDeadlineCalendarPage() {
         setItems([])
       } else {
         const thesisItems: CalendarItem[] = (data || [])
-          .filter((item: any) => item.theses)
+          .filter((item: any) => item.theses?.deadline)
           .map((item: any) => ({
             id: item.theses.id,
             title: item.theses.title,
@@ -81,7 +81,7 @@ export default function StudentDeadlineCalendarPage() {
           }))
 
         const programItems: CalendarItem[] = (data || [])
-          .filter((item: any) => item.trainee_programs)
+          .filter((item: any) => item.trainee_programs?.deadline)
           .map((item: any) => ({
             id: item.trainee_programs.id,
             title: item.trainee_programs.title,

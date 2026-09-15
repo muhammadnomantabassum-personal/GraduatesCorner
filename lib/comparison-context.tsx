@@ -15,7 +15,9 @@ export type ComparisonItem = {
   field: string
   location: string
   compensation: string
-  deadline: string
+  deadline: string | null
+  deadlineType?: string
+  sourceCheckedAt?: string | null
   duration?: string
   workMode: string
   verified: boolean

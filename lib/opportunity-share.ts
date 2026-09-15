@@ -12,7 +12,7 @@ export interface OpportunityShareData {
   organization: string
   organizationType: "university" | "company"
   location: string
-  deadline: string
+  deadline: string | null
   logoUrl?: string
 }
 

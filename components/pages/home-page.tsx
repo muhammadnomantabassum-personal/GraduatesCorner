@@ -86,7 +86,7 @@ function mapThesis(thesis: any): Thesis {
     organizationType: thesis.organization_type,
     location: thesis.location,
     compensation: thesis.compensation,
-    deadline: thesis.deadline,
+    deadline: thesis.deadline, deadlineType: thesis.deadline_type, sourceCheckedAt: thesis.source_checked_at,
     postedBy: thesis.posted_by,
     postedByUserId: thesis.posted_by_user_id,
     externalUrl: thesis.external_url,
@@ -107,7 +107,7 @@ function mapProgram(program: any): TraineeProgram {
     location: program.location,
     duration: program.duration,
     compensation: program.compensation,
-    deadline: program.deadline,
+    deadline: program.deadline, deadlineType: program.deadline_type, sourceCheckedAt: program.source_checked_at,
     postedBy: program.posted_by,
     postedByUserId: program.posted_by_user_id,
     externalUrl: program.external_url,
@@ -161,26 +161,26 @@ function HomePageContent() {
             supabase
               .from("theses")
               .select("*, profiles:posted_by_user_id (is_verified, verification_badge)")
-              .eq("status", "approved").gte("deadline", new Date().toISOString().slice(0, 10))
+              .eq("status", "approved").eq("source_status", "active").or(`deadline.is.null,deadline.gte.${new Date().toISOString().slice(0, 10)}`)
               .eq("type", "phd")
               .order("created_at", { ascending: false })
               .limit(3),
             supabase
               .from("theses")
               .select("*, profiles:posted_by_user_id (is_verified, verification_badge)")
-              .eq("status", "approved").gte("deadline", new Date().toISOString().slice(0, 10))
+              .eq("status", "approved").eq("source_status", "active").or(`deadline.is.null,deadline.gte.${new Date().toISOString().slice(0, 10)}`)
               .eq("type", "master")
               .order("created_at", { ascending: false })
               .limit(3),
             supabase
               .from("trainee_programs")
               .select("*, profiles:posted_by_user_id (is_verified, verification_badge)")
-              .eq("status", "approved").gte("deadline", new Date().toISOString().slice(0, 10))
+              .eq("status", "approved").eq("source_status", "active").or(`deadline.is.null,deadline.gte.${new Date().toISOString().slice(0, 10)}`)
               .order("created_at", { ascending: false })
               .limit(3),
-            supabase.from("theses").select("id", { count: "exact", head: true }).eq("status", "approved").gte("deadline", new Date().toISOString().slice(0, 10)).eq("type", "phd"),
-            supabase.from("theses").select("id", { count: "exact", head: true }).eq("status", "approved").gte("deadline", new Date().toISOString().slice(0, 10)).eq("type", "master"),
-            supabase.from("trainee_programs").select("id", { count: "exact", head: true }).eq("status", "approved").gte("deadline", new Date().toISOString().slice(0, 10)),
+            supabase.from("theses").select("id", { count: "exact", head: true }).eq("status", "approved").eq("source_status", "active").or(`deadline.is.null,deadline.gte.${new Date().toISOString().slice(0, 10)}`).eq("type", "phd"),
+            supabase.from("theses").select("id", { count: "exact", head: true }).eq("status", "approved").eq("source_status", "active").or(`deadline.is.null,deadline.gte.${new Date().toISOString().slice(0, 10)}`).eq("type", "master"),
+            supabase.from("trainee_programs").select("id", { count: "exact", head: true }).eq("status", "approved").eq("source_status", "active").or(`deadline.is.null,deadline.gte.${new Date().toISOString().slice(0, 10)}`),
           ])
 
         setPlatformCounts({

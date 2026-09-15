@@ -10,6 +10,8 @@ export type EmployerCandidate = {
   description: string
   field: string
   deadline: string | null
+  deadlineType: import("../opportunity-deadline").DeadlineType
+  activeConfirmed: boolean
   compensation: "paid" | "unpaid" | "stipend" | null
   duration: string
   publishedAt: string | null
