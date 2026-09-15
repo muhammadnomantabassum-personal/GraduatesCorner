@@ -23,12 +23,13 @@ ALTER TABLE public.employer_import_items
 CREATE INDEX IF NOT EXISTS employer_items_due ON public.employer_import_items(next_check_at, id) WHERE status IN ('pending','published');
 
 -- Restrictive policies also protect direct API requests despite existing approval policies.
+-- Owners retain access; the authenticated admin API uses service_role for archived records.
 DROP POLICY IF EXISTS "Available theses" ON public.theses;
 CREATE POLICY "Available theses" ON public.theses AS RESTRICTIVE FOR SELECT TO anon, authenticated
-  USING (source_status='active' OR (SELECT public.is_admin()) OR posted_by_user_id=(SELECT auth.uid()));
+  USING (source_status='active' OR posted_by_user_id=(SELECT auth.uid()));
 DROP POLICY IF EXISTS "Available trainee programs" ON public.trainee_programs;
 CREATE POLICY "Available trainee programs" ON public.trainee_programs AS RESTRICTIVE FOR SELECT TO anon, authenticated
-  USING (source_status='active' OR (SELECT public.is_admin()) OR posted_by_user_id=(SELECT auth.uid()));
+  USING (source_status='active' OR posted_by_user_id=(SELECT auth.uid()));
 
 CREATE OR REPLACE FUNCTION public.claim_employer_availability(candidate_id UUID DEFAULT NULL)
 RETURNS SETOF public.employer_import_items LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
