@@ -225,7 +225,7 @@ export async function readEmployerCandidate(source: EmployerSource, job: Listing
     const canApply = $("a[href],button:not([disabled]),input[type='submit']:not([disabled])").toArray().some(node => {
       const control = $(node)
       const label = text(control.text() || control.attr("value")).replace(/[\u00bb\u203a\u2192\u2197!]+$/u, "").trim()
-      return control.attr("aria-disabled") !== "true" && /^(?:apply(?: now| for (?:this|the) (?:job|position))?|ansök(?: nu)?|bewerben(?: sie sich)?|søk(?: nå)?|solliciteer(?: direct)?)$/i.test(label) && !/^(?:#|javascript:)/i.test(control.attr("href") || "valid")
+      return control.attr("aria-disabled") !== "true" && /^(?:apply(?: now| for (?:this|the) (?:job|position))?|ansök(?: nu)?|(?:jetzt )?bewerben(?: sie sich)?|søk(?: nå)?|solliciteer(?: direct)?)$/i.test(label) && !/^(?:#|javascript:)/i.test(control.attr("href") || "valid")
     })
     activeConfirmed = sameVacancy && Boolean(parsed || (matchingTitle && canApply))
     $("script,style,nav,header,footer,form").remove()

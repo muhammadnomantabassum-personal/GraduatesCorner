@@ -40,7 +40,11 @@ export function EmployerImportDashboard({ section }: { section: "master" | "trai
   async function action(body: Record<string, unknown>, label: string) {
     setBusy(label)
     try { const data = await send(body); await load(); toast.success(body.action === "scan" ? `Added ${data.added}; skipped ${data.duplicates} duplicates` : "Updated"); if (data.error_message) toast.warning(data.error_message) }
-    catch (error) { toast.error(error instanceof Error ? error.message : "Operation failed") }
+    catch (error) {
+      // A rejected publication can still update the source check and its failure reason.
+      await load().catch(() => {})
+      toast.error(error instanceof Error ? error.message : "Operation failed")
+    }
     finally { setBusy("") }
   }
   async function scanSources(verifiedOnly = false) {
